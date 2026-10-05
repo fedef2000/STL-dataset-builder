@@ -1,176 +1,122 @@
-import csv
 import json
 import re
 import time
 import requests
 
-# Replace with your email to join OpenAlex's "Polite Pool" (10 requests/sec)
-USER_EMAIL = "your-email@domain.com"
-FOUNDATIONAL_DOI = "https://doi.org/10.1007/978-3-540-30206-3_12" 
-FOUNDATIONAL_TITLE = "Monitoring Temporal Properties of Continuous Signals"
-SEED_WORK_ID = "W1547304883"
+USER_EMAIL = "federico.ferrari@ait.ac.at"
+HEADERS = {"User-Agent": f"NL2STL-Collector/2.0 (mailto:{USER_EMAIL})"}
 
-HEADERS = {
-    "User-Agent": f"NL2STL-CitationCollector/1.0 (mailto:{USER_EMAIL})"
-}
+# Top 4 foundational STL papers (Maler 2004, Donze 2010, Fainekos 2009, Donze Breach 2010)
+SEED_DOIS = [
+    "https://doi.org/10.1007/978-3-540-30206-3_12",  # Maler & Nickovic 2004 (STL)
+    "https://doi.org/10.1007/978-3-642-15297-9_9",   # Donze & Maler 2010 (Quantitative STL)
+    "https://doi.org/10.1016/j.tcs.2009.06.021",     # Fainekos & Pappas 2009 (Robustness / MTL-STL)
+    "https://doi.org/10.1007/978-3-642-14295-6_17",  # Donze 2010 (Breach Toolbox)
+]
 
 
-"""
-def get_seed_work_id():
-    \"""Finds the OpenAlex Work ID for Maler & Nickovic (2004).\"""
-    # 1. Try lookup by exact DOI first
-    url = f"https://api.openalex.org/works/{FOUNDATIONAL_DOI}"
-    resp = requests.get(url, headers=HEADERS, timeout=30)
-    if resp.status_code == 200:
-        data = resp.json()
-        work_id = data["id"].split("/")[-1]
-        print(f"Found seed paper via DOI: {data['display_name']} ({work_id})")
-        print(f"Reported citation count: {data.get('cited_by_count', 0)}")
-        return work_id
+def resolve_seed_ids(dois):
+    work_ids = []
+    for doi in dois:
+        resp = requests.get(f"https://api.openalex.org/works/{doi}", headers=HEADERS, timeout=30)
+        if resp.status_code == 200:
+             data = resp.json()
+             wid = data["id"].split("/")[-1]
+             work_ids.append(wid)
+             print(f"Resolved {wid}: {data['display_name']} ({data.get('cited_by_count')} citations)")
+    return work_ids
 
-    # 2. Fallback to title search if DOI format varies
-    search_url = "https://api.openalex.org/works"
-    params = {"filter": f"title.search:{FOUNDATIONAL_TITLE}", "per-page": 5}
-    resp = requests.get(search_url, params=params, headers=HEADERS, timeout=30)
-    resp.raise_for_status()
-    results = resp.json().get("results", [])
-    if not results:
-        raise ValueError("Could not locate the seed paper in OpenAlex.")
 
-    work_id = results[0]["id"].split("/")[-1]
-    print(f"Found seed paper via search: {results[0]['display_name']} ({work_id})")
-    return work_id
-"""
+def analyze_locations(work):
+    """Scans ALL locations for arXiv IDs, HAL/repo PDFs, and any permissive/NC licenses."""
+    arxiv_id = None
+    all_pdf_urls = []
+    licenses_found = set()
 
-def extract_arxiv_id(work):
-    """Extracts a clean arXiv ID (e.g., '2305.12345') if the paper has an arXiv preprint."""
-    # 1. Check OpenAlex's canonical ids dictionary first
+    # Check canonical IDs first
     arxiv_url = (work.get("ids") or {}).get("arxiv") or ""
-    urls_to_check = [arxiv_url] if arxiv_url else []
+    if arxiv_url:
+        m = re.search(r"arxiv\.org/(?:abs|pdf)/([0-9]{4}\.[0-9]{4,5}|[a-z\-]+/[0-9]{7})", arxiv_url)
+        if m:
+            arxiv_id = m.group(1)
 
-    # 2. Also check all indexed repository locations
     for loc in work.get("locations", []):
-        if loc.get("landing_page_url"):
-            urls_to_check.append(loc["landing_page_url"])
-        if loc.get("pdf_url"):
-            urls_to_check.append(loc["pdf_url"])
+        lic = loc.get("license")
+        if lic:
+            licenses_found.add(lic.lower())
 
-    for url in urls_to_check:
-        if "arxiv.org" in url:
-            match = re.search(
-                r"arxiv\.org/(?:abs|pdf)/([0-9]{4}\.[0-9]{4,5}|[a-z\-]+/[0-9]{7})",
-                url,
-            )
-            if match:
-                return match.group(1)
-    return None
+        for url_key in ("landing_page_url", "pdf_url"):
+            url = loc.get(url_key) or ""
+            if "arxiv.org" in url and not arxiv_id:
+                m = re.search(r"arxiv\.org/(?:abs|pdf)/([0-9]{4}\.[0-9]{4,5}|[a-z\-]+/[0-9]{7})", url)
+                if m:
+                    arxiv_id = m.group(1)
+            if url_key == "pdf_url" and url:
+                all_pdf_urls.append(url)
+
+    # Also check open_access.oa_url fallback
+    oa_url = (work.get("open_access") or {}).get("oa_url")
+    if oa_url and oa_url not in all_pdf_urls:
+        all_pdf_urls.append(oa_url)
+
+    return {
+        "arxiv_id": arxiv_id,
+        "eprint_source_url": f"https://export.arxiv.org/e-print/{arxiv_id}" if arxiv_id else None,
+        "pdf_urls": all_pdf_urls,
+        "has_hal_or_repo_pdf": len(all_pdf_urls) > 0,
+        "licenses": list(licenses_found),
+        "has_cc_license": any(l.startswith("cc-") or l == "cc0" for l in licenses_found),
+    }
 
 
-def reconstruct_abstract(inverted_index):
-    """Reconstructs plain-text abstract from OpenAlex's inverted index format."""
-    if not inverted_index:
-        return ""
-    word_positions = []
-    for word, positions in inverted_index.items():
-        for pos in positions:
-            word_positions.append((pos, word))
-    word_positions.sort(key=lambda x: x[0])
-    return " ".join(word for _, word in word_positions)
-
-
-def fetch_all_citing_papers(seed_work_id):
-    """Retrieves all works citing the seed paper using cursor pagination."""
+def fetch_citing_corpus(seed_ids):
     base_url = "https://api.openalex.org/works"
+    # Combine all seed IDs with OR ('|') — OpenAlex automatically deduplicates works!
+    cites_filter = "|".join(seed_ids)
     cursor = "*"
-    citing_papers = []
-    page = 1
+    corpus = []
 
     while cursor:
         params = {
-            "filter": f"cites:{seed_work_id}",
-            "per-page": 200,  # Maximum allowed by OpenAlex per page
+            "filter": f"cites:{cites_filter}",
+            "per-page": 200,
             "cursor": cursor,
             "mailto": USER_EMAIL,
         }
         resp = requests.get(base_url, params=params, headers=HEADERS, timeout=30)
         resp.raise_for_status()
         data = resp.json()
-
         results = data.get("results", [])
         if not results:
             break
 
         for work in results:
-            best_oa = work.get("best_oa_location") or {}
-            primary_loc = work.get("primary_location") or {}
-            source = primary_loc.get("source") or {}
-
-            arxiv_id = extract_arxiv_id(work)
-            license_str = (
-                best_oa.get("license")
-                or primary_loc.get("license")
-                or "unknown"
-            )
-
-            paper_record = {
+            loc_info = analyze_locations(work)
+            corpus.append({
                 "openalex_id": work.get("id"),
                 "title": work.get("display_name"),
-                "publication_year": work.get("publication_year"),
+                "year": work.get("publication_year"),
                 "doi": work.get("doi"),
-                "arxiv_id": arxiv_id,
-                "eprint_source_url": (
-                    f"https://export.arxiv.org/e-print/{arxiv_id}"
-                    if arxiv_id
-                    else None
-                ),
-                "venue": source.get("display_name"),
-                "is_oa": work.get("open_access", {}).get("is_oa", False),
-                "license": license_str,
-                "is_permissive_license": license_str in ("cc-by", "cc0", "cc-by-sa"),
-                "pdf_url": best_oa.get("pdf_url")
-                or work.get("open_access", {}).get("oa_url"),
-                "cited_by_count": work.get("cited_by_count", 0),
-                "abstract": reconstruct_abstract(
-                    work.get("abstract_inverted_index")
-                ),
-            }
-            citing_papers.append(paper_record)
+                "is_oa": (work.get("open_access") or {}).get("is_oa", False),
+                **loc_info
+            })
 
         cursor = data.get("meta", {}).get("next_cursor")
-        print(f"Page {page}: Collected {len(citing_papers)} citing papers so far...")
-        page += 1
-        time.sleep(0.15)  # Polite rate-limiting
+        print(f"Collected {len(corpus)} unique STL-related papers...")
+        time.sleep(0.15)
 
-    return citing_papers
+    return corpus
 
 
 if __name__ == "__main__":
-    seed_id = SEED_WORK_ID #get_seed_work_id()
-    papers = fetch_all_citing_papers(seed_id)
+    seed_ids = resolve_seed_ids(SEED_DOIS)
+    corpus = fetch_citing_corpus(seed_ids)
 
-    # Summary statistics for your NL-to-STL dataset pipeline
-    arxiv_count = sum(1 for p in papers if p["arxiv_id"])
-    permissive_count = sum(1 for p in papers if p["is_permissive_license"])
-    arxiv_and_permissive = sum(
-        1 for p in papers if p["arxiv_id"] and p["is_permissive_license"]
-    )
+    print("\n--- Expanded STL Corpus Summary ---")
+    print(f"Total unique citing papers: {len(corpus)}")
+    print(f"Papers with arXiv .tex source: {sum(1 for p in corpus if p['arxiv_id'])}")
+    print(f"Papers with ANY Open Access PDF (arXiv, HAL, Inria, Univ Repos): {sum(1 for p in corpus if p['has_hal_or_repo_pdf'])}")
+    print(f"Papers with any Creative Commons license (including CC-BY-NC): {sum(1 for p in corpus if p['has_cc_license'])}")
 
-    print("\n--- Collection Complete ---")
-    print(f"Total citing papers retrieved: {len(papers)}")
-    print(f"Papers with arXiv LaTeX sources available: {arxiv_count}")
-    print(f"Papers with CC-BY / CC0 licenses: {permissive_count}")
-    print(f"Papers with BOTH arXiv source + permissive license: {arxiv_and_permissive}")
-
-    # Save full records (including reconstructed abstracts) to JSON
-    with open("stl_citing_papers.json", "w", encoding="utf-8") as jf:
-        json.dump(papers, jf, indent=2, ensure_ascii=False)
-
-    # Save tabular summary to CSV
-    if papers:
-        csv_fields = [k for k in papers[0].keys() if k != "abstract"]
-        with open("stl_citing_papers.csv", "w", newline="", encoding="utf-8") as cf:
-            writer = csv.DictWriter(cf, fieldnames=csv_fields, extrasaction="ignore")
-            writer.writeheader()
-            writer.writerows(papers)
-
-    print("Saved output to 'stl_citing_papers.json' and 'stl_citing_papers.csv'.")
+    with open("stl_expanded_corpus.json", "w", encoding="utf-8") as f:
+        json.dump(corpus, f, indent=2)
