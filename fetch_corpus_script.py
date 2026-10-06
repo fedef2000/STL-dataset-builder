@@ -8,10 +8,10 @@ HEADERS = {"User-Agent": f"NL2STL-Collector/2.0 (mailto:{USER_EMAIL})"}
 
 # Top 4 foundational STL papers (Maler 2004, Donze 2010, Fainekos 2009, Donze Breach 2010)
 SEED_DOIS = [
-    "https://doi.org/10.1007/978-3-540-30206-3_12",  # Maler & Nickovic 2004 (STL)
-    "https://doi.org/10.1007/978-3-642-15297-9_9",   # Donze & Maler 2010 (Quantitative STL)
-    "https://doi.org/10.1016/j.tcs.2009.06.021",     # Fainekos & Pappas 2009 (Robustness / MTL-STL)
-    "https://doi.org/10.1007/978-3-642-14295-6_17",  # Donze 2010 (Breach Toolbox)
+    "https://doi.org/10.1007/978-3-540-30206-3_12",  # Maler & Nickovic 2004 (STL) Monitoring Temporal Properties of Continuous Signals
+    "https://doi.org/10.1007/978-3-642-15297-9_9",   # Donze & Maler 2010 (Quantitative STL) Robust Satisfaction of Temporal Logic over Real-Valued Signals
+    "https://doi.org/10.1016/j.tcs.2009.06.021",     # Fainekos & Pappas 2009 (Robustness / MTL-STL) Robustness of temporal logic specifications for continuous-time signals
+    "https://doi.org/10.1007/978-3-642-14295-6_17",  # Donze 2010 (Breach Toolbox) Breach, A Toolbox for Verification and Parameter Synthesis of Hybrid Systems
 ]
 
 
