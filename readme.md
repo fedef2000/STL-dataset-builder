@@ -82,13 +82,14 @@ pip install requests pymupdf
 
 ```
 
-### 2. Configure `config.py`
+### 2. Configure `.env`
 
-Open `config.py` and set your email address and (optionally) a free OpenAlex API key:
+Copy `.env.example` to `.env` and fill in your email address and (optionally) your API keys. `.env` is gitignored and is loaded by `config.py`:
 
-```python
-USER_EMAIL = "your.name@university.edu"      # Enables OpenAlex Polite Pool
-OPENALEX_API_KEY = "your_free_openalex_key"  # Optional: Increases daily quota 10x (get at openalex.org)
+```bash
+USER_EMAIL=your.name@university.edu        # Enables OpenAlex Polite Pool
+OPENALEX_API_KEY=your_free_openalex_key    # Optional: Increases daily quota 10x (get at openalex.org)
+SEMANTIC_SCHOLAR_API_KEY=your_s2_key       # Optional: Lifts the anonymous rate limit (semanticscholar.org/product/api)
 
 ```
 

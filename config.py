@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -10,8 +11,20 @@ LOG_DIR = DATA_DIR / "logs"
 CORPUS_FILE = DATA_DIR / "corpus.json"
 LOG_FILE = LOG_DIR / "pipeline.log"
 
-USER_EMAIL = "federico.ferrari@ait.ac.at"
-OPENALEX_API_KEY = "bsBCSjRR8mkCoERfh5chhh"
+# Credentials live in .env (gitignored); copy .env.example to .env and fill it in.
+# Variables already set in the environment take precedence over the file.
+ENV_FILE = BASE_DIR / ".env"
+if ENV_FILE.is_file():
+    for line in ENV_FILE.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if line and not line.startswith("#") and "=" in line:
+            key, value = line.split("=", 1)
+            os.environ.setdefault(key.strip(), value.strip().strip("'\""))
+
+USER_EMAIL = os.environ.get("USER_EMAIL", "")                      # Enables the OpenAlex polite pool
+OPENALEX_API_KEY = os.environ.get("OPENALEX_API_KEY", "")          # Optional: higher daily OpenAlex quota
+# Optional: lifts Semantic Scholar's anonymous rate limit (request a key at semanticscholar.org/product/api)
+SEMANTIC_SCHOLAR_API_KEY = os.environ.get("SEMANTIC_SCHOLAR_API_KEY", "")
 
 HEADERS = {"User-Agent": f"NL2STL-ModularBuilder/3.0 (mailto:{USER_EMAIL})"}
 if OPENALEX_API_KEY:
