@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 import re
 from config import CORPUS_FILE, RAW_LATEX_DIR, RAW_PDF_DIR
@@ -137,7 +138,7 @@ class CorpusStore:
         # Check if local files already exist on disk for this new paper
         tex_dir = RAW_LATEX_DIR / pid
         pdf_file = RAW_PDF_DIR / f"{pid}.pdf"
-        if tex_dir.is_dir() and any(tex_dir.glob("*.tex")):
+        if tex_dir.is_dir() and any(tex_dir.rglob("*.tex")):
             paper_dict["local_files"] = {
                 "status": "downloaded_latex",
                 "path": f"data/raw/latex/{pid}",
@@ -164,5 +165,8 @@ class CorpusStore:
         return pid, True
 
     def save(self):
-        with open(self.path, "w", encoding="utf-8") as f:
+        # Write to a temp file and swap it in, so an interrupted save never leaves a truncated corpus.json
+        tmp_path = self.path.with_name(self.path.name + ".tmp")
+        with open(tmp_path, "w", encoding="utf-8") as f:
             json.dump(self.papers, f, indent=2, ensure_ascii=False)
+        os.replace(tmp_path, self.path)

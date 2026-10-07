@@ -46,7 +46,7 @@ def scan_tex_folder(tex_folder: Path) -> list[str]:
     if not tex_folder.is_dir():
         return []
     found = set()
-    for tex_file in tex_folder.glob("*.tex"):
+    for tex_file in tex_folder.rglob("*.tex"):
         try:
             raw = tex_file.read_text(encoding="utf-8", errors="ignore")
             active_code = strip_latex_comments(raw)

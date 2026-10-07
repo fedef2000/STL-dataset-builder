@@ -1,7 +1,8 @@
+from collections import Counter
 import difflib
 import gzip
-import os
-from pathlib import Path
+import logging
+from pathlib import Path, PurePosixPath
 import shutil
 import tarfile
 import time
@@ -21,6 +22,19 @@ BROWSER_HEADERS = {
 }
 
 
+# Kept from arXiv bundles: .tex plus the files where authors define their macros
+SOURCE_EXTENSIONS = (".tex", ".sty", ".cls", ".def")
+
+
+def safe_member_path(member_name: str) -> PurePosixPath | None:
+    """Returns the archive member's relative path, or None if it would escape the target folder."""
+    path = PurePosixPath(member_name.replace("\\", "/"))
+    parts = [p for p in path.parts if p != "."]
+    if not parts or any(p in ("/", "..") or ":" in p for p in parts):
+        return None
+    return PurePosixPath(*parts)
+
+
 def verify_disk_status(paper_id: str) -> tuple[str, str | None]:
     """
     Verifies if a paper's files actually exist on disk and are non-empty.
@@ -34,8 +48,7 @@ def verify_disk_status(paper_id: str) -> tuple[str, str | None]:
         temp_archive.unlink()
 
     if tex_dir.is_dir():
-        tex_files = list(tex_dir.glob("*.tex"))
-        if len(tex_files) > 0:
+        if any(tex_dir.rglob("*.tex")):
             return "downloaded_latex", f"data/raw/latex/{paper_id}"
         else:
             shutil.rmtree(tex_dir, ignore_errors=True)
@@ -68,18 +81,25 @@ def download_and_extract_arxiv_tex(eprint_url: str, target_folder: Path) -> tupl
 
         if tarfile.is_tarfile(temp_archive):
             with tarfile.open(temp_archive, "r:*") as tar:
-                tex_members = [
-                    m for m in tar.getmembers()
-                    if m.isfile() and m.name.lower().endswith(".tex")
-                ]
-                for member in tex_members:
-                    safe_name = os.path.basename(member.name)
+                tex_count = 0
+                for member in tar.getmembers():
+                    if not member.isfile() or not member.name.lower().endswith(SOURCE_EXTENSIONS):
+                        continue
+                    rel_path = safe_member_path(member.name)
                     src = tar.extractfile(member)
-                    if src:
-                        with src, open(target_folder / safe_name, "wb") as dst:
+                    if rel_path is None or src is None:
+                        continue
+                    dst_path = target_folder / rel_path
+                    try:
+                        dst_path.parent.mkdir(parents=True, exist_ok=True)
+                        with src, open(dst_path, "wb") as dst:
                             shutil.copyfileobj(src, dst)
+                    except OSError:
+                        continue
+                    if dst_path.suffix.lower() == ".tex":
+                        tex_count += 1
             temp_archive.unlink(missing_ok=True)
-            if len(tex_members) > 0:
+            if tex_count > 0:
                 return True, "Success"
             shutil.rmtree(target_folder, ignore_errors=True)
             return False, "Archive contained no .tex files"
@@ -151,6 +171,35 @@ def download_pdf_from_mirrors(
 # -------------------------------------------------------------------------
 # SECOND-CHANCE RECOVERY HELPERS (Semantic Scholar, arXiv Title, HAL)
 # -------------------------------------------------------------------------
+RETRY_WAITS = (2, 5, 10)
+MAX_CONSECUTIVE_GIVE_UPS = 20
+
+# Lookups abandoned while the service was still throttling us, per service (read by scripts/02 for reporting)
+rate_limit_hits = Counter()
+_consecutive_give_ups = Counter()
+
+
+def get_with_backoff(service: str, url: str, timeout: int) -> requests.Response:
+    """
+    GET for the recovery lookups. Retries on 429/503 so a throttled lookup is not mistaken for "not found".
+    If a service keeps throttling for many papers in a row, stops waiting on it until it answers again.
+    """
+    waits = RETRY_WAITS if _consecutive_give_ups[service] < MAX_CONSECUTIVE_GIVE_UPS else ()
+    for wait in (*waits, None):
+        resp = requests.get(url, headers=HEADERS, timeout=timeout)
+        if resp.status_code not in (429, 503):
+            _consecutive_give_ups[service] = 0
+            return resp
+        if wait is not None:
+            retry_after = resp.headers.get("Retry-After", "")
+            time.sleep(min(int(retry_after), 30) if retry_after.isdigit() else wait)
+
+    _consecutive_give_ups[service] += 1
+    rate_limit_hits[service] += 1
+    logging.warning(f"    [!] {service} lookup rate-limited (HTTP {resp.status_code}), giving up on this paper.")
+    return resp
+
+
 def _similar_title(t1: str, t2: str, threshold: float = 0.88) -> bool:
     clean1 = "".join(c.lower() for c in (t1 or "") if c.isalnum() or c == " ")
     clean2 = "".join(c.lower() for c in (t2 or "") if c.isalnum() or c == " ")
@@ -165,7 +214,7 @@ def find_arxiv_by_title(title: str) -> str | None:
     query = urllib.parse.quote(f'ti:"{clean_q}"')
     url = f"http://export.arxiv.org/api/query?search_query={query}&max_results=3"
     try:
-        resp = requests.get(url, headers=HEADERS, timeout=20)
+        resp = get_with_backoff("arXiv title search", url, timeout=20)
         if resp.status_code != 200:
             return None
         root = ET.fromstring(resp.content)
@@ -190,7 +239,7 @@ def find_via_semantic_scholar(doi: str | None) -> tuple[str | None, str | None]:
             f"https://api.semanticscholar.org/graph/v1/paper/DOI:{clean_doi}"
             f"?fields=externalIds,openAccessPdf"
         )
-        resp = requests.get(url, headers=HEADERS, timeout=15)
+        resp = get_with_backoff("Semantic Scholar", url, timeout=15)
         if resp.status_code == 200:
             data = resp.json()
             arxiv_id = (data.get("externalIds") or {}).get("ArXiv")
@@ -208,7 +257,7 @@ def find_via_hal(title: str) -> str | None:
     q = urllib.parse.quote(f'title_t:("{title}")')
     url = f"https://api.archives-ouvertes.fr/search/?q={q}&fl=title_s,fileMain_s&wt=json&rows=3"
     try:
-        resp = requests.get(url, headers=HEADERS, timeout=15)
+        resp = get_with_backoff("HAL", url, timeout=15)
         if resp.status_code == 200:
             docs = resp.json().get("response", {}).get("docs", [])
             for d in docs:
