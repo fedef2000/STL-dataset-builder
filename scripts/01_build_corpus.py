@@ -40,9 +40,9 @@ def main():
     )
     parser.add_argument(
         "--hop2-require-stl-text",
-        action="store_true",
+        action=argparse.BooleanOptionalAction,
         default=True,
-        help="When --hops 2 is used, require Hop-2 papers to mention 'Signal Temporal Logic' or 'STL' (prevents topic drift).",
+        help="When --hops 2 is used, keep only Hop-2 papers whose title/abstract matches the local STL relevance terms (prevents topic drift). Use --no-hop2-require-stl-text to disable.",
     )
     parser.add_argument(
         "--keywords",
@@ -100,11 +100,6 @@ def main():
                 f"with >= {args.min_hop1_citations} citations) ==="
             )
             # Prevent topic drift on Hop 2 by filtering for temporal logic relevance
-            extra_filter = (
-                'default.search:"Signal Temporal Logic" OR "Metric Temporal Logic"'
-                if args.hop2_require_stl_text
-                else None
-            )
             added_h2 = fetch_citing_works(
                 eligible_hop1,
                 store,
