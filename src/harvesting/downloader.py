@@ -48,14 +48,17 @@ def verify_disk_status(paper_id: str) -> tuple[str, str | None]:
 
     return "pending", None
 
-
-def download_and_extract_arxiv_tex(eprint_url: str, target_folder: Path) -> bool:
-    """Downloads an arXiv e-print bundle and extracts only the .tex files."""
+def download_and_extract_arxiv_tex(eprint_url: str, target_folder: Path) -> tuple[bool, str]:
+    """Downloads an arXiv e-print bundle. Returns (success, reason)."""
     temp_archive = Path(f"{target_folder}_temp")
     try:
         resp = requests.get(eprint_url, headers=HEADERS, timeout=45, stream=True)
+        if resp.status_code == 404:
+            return False, "arXiv Error: HTTP 404 (Not Found)"
+        if resp.status_code == 403:
+            return False, "arXiv Error: HTTP 403 (Forbidden/Blocked)"
         if resp.status_code != 200:
-            return False
+            return False, f"arXiv Error: HTTP {resp.status_code}"
 
         with open(temp_archive, "wb") as f:
             for chunk in resp.iter_content(chunk_size=8192):
@@ -63,12 +66,10 @@ def download_and_extract_arxiv_tex(eprint_url: str, target_folder: Path) -> bool
 
         target_folder.mkdir(parents=True, exist_ok=True)
 
-        # Case 1: Multi-file .tar.gz archive (most common on arXiv)
         if tarfile.is_tarfile(temp_archive):
             with tarfile.open(temp_archive, "r:*") as tar:
                 tex_members = [
-                    m
-                    for m in tar.getmembers()
+                    m for m in tar.getmembers()
                     if m.isfile() and m.name.lower().endswith(".tex")
                 ]
                 for member in tex_members:
@@ -79,11 +80,10 @@ def download_and_extract_arxiv_tex(eprint_url: str, target_folder: Path) -> bool
                             shutil.copyfileobj(src, dst)
             temp_archive.unlink(missing_ok=True)
             if len(tex_members) > 0:
-                return True
+                return True, "Success"
             shutil.rmtree(target_folder, ignore_errors=True)
-            return False
+            return False, "Archive contained no .tex files"
 
-        # Case 2: Single .tex file compressed with gzip (not tarred)
         try:
             with gzip.open(temp_archive, "rb") as gz:
                 content = gz.read()
@@ -91,40 +91,62 @@ def download_and_extract_arxiv_tex(eprint_url: str, target_folder: Path) -> bool
                     with open(target_folder / "main.tex", "wb") as dst:
                         dst.write(content)
                     temp_archive.unlink(missing_ok=True)
-                    return True
+                    return True, "Success"
         except OSError:
             pass
 
         shutil.rmtree(target_folder, ignore_errors=True)
         temp_archive.unlink(missing_ok=True)
-        return False
+        return False, "Invalid archive format or PDF only"
 
-    except Exception:
+    except requests.exceptions.Timeout:
+        return False, "arXiv Error: Connection Timeout"
+    except Exception as e:
         shutil.rmtree(target_folder, ignore_errors=True)
         temp_archive.unlink(missing_ok=True)
-        return False
+        return False, f"arXiv Error: Network/System Exception"
 
 
 def download_pdf_from_mirrors(
     pdf_urls: list[str], dest_path: Path, use_browser_headers: bool = True
-) -> bool:
-    """Tries each mirror URL until a valid PDF (verified via %PDF magic bytes) is saved."""
+) -> tuple[bool, str]:
+    """Tries each mirror URL. Returns (success, reason)."""
+    if not pdf_urls:
+        return False, "No PDF URLs in metadata"
+
     req_headers = BROWSER_HEADERS if use_browser_headers else HEADERS
+    last_reason = "Unknown Error"
+
     for url in pdf_urls:
         if not url:
             continue
         try:
-            resp = requests.get(
-                url, headers=req_headers, timeout=30, allow_redirects=True
-            )
-            if resp.status_code == 200 and resp.content.startswith(b"%PDF"):
+            resp = requests.get(url, headers=req_headers, timeout=30, allow_redirects=True)
+            
+            if resp.status_code == 403:
+                last_reason = "HTTP 403 (Paywall or Bot Protection)"
+                continue
+            if resp.status_code == 404:
+                last_reason = "HTTP 404 (Dead Link)"
+                continue
+            if resp.status_code != 200:
+                last_reason = f"HTTP {resp.status_code}"
+                continue
+
+            # Check magic bytes to ensure it's actually a PDF and not an HTML login page
+            if resp.content.startswith(b"%PDF"):
                 with open(dest_path, "wb") as f:
                     f.write(resp.content)
-                return True
+                return True, "Success"
+            else:
+                last_reason = "HTML Landing Page (Not a %PDF file)"
+                
+        except requests.exceptions.Timeout:
+            last_reason = "Connection Timeout"
         except Exception:
-            continue
-    return False
+            last_reason = "Connection Error (Domain unreachable)"
 
+    return False, last_reason
 
 # -------------------------------------------------------------------------
 # SECOND-CHANCE RECOVERY HELPERS (Semantic Scholar, arXiv Title, HAL)
