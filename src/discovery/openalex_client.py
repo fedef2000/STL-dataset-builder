@@ -213,6 +213,7 @@ def fetch_citing_works(
     for b_idx in range(0, len(parent_work_ids), batch_size):
         batch = parent_work_ids[b_idx : b_idx + batch_size]
         cites_clause = f"cites:{'|'.join(batch)}"
+        batch_urls = {f"https://openalex.org/{pid}": pid for pid in batch}
 
         cursor = "*"
         while cursor:
@@ -233,9 +234,15 @@ def fetch_citing_works(
                 if require_stl_relevance and not is_stl_relevant_locally(work):
                     continue
 
+                # The query matches works citing ANY paper in the batch, so keep only the ones this work actually cites
+                parents = [
+                    batch_urls[ref]
+                    for ref in work.get("referenced_works") or []
+                    if ref in batch_urls
+                ]
                 parsed = parse_openalex_work(work)
                 _, is_new = store.upsert_paper(
-                    parsed, method=method_label, hop=hop, parent_ids=batch
+                    parsed, method=method_label, hop=hop, parent_ids=parents
                 )
                 if is_new:
                     newly_added += 1
@@ -285,11 +292,15 @@ def search_openalex_by_keywords(
                 break
 
             for work in results:
+                fetched_for_kw += 1
+                # default.search also hits full text, so drop works whose title/abstract shows no STL relevance
+                if not is_stl_relevant_locally(work):
+                    continue
+
                 parsed = parse_openalex_work(work)
                 _, is_new = store.upsert_paper(
                     parsed, method=f"openalex_kw:{kw}", hop=None
                 )
-                fetched_for_kw += 1
                 if is_new:
                     newly_added += 1
 
@@ -300,5 +311,7 @@ def search_openalex_by_keywords(
         print(
             f"    -> Finished '{kw}': scanned {fetched_for_kw} works (+{newly_added} cumulative new)."
         )
+
+    return newly_added
 
     return newly_added
