@@ -10,6 +10,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from config import LOG_FILE, RAW_LATEX_DIR, RAW_PDF_DIR
 from src.harvesting.downloader import (
+    check_semantic_scholar,
     download_and_extract_arxiv_tex,
     download_pdf_from_mirrors,
     find_arxiv_by_title,
@@ -48,6 +49,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--with-recovery", action="store_true")
     parser.add_argument("--retry-unavailable", action="store_true")
+    parser.add_argument("--retry-rate-limited", action="store_true", help="Retry only unavailable papers whose recovery lookups were rate-limited.")
     parser.add_argument("--limit", type=int, default=None)
     args = parser.parse_args()
 
@@ -61,10 +63,17 @@ def main():
         target_statuses.add("unavailable")
 
     queue = [pid for pid, p in store.papers.items() if p.get("local_files", {}).get("status") in target_statuses]
+    if args.retry_rate_limited and not args.retry_unavailable:
+        queue += [
+            pid for pid, p in store.papers.items()
+            if p.get("local_files", {}).get("status") == "unavailable" and p["local_files"].get("recovery_rate_limited")
+        ]
     if args.limit:
         queue = queue[: args.limit]
 
     logging.info(f"=== STEP 2 START | Queued: {len(queue)} ===")
+    if args.with_recovery:
+        logging.info(f"Semantic Scholar check: {check_semantic_scholar()}")
 
     attempted = 0
     for pid in queue:

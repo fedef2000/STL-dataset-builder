@@ -9,7 +9,7 @@ import time
 import urllib.parse
 import xml.etree.ElementTree as ET
 import requests
-from config import HEADERS, RAW_LATEX_DIR, RAW_PDF_DIR
+from config import HEADERS, RAW_LATEX_DIR, RAW_PDF_DIR, SEMANTIC_SCHOLAR_API_KEY
 
 # Standard browser headers to avoid 403 blocks on university/institutional PDF repositories
 BROWSER_HEADERS = {
@@ -172,21 +172,43 @@ def download_pdf_from_mirrors(
 # SECOND-CHANCE RECOVERY HELPERS (Semantic Scholar, arXiv Title, HAL)
 # -------------------------------------------------------------------------
 RETRY_WAITS = (2, 5, 10)
-MAX_CONSECUTIVE_GIVE_UPS = 20
+MAX_CONSECUTIVE_GIVE_UPS = 5
+SERVICE_COOLDOWN_SEC = 900
+# Semantic Scholar allows about 1 request/second per API key
+MIN_INTERVAL_SEC = {"Semantic Scholar": 1.1}
 
-# Lookups abandoned while the service was still throttling us, per service (read by scripts/02 for reporting)
+# Semantic Scholar gets its own headers: its API key, and not the OpenAlex token carried by HEADERS
+S2_HEADERS = {"User-Agent": HEADERS["User-Agent"]}
+if SEMANTIC_SCHOLAR_API_KEY:
+    S2_HEADERS["x-api-key"] = SEMANTIC_SCHOLAR_API_KEY
+
+# Lookups skipped or abandoned because the service was throttling us, per service (read by scripts/02 for reporting)
 rate_limit_hits = Counter()
 _consecutive_give_ups = Counter()
+_cooldown_until = {}
+_last_request_at = {}
 
 
-def get_with_backoff(service: str, url: str, timeout: int) -> requests.Response:
+class ServiceThrottled(Exception):
+    """Raised instead of calling a service that is in its cooldown period."""
+
+
+def get_with_backoff(service: str, url: str, timeout: int, headers: dict = HEADERS) -> requests.Response:
     """
     GET for the recovery lookups. Retries on 429/503 so a throttled lookup is not mistaken for "not found".
-    If a service keeps throttling for many papers in a row, stops waiting on it until it answers again.
+    If a service throttles several papers in a row (e.g. an IP block), it is left alone for
+    SERVICE_COOLDOWN_SEC and then probed again, instead of being hit once per paper.
     """
-    waits = RETRY_WAITS if _consecutive_give_ups[service] < MAX_CONSECUTIVE_GIVE_UPS else ()
-    for wait in (*waits, None):
-        resp = requests.get(url, headers=HEADERS, timeout=timeout)
+    if time.monotonic() < _cooldown_until.get(service, 0):
+        rate_limit_hits[service] += 1
+        raise ServiceThrottled(service)
+
+    for wait in (*RETRY_WAITS, None):
+        gap = MIN_INTERVAL_SEC.get(service, 0) - (time.monotonic() - _last_request_at.get(service, float("-inf")))
+        if gap > 0:
+            time.sleep(gap)
+        _last_request_at[service] = time.monotonic()
+        resp = requests.get(url, headers=headers, timeout=timeout)
         if resp.status_code not in (429, 503):
             _consecutive_give_ups[service] = 0
             return resp
@@ -196,7 +218,14 @@ def get_with_backoff(service: str, url: str, timeout: int) -> requests.Response:
 
     _consecutive_give_ups[service] += 1
     rate_limit_hits[service] += 1
-    logging.warning(f"    [!] {service} lookup rate-limited (HTTP {resp.status_code}), giving up on this paper.")
+    if _consecutive_give_ups[service] >= MAX_CONSECUTIVE_GIVE_UPS:
+        _cooldown_until[service] = time.monotonic() + SERVICE_COOLDOWN_SEC
+        logging.warning(
+            f"    [!] {service} is still rate-limiting (HTTP {resp.status_code}): "
+            f"skipping its lookups for {SERVICE_COOLDOWN_SEC // 60} min, then trying again."
+        )
+    else:
+        logging.warning(f"    [!] {service} lookup rate-limited (HTTP {resp.status_code}), giving up on this paper.")
     return resp
 
 
@@ -239,7 +268,7 @@ def find_via_semantic_scholar(doi: str | None) -> tuple[str | None, str | None]:
             f"https://api.semanticscholar.org/graph/v1/paper/DOI:{clean_doi}"
             f"?fields=externalIds,openAccessPdf"
         )
-        resp = get_with_backoff("Semantic Scholar", url, timeout=15)
+        resp = get_with_backoff("Semantic Scholar", url, timeout=15, headers=S2_HEADERS)
         if resp.status_code == 200:
             data = resp.json()
             arxiv_id = (data.get("externalIds") or {}).get("ArXiv")
@@ -248,6 +277,24 @@ def find_via_semantic_scholar(doi: str | None) -> tuple[str | None, str | None]:
     except Exception:
         pass
     return None, None
+
+
+def check_semantic_scholar() -> str:
+    """One test lookup, so a blocked IP or a rejected API key is visible before a long run."""
+    mode = "with API key" if SEMANTIC_SCHOLAR_API_KEY else "anonymous, SEMANTIC_SCHOLAR_API_KEY not set"
+    url = "https://api.semanticscholar.org/graph/v1/paper/DOI:10.1007/978-3-540-30206-3_12?fields=externalIds"
+    try:
+        resp = requests.get(url, headers=S2_HEADERS, timeout=15)
+    except requests.exceptions.RequestException:
+        return f"unreachable ({mode})"
+    _last_request_at["Semantic Scholar"] = time.monotonic()
+    if resp.status_code == 200:
+        return f"OK ({mode})"
+    if resp.status_code in (401, 403) and SEMANTIC_SCHOLAR_API_KEY:
+        return f"API key rejected (HTTP {resp.status_code})"
+    if resp.status_code == 429:
+        return f"rate-limited or blocked (HTTP 429, {mode})"
+    return f"HTTP {resp.status_code} ({mode})"
 
 
 def find_via_hal(title: str) -> str | None:
