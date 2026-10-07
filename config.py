@@ -16,7 +16,6 @@ OPENALEX_API_KEY = "bsBCSjRR8mkCoERfh5chhh"
 HEADERS = {"User-Agent": f"NL2STL-ModularBuilder/3.0 (mailto:{USER_EMAIL})"}
 if OPENALEX_API_KEY:
     HEADERS["Authorization"] = f"Bearer {OPENALEX_API_KEY}"
-HEADERS = {"User-Agent": f"NL2STL-ModularBuilder/3.0 (mailto:{USER_EMAIL})"}
 
 # The 4 foundational STL papers (Hop 0 seeds)
 SEED_DOIS = [
