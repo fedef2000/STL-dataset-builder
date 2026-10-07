@@ -373,7 +373,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 11,
       "symbolic": 0
     }
   },
@@ -907,8 +907,8 @@
       "W2753637750"
     ],
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 4
+      "concrete": 4,
+      "symbolic": 24
     }
   },
   "W1535889317": {
@@ -1159,7 +1159,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 1,
+      "concrete": 2,
       "symbolic": 0
     }
   },
@@ -1440,7 +1440,7 @@
     },
     "formula_estimates": {
       "concrete": 4,
-      "symbolic": 13
+      "symbolic": 19
     }
   },
   "W2804655496": {
@@ -1689,7 +1689,8 @@
     "local_files": {
       "status": "unavailable",
       "path": null,
-      "failure_reason": "Closed Access / Paywalled"
+      "failure_reason": "Closed Access / Paywalled",
+      "recovery_rate_limited": true
     },
     "license_info": {
       "effective_license": null,
@@ -1969,7 +1970,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 1,
       "symbolic": 0
     }
   },
@@ -2405,7 +2406,7 @@
     ],
     "formula_estimates": {
       "concrete": 9,
-      "symbolic": 2
+      "symbolic": 8
     }
   },
   "W2965407852": {
@@ -2873,9 +2874,8 @@
       ]
     },
     "local_files": {
-      "status": "unavailable",
-      "path": null,
-      "failure_reason": "PDF Mirrors: Connection Timeout"
+      "status": "downloaded_pdf",
+      "path": "data/raw/pdfs/W2161081924.pdf"
     },
     "license_info": {
       "effective_license": null,
@@ -2889,6 +2889,10 @@
         "arxiv_oai": [],
         "pdf_metadata": []
       }
+    },
+    "formula_estimates": {
+      "concrete": 0,
+      "symbolic": 0
     }
   },
   "W4384521943": {
@@ -2997,7 +3001,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 1
+      "symbolic": 2
     }
   },
   "W2899532715": {
@@ -3806,7 +3810,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 3,
       "symbolic": 0
     }
   },
@@ -3919,8 +3923,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 13,
-      "symbolic": 14
+      "concrete": 14,
+      "symbolic": 21
     }
   },
   "W2167799541": {
@@ -3977,8 +3981,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 21,
+      "symbolic": 75
     }
   },
   "W2492473950": {
@@ -4138,7 +4142,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 2,
       "symbolic": 0
     }
   },
@@ -4552,8 +4556,8 @@
       "W3127094934"
     ],
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 7,
+      "symbolic": 28
     }
   },
   "W2898929447": {
@@ -4609,7 +4613,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 0
+      "symbolic": 5
     }
   },
   "W2892537867": {
@@ -4935,8 +4939,8 @@
       "W3028181794"
     ],
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 2
+      "concrete": 1,
+      "symbolic": 3
     }
   },
   "W2951796861": {
@@ -5104,8 +5108,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 27,
+      "symbolic": 64
     }
   },
   "W4323644408": {
@@ -5273,7 +5277,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 4,
+      "concrete": 8,
       "symbolic": 0
     }
   },
@@ -5513,7 +5517,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 4
+      "symbolic": 5
     }
   },
   "W2147263744": {
@@ -5583,7 +5587,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 6
+      "symbolic": 14
     }
   },
   "W2796878315": {
@@ -5771,7 +5775,7 @@
     ],
     "formula_estimates": {
       "concrete": 17,
-      "symbolic": 29
+      "symbolic": 45
     }
   },
   "W3134978222": {
@@ -6251,8 +6255,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 2,
+      "symbolic": 1
     }
   },
   "W4392877269": {
@@ -7218,8 +7222,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 13,
-      "symbolic": 3
+      "concrete": 15,
+      "symbolic": 4
     }
   },
   "W2157413433": {
@@ -7270,7 +7274,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 7,
       "symbolic": 0
     }
   },
@@ -7387,7 +7391,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 4,
       "symbolic": 0
     }
   },
@@ -7853,8 +7857,8 @@
       "W2791714342"
     ],
     "formula_estimates": {
-      "concrete": 8,
-      "symbolic": 0
+      "concrete": 11,
+      "symbolic": 1
     }
   },
   "W1705718777": {
@@ -7914,7 +7918,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 1
+      "symbolic": 23
     }
   },
   "W2759950027": {
@@ -8067,7 +8071,7 @@
     },
     "formula_estimates": {
       "concrete": 2,
-      "symbolic": 4
+      "symbolic": 1
     }
   },
   "W2531762107": {
@@ -8471,8 +8475,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 1,
-      "symbolic": 0
+      "concrete": 4,
+      "symbolic": 3
     }
   },
   "W2795231670": {
@@ -8541,7 +8545,7 @@
       "W2521098037"
     ],
     "formula_estimates": {
-      "concrete": 1,
+      "concrete": 6,
       "symbolic": 0
     }
   },
@@ -8601,7 +8605,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 1,
       "symbolic": 0
     }
   },
@@ -8669,7 +8673,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 1
+      "symbolic": 23
     }
   },
   "W2920995093": {
@@ -9024,8 +9028,8 @@
       "W2951265367"
     ],
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 6,
+      "symbolic": 22
     }
   },
   "W2969218722": {
@@ -9534,8 +9538,8 @@
       "W2952898435"
     ],
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 8,
+      "symbolic": 21
     }
   },
   "W2312067050": {
@@ -9609,7 +9613,7 @@
     },
     "formula_estimates": {
       "concrete": 20,
-      "symbolic": 30
+      "symbolic": 31
     }
   },
   "W2425244199": {
@@ -9718,8 +9722,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 14,
+      "symbolic": 20
     }
   },
   "W3112716182": {
@@ -9952,7 +9956,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 0
+      "symbolic": 22
     }
   },
   "W369898724": {
@@ -10606,7 +10610,7 @@
     },
     "formula_estimates": {
       "concrete": 16,
-      "symbolic": 3
+      "symbolic": 4
     }
   },
   "W3092507083": {
@@ -10718,7 +10722,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 1,
       "symbolic": 0
     }
   },
@@ -11134,7 +11138,7 @@
       "W3158987425"
     ],
     "formula_estimates": {
-      "concrete": 18,
+      "concrete": 19,
       "symbolic": 0
     }
   },
@@ -11198,8 +11202,8 @@
       "W2404261600"
     ],
     "formula_estimates": {
-      "concrete": 1,
-      "symbolic": 0
+      "concrete": 6,
+      "symbolic": 6
     }
   },
   "W2757813108": {
@@ -11633,8 +11637,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 1,
+      "symbolic": 1
     }
   },
   "W2989996325": {
@@ -11696,7 +11700,7 @@
     ],
     "formula_estimates": {
       "concrete": 6,
-      "symbolic": 2
+      "symbolic": 4
     }
   },
   "W3149132974": {
@@ -11764,7 +11768,7 @@
       "W3156036822"
     ],
     "formula_estimates": {
-      "concrete": 50,
+      "concrete": 52,
       "symbolic": 7
     }
   },
@@ -11969,7 +11973,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 6,
+      "concrete": 8,
       "symbolic": 0
     }
   },
@@ -12042,7 +12046,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 44,
       "symbolic": 0
     }
   },
@@ -12372,8 +12376,8 @@
       "W3110605104"
     ],
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 6,
+      "symbolic": 27
     }
   },
   "W3023131782": {
@@ -12444,8 +12448,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 8,
+      "symbolic": 8
     }
   },
   "W3034546171": {
@@ -12561,7 +12565,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 3
+      "symbolic": 13
     }
   },
   "W183719528": {
@@ -12889,8 +12893,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 14,
+      "symbolic": 5
     }
   },
   "W3138484593": {
@@ -13243,8 +13247,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 4,
+      "symbolic": 27
     }
   },
   "W2796919988": {
@@ -13477,7 +13481,7 @@
     ],
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 0
+      "symbolic": 40
     }
   },
   "W2998363984": {
@@ -13603,7 +13607,7 @@
     ],
     "formula_estimates": {
       "concrete": 2,
-      "symbolic": 6
+      "symbolic": 12
     }
   },
   "W2245953329": {
@@ -13944,7 +13948,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 11,
       "symbolic": 0
     }
   },
@@ -14298,7 +14302,7 @@
     },
     "formula_estimates": {
       "concrete": 1,
-      "symbolic": 4
+      "symbolic": 6
     }
   },
   "W3089553867": {
@@ -14361,7 +14365,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 0
+      "symbolic": 5
     }
   },
   "W3128000887": {
@@ -14628,8 +14632,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 4,
-      "symbolic": 5
+      "concrete": 6,
+      "symbolic": 9
     }
   },
   "W2978287595": {
@@ -14881,7 +14885,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 0
+      "symbolic": 2
     }
   },
   "W2132394594": {
@@ -15101,7 +15105,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 4,
       "symbolic": 0
     }
   },
@@ -16518,7 +16522,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 0
+      "symbolic": 4
     }
   },
   "W2934277896": {
@@ -16874,7 +16878,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 1,
       "symbolic": 0
     }
   },
@@ -17269,7 +17273,7 @@
     ],
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 5
+      "symbolic": 6
     }
   },
   "W2991657688": {
@@ -17335,7 +17339,7 @@
     ],
     "formula_estimates": {
       "concrete": 4,
-      "symbolic": 3
+      "symbolic": 4
     }
   },
   "W3022362085": {
@@ -17471,7 +17475,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 0
+      "symbolic": 7
     }
   },
   "W3210646386": {
@@ -17950,6 +17954,10 @@
         "arxiv_oai": [],
         "pdf_metadata": []
       }
+    },
+    "formula_estimates": {
+      "concrete": 187,
+      "symbolic": 0
     }
   },
   "W3200472368": {
@@ -18137,7 +18145,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 0
+      "symbolic": 9
     }
   },
   "W4382119883": {
@@ -18272,7 +18280,7 @@
     },
     "formula_estimates": {
       "concrete": 3,
-      "symbolic": 16
+      "symbolic": 35
     }
   },
   "W4389235528": {
@@ -18342,8 +18350,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 27,
-      "symbolic": 15
+      "concrete": 29,
+      "symbolic": 23
     }
   },
   "W1564238152": {
@@ -19004,7 +19012,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 63,
       "symbolic": 0
     }
   },
@@ -19142,8 +19150,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 5
+      "concrete": 18,
+      "symbolic": 15
     }
   },
   "W4294495167": {
@@ -19548,8 +19556,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 1,
-      "symbolic": 4
+      "concrete": 5,
+      "symbolic": 17
     }
   },
   "W4387623893": {
@@ -19690,8 +19698,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 3
+      "concrete": 17,
+      "symbolic": 13
     }
   },
   "W2114588579": {
@@ -20426,8 +20434,8 @@
       "W2981192433"
     ],
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 3,
+      "symbolic": 14
     }
   },
   "W3119572193": {
@@ -20485,6 +20493,10 @@
         "arxiv_oai": [],
         "pdf_metadata": []
       }
+    },
+    "formula_estimates": {
+      "concrete": 6,
+      "symbolic": 0
     }
   },
   "W3205889124": {
@@ -20689,8 +20701,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 2
+      "concrete": 14,
+      "symbolic": 14
     }
   },
   "W4389666293": {
@@ -20751,7 +20763,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 5,
       "symbolic": 0
     }
   },
@@ -20928,8 +20940,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 18,
+      "symbolic": 15
     }
   },
   "W4297311343": {
@@ -21272,7 +21284,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 4
+      "symbolic": 8
     }
   },
   "W4383108582": {
@@ -21452,8 +21464,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 55,
+      "symbolic": 116
     }
   },
   "W4400189275": {
@@ -21531,7 +21543,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 1,
       "symbolic": 0
     }
   },
@@ -21598,8 +21610,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 13,
+      "symbolic": 34
     }
   },
   "W4384573255": {
@@ -21720,7 +21732,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 7
+      "symbolic": 10
     }
   },
   "W4413156306": {
@@ -21773,7 +21785,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 6,
       "symbolic": 0
     }
   },
@@ -22207,7 +22219,7 @@
     ],
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 0
+      "symbolic": 2
     }
   },
   "W4293258864": {
@@ -22720,7 +22732,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 9
+      "symbolic": 16
     }
   },
   "W4384471438": {
@@ -23011,7 +23023,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 0
+      "symbolic": 5
     }
   },
   "W4399431532": {
@@ -23069,8 +23081,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 5,
-      "symbolic": 6
+      "concrete": 12,
+      "symbolic": 9
     }
   },
   "W4400189267": {
@@ -23298,7 +23310,7 @@
     },
     "formula_estimates": {
       "concrete": 2,
-      "symbolic": 17
+      "symbolic": 18
     }
   },
   "W4409606255": {
@@ -23420,7 +23432,7 @@
     },
     "formula_estimates": {
       "concrete": 9,
-      "symbolic": 5
+      "symbolic": 9
     }
   },
   "W4400946475": {
@@ -23485,8 +23497,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 4,
+      "symbolic": 16
     }
   },
   "W4407307528": {
@@ -23902,8 +23914,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 17,
+      "symbolic": 3
     }
   },
   "W4391547823": {
@@ -24035,7 +24047,7 @@
     },
     "formula_estimates": {
       "concrete": 2,
-      "symbolic": 1
+      "symbolic": 6
     }
   },
   "W4401634058": {
@@ -24101,7 +24113,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 15
+      "symbolic": 17
     }
   },
   "W4407414165": {
@@ -24608,8 +24620,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 1,
+      "symbolic": 11
     }
   },
   "W2076375575": {
@@ -24735,7 +24747,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 1,
+      "concrete": 3,
       "symbolic": 0
     }
   },
@@ -25488,8 +25500,8 @@
       "W2968740912"
     ],
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 10,
+      "symbolic": 17
     }
   },
   "W2340973907": {
@@ -26327,8 +26339,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 15
+      "concrete": 17,
+      "symbolic": 23
     }
   },
   "W3103773816": {
@@ -26633,8 +26645,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 5,
+      "symbolic": 8
     }
   },
   "W1822842849": {
@@ -27254,8 +27266,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 3,
-      "symbolic": 0
+      "concrete": 7,
+      "symbolic": 6
     }
   },
   "W2566678492": {
@@ -27960,7 +27972,7 @@
     ],
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 3
+      "symbolic": 5
     }
   },
   "W3114467743": {
@@ -29018,7 +29030,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 3,
       "symbolic": 0
     }
   },
@@ -29622,8 +29634,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 24,
+      "symbolic": 43
     }
   },
   "W4387735129": {
@@ -30456,7 +30468,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 0
+      "symbolic": 1
     }
   },
   "W2888839644": {
@@ -31362,8 +31374,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 7,
+      "symbolic": 2
     }
   },
   "W2978500837": {
@@ -31622,6 +31634,10 @@
         "arxiv_oai": [],
         "pdf_metadata": []
       }
+    },
+    "formula_estimates": {
+      "concrete": 27,
+      "symbolic": 15
     }
   },
   "W4317207462": {
@@ -31740,7 +31756,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 13,
       "symbolic": 0
     }
   },
@@ -32317,7 +32333,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 0
+      "symbolic": 1
     }
   },
   "W4225515613": {
@@ -32482,7 +32498,7 @@
     },
     "formula_estimates": {
       "concrete": 2,
-      "symbolic": 4
+      "symbolic": 7
     }
   },
   "W4382936130": {
@@ -32545,8 +32561,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 7,
-      "symbolic": 7
+      "concrete": 13,
+      "symbolic": 14
     }
   },
   "W4390604995": {
@@ -32845,7 +32861,7 @@
     },
     "formula_estimates": {
       "concrete": 10,
-      "symbolic": 12
+      "symbolic": 15
     }
   },
   "W3080231185": {
@@ -32920,8 +32936,8 @@
       "W2999203876"
     ],
     "formula_estimates": {
-      "concrete": 32,
-      "symbolic": 0
+      "concrete": 35,
+      "symbolic": 1
     }
   },
   "W3131101596": {
@@ -33158,8 +33174,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 3,
+      "symbolic": 6
     }
   },
   "W4376606365": {
@@ -34452,7 +34468,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 1
+      "symbolic": 2
     }
   },
   "W4389610038": {
@@ -34517,8 +34533,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 18,
+      "symbolic": 30
     }
   },
   "W4390939857": {
@@ -34818,7 +34834,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 3
+      "symbolic": 5
     }
   },
   "W4283820925": {
@@ -35217,8 +35233,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 15,
+      "symbolic": 80
     }
   },
   "W4391020705": {
@@ -35404,6 +35420,10 @@
         "arxiv_oai": [],
         "pdf_metadata": []
       }
+    },
+    "formula_estimates": {
+      "concrete": 40,
+      "symbolic": 11
     }
   },
   "W4405371349": {
@@ -35851,8 +35871,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 2,
-      "symbolic": 0
+      "concrete": 9,
+      "symbolic": 3
     }
   },
   "W4386232850": {
@@ -36140,8 +36160,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 12,
+      "symbolic": 24
     }
   },
   "W4402434896": {
@@ -36277,7 +36297,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 8,
       "symbolic": 0
     }
   },
@@ -36591,7 +36611,7 @@
       "W3151649154"
     ],
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 1,
       "symbolic": 0
     }
   },
@@ -36877,7 +36897,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 1,
       "symbolic": 1
     }
   },
@@ -36949,8 +36969,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 25,
+      "symbolic": 15
     }
   },
   "W2892273617": {
@@ -37172,7 +37192,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 2
+      "symbolic": 18
     }
   },
   "W4400995452": {
@@ -37365,7 +37385,7 @@
     },
     "formula_estimates": {
       "concrete": 1,
-      "symbolic": 0
+      "symbolic": 6
     }
   },
   "W4411203451": {
@@ -37862,7 +37882,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 5,
+      "concrete": 9,
       "symbolic": 0
     }
   },
@@ -39129,8 +39149,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 15,
+      "symbolic": 32
     }
   },
   "W2901572527": {
@@ -39639,6 +39659,10 @@
         "arxiv_oai": [],
         "pdf_metadata": []
       }
+    },
+    "formula_estimates": {
+      "concrete": 0,
+      "symbolic": 0
     }
   },
   "W2939295339": {
@@ -39962,7 +39986,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 7,
       "symbolic": 0
     }
   },
@@ -40817,7 +40841,7 @@
     ],
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 0
+      "symbolic": 1
     }
   },
   "W2901054789": {
@@ -41871,8 +41895,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 37,
+      "symbolic": 18
     }
   },
   "W4292070345": {
@@ -41932,6 +41956,10 @@
         "arxiv_oai": [],
         "pdf_metadata": []
       }
+    },
+    "formula_estimates": {
+      "concrete": 35,
+      "symbolic": 43
     }
   },
   "W4308080353": {
@@ -42058,7 +42086,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 19,
       "symbolic": 0
     }
   },
@@ -42701,7 +42729,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 7
+      "symbolic": 9
     }
   },
   "W3197852141": {
@@ -42922,7 +42950,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 8,
+      "concrete": 19,
       "symbolic": 5
     }
   },
@@ -42989,8 +43017,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 23,
-      "symbolic": 17
+      "concrete": 28,
+      "symbolic": 24
     }
   },
   "W1487948848": {
@@ -43181,8 +43209,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 4,
-      "symbolic": 17
+      "concrete": 0,
+      "symbolic": 2
     }
   },
   "W2910414876": {
@@ -43313,7 +43341,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 2,
+      "concrete": 7,
       "symbolic": 1
     }
   },
@@ -43623,7 +43651,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 11,
       "symbolic": 0
     }
   },
@@ -43858,8 +43886,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 7,
+      "symbolic": 5
     }
   },
   "W95346533": {
@@ -44071,8 +44099,8 @@
       "W3106987548"
     ],
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 6,
+      "symbolic": 22
     }
   },
   "W3041997180": {
@@ -44208,8 +44236,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 17,
+      "symbolic": 19
     }
   },
   "W3146720230": {
@@ -44276,8 +44304,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 3
+      "concrete": 9,
+      "symbolic": 36
     }
   },
   "W3154341275": {
@@ -44342,7 +44370,7 @@
     },
     "formula_estimates": {
       "concrete": 10,
-      "symbolic": 2
+      "symbolic": 3
     }
   },
   "W3159513475": {
@@ -44398,8 +44426,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 1,
-      "symbolic": 101
+      "concrete": 7,
+      "symbolic": 149
     }
   },
   "W3175524290": {
@@ -44559,7 +44587,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 1,
       "symbolic": 0
     }
   },
@@ -44681,7 +44709,7 @@
       "W3199168750"
     ],
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 6,
       "symbolic": 0
     }
   },
@@ -44801,6 +44829,10 @@
         "arxiv_oai": [],
         "pdf_metadata": []
       }
+    },
+    "formula_estimates": {
+      "concrete": 0,
+      "symbolic": 0
     }
   },
   "W4293828555": {
@@ -44974,7 +45006,7 @@
     },
     "formula_estimates": {
       "concrete": 2,
-      "symbolic": 0
+      "symbolic": 1
     }
   },
   "W4314946941": {
@@ -45032,8 +45064,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 8,
+      "symbolic": 22
     }
   },
   "W4321380931": {
@@ -45708,8 +45740,8 @@
       "W3047484697"
     ],
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 5,
+      "symbolic": 21
     }
   },
   "W3202302376": {
@@ -46015,7 +46047,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 7,
+      "concrete": 26,
       "symbolic": 0
     }
   },
@@ -46185,8 +46217,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 15,
-      "symbolic": 5
+      "concrete": 35,
+      "symbolic": 16
     }
   },
   "W4386806266": {
@@ -46346,8 +46378,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 11,
+      "symbolic": 18
     }
   },
   "W2081204465": {
@@ -47458,7 +47490,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 2,
       "symbolic": 0
     }
   },
@@ -47575,7 +47607,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 3
+      "symbolic": 6
     }
   },
   "W3209508661": {
@@ -47639,8 +47671,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 8
+      "concrete": 6,
+      "symbolic": 24
     }
   },
   "W4290785394": {
@@ -47918,7 +47950,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 0
+      "symbolic": 1
     }
   },
   "W4387225557": {
@@ -47990,7 +48022,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 5
+      "symbolic": 6
     }
   },
   "W4388895363": {
@@ -48110,7 +48142,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 2
+      "symbolic": 5
     }
   },
   "W4391409166": {
@@ -48207,7 +48239,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 1,
       "symbolic": 0
     }
   },
@@ -48354,7 +48386,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 2,
       "symbolic": 0
     }
   },
@@ -48422,8 +48454,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 5,
-      "symbolic": 5
+      "concrete": 6,
+      "symbolic": 14
     }
   },
   "W4402800273": {
@@ -48505,8 +48537,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 21,
+      "symbolic": 4
     }
   },
   "W4403276795": {
@@ -48565,7 +48597,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 2
+      "symbolic": 3
     }
   },
   "W4405786505": {
@@ -48625,8 +48657,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 2,
+      "symbolic": 5
     }
   },
   "W2567580527": {
@@ -48892,7 +48924,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 0
+      "symbolic": 9
     }
   },
   "W4315471775": {
@@ -49004,8 +49036,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 3,
+      "symbolic": 9
     }
   },
   "W4323266611": {
@@ -49519,7 +49551,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 8,
       "symbolic": 0
     }
   },
@@ -50011,7 +50043,7 @@
     },
     "formula_estimates": {
       "concrete": 9,
-      "symbolic": 6
+      "symbolic": 16
     }
   },
   "W4408479766": {
@@ -50425,7 +50457,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 1,
       "symbolic": 0
     }
   },
@@ -50652,7 +50684,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 5
+      "symbolic": 12
     }
   },
   "W4405987227": {
@@ -51099,8 +51131,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 10,
+      "symbolic": 3
     }
   },
   "W4403281675": {
@@ -51212,7 +51244,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 9,
       "symbolic": 0
     }
   },
@@ -51587,7 +51619,7 @@
     },
     "formula_estimates": {
       "concrete": 9,
-      "symbolic": 6
+      "symbolic": 8
     }
   },
   "W4413943424": {
@@ -51634,7 +51666,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 0
+      "symbolic": 3
     }
   },
   "W7128297731": {
@@ -52589,8 +52621,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 19,
+      "symbolic": 3
     }
   },
   "W747567354": {
@@ -52876,7 +52908,7 @@
     },
     "formula_estimates": {
       "concrete": 6,
-      "symbolic": 4
+      "symbolic": 6
     }
   },
   "W2924373019": {
@@ -52937,7 +52969,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 1,
       "symbolic": 0
     }
   },
@@ -53151,7 +53183,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 2,
       "symbolic": 0
     }
   },
@@ -53263,7 +53295,7 @@
     },
     "formula_estimates": {
       "concrete": 23,
-      "symbolic": 4
+      "symbolic": 5
     }
   },
   "W2579440852": {
@@ -54570,8 +54602,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 3
+      "concrete": 4,
+      "symbolic": 4
     }
   },
   "W2885021537": {
@@ -54881,7 +54913,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 2,
+      "concrete": 4,
       "symbolic": 0
     }
   },
@@ -55066,6 +55098,10 @@
         "arxiv_oai": [],
         "pdf_metadata": []
       }
+    },
+    "formula_estimates": {
+      "concrete": 18,
+      "symbolic": 40
     }
   },
   "W1504065953": {
@@ -55307,7 +55343,7 @@
     },
     "formula_estimates": {
       "concrete": 5,
-      "symbolic": 12
+      "symbolic": 2
     }
   },
   "W2955864748": {
@@ -56142,7 +56178,7 @@
     ],
     "formula_estimates": {
       "concrete": 10,
-      "symbolic": 0
+      "symbolic": 3
     }
   },
   "W3022327521": {
@@ -56522,8 +56558,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 13,
+      "symbolic": 19
     }
   },
   "W4205291195": {
@@ -56799,8 +56835,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 4
+      "concrete": 2,
+      "symbolic": 8
     }
   },
   "W4315471890": {
@@ -57981,7 +58017,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 4,
       "symbolic": 0
     }
   },
@@ -58534,6 +58570,10 @@
         "arxiv_oai": [],
         "pdf_metadata": []
       }
+    },
+    "formula_estimates": {
+      "concrete": 12,
+      "symbolic": 4
     }
   },
   "W4402389497": {
@@ -59618,7 +59658,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 4,
+      "concrete": 6,
       "symbolic": 0
     }
   },
@@ -60101,6 +60141,10 @@
         "arxiv_oai": [],
         "pdf_metadata": []
       }
+    },
+    "formula_estimates": {
+      "concrete": 55,
+      "symbolic": 35
     }
   },
   "W4399357139": {
@@ -60260,7 +60304,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 0
+      "symbolic": 5
     }
   },
   "W4401416275": {
@@ -60380,6 +60424,10 @@
         "arxiv_oai": [],
         "pdf_metadata": []
       }
+    },
+    "formula_estimates": {
+      "concrete": 1,
+      "symbolic": 9
     }
   },
   "W4402496627": {
@@ -60606,7 +60654,7 @@
     },
     "formula_estimates": {
       "concrete": 2,
-      "symbolic": 13
+      "symbolic": 14
     }
   },
   "W4405871132": {
@@ -60710,6 +60758,10 @@
         "arxiv_oai": [],
         "pdf_metadata": []
       }
+    },
+    "formula_estimates": {
+      "concrete": 0,
+      "symbolic": 0
     }
   },
   "W4407951572": {
@@ -60772,7 +60824,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 0
+      "symbolic": 9
     }
   },
   "W4408696913": {
@@ -61058,7 +61110,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 3,
+      "concrete": 4,
       "symbolic": 2
     }
   },
@@ -61495,6 +61547,10 @@
         "arxiv_oai": [],
         "pdf_metadata": []
       }
+    },
+    "formula_estimates": {
+      "concrete": 8,
+      "symbolic": 10
     }
   },
   "W4386858766": {
@@ -61615,7 +61671,7 @@
     },
     "formula_estimates": {
       "concrete": 2,
-      "symbolic": 21
+      "symbolic": 29
     }
   },
   "W4389315149": {
@@ -61778,8 +61834,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 26,
+      "symbolic": 6
     }
   },
   "W4391308731": {
@@ -62037,7 +62093,7 @@
     },
     "formula_estimates": {
       "concrete": 11,
-      "symbolic": 3
+      "symbolic": 8
     }
   },
   "W4400985694": {
@@ -62206,8 +62262,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 45,
+      "symbolic": 3
     }
   },
   "W4402496127": {
@@ -62993,7 +63049,7 @@
     },
     "formula_estimates": {
       "concrete": 17,
-      "symbolic": 8
+      "symbolic": 11
     }
   },
   "W4407951071": {
@@ -63037,8 +63093,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 4,
+      "symbolic": 9
     }
   },
   "W4408024820": {
@@ -63105,7 +63161,7 @@
     },
     "formula_estimates": {
       "concrete": 58,
-      "symbolic": 12
+      "symbolic": 16
     }
   },
   "W4408148620": {
@@ -63313,7 +63369,7 @@
     },
     "formula_estimates": {
       "concrete": 1,
-      "symbolic": 7
+      "symbolic": 10
     }
   },
   "W4410555906": {
@@ -63542,8 +63598,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 4,
+      "symbolic": 9
     }
   },
   "W4413131612": {
@@ -63615,8 +63671,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 167,
+      "symbolic": 37
     }
   },
   "W4416178261": {
@@ -63951,7 +64007,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 1,
       "symbolic": 0
     }
   },
@@ -64016,7 +64072,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 1,
       "symbolic": 0
     }
   },
@@ -64774,8 +64830,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 9,
-      "symbolic": 8
+      "concrete": 12,
+      "symbolic": 12
     }
   },
   "W4407950523": {
@@ -65131,7 +65187,7 @@
     },
     "formula_estimates": {
       "concrete": 1,
-      "symbolic": 8
+      "symbolic": 15
     }
   },
   "W4410555952": {
@@ -65201,7 +65257,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 1,
       "symbolic": 5
     }
   },
@@ -65602,8 +65658,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 3,
+      "symbolic": 26
     }
   },
   "W4414598944": {
@@ -65710,8 +65766,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 4,
+      "symbolic": 2
     }
   },
   "W4414904520": {
@@ -65827,8 +65883,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 2
+      "concrete": 8,
+      "symbolic": 9
     }
   },
   "W7117676522": {
@@ -66373,7 +66429,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 4,
       "symbolic": 0
     }
   },
@@ -66481,8 +66537,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 4,
+      "symbolic": 6
     }
   },
   "W7162316612": {
@@ -66652,7 +66708,7 @@
     },
     "formula_estimates": {
       "concrete": 14,
-      "symbolic": 20
+      "symbolic": 25
     }
   },
   "W2972301400": {
@@ -68664,8 +68720,8 @@
       "W2991659948"
     ],
     "formula_estimates": {
-      "concrete": 7,
-      "symbolic": 10
+      "concrete": 10,
+      "symbolic": 16
     }
   },
   "W3159952083": {
@@ -69879,8 +69935,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 38,
+      "symbolic": 4
     }
   },
   "W1705440970": {
@@ -70450,7 +70506,7 @@
     ],
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 0
+      "symbolic": 2
     }
   },
   "W4205136658": {
@@ -70682,7 +70738,7 @@
     },
     "formula_estimates": {
       "concrete": 14,
-      "symbolic": 11
+      "symbolic": 17
     }
   },
   "W4287882710": {
@@ -70887,7 +70943,7 @@
     },
     "formula_estimates": {
       "concrete": 3,
-      "symbolic": 22
+      "symbolic": 23
     }
   },
   "W4367597794": {
@@ -70989,7 +71045,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 34,
       "symbolic": 0
     }
   },
@@ -71042,6 +71098,10 @@
         "arxiv_oai": [],
         "pdf_metadata": []
       }
+    },
+    "formula_estimates": {
+      "concrete": 0,
+      "symbolic": 0
     }
   },
   "W4403588574": {
@@ -71514,8 +71574,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 1,
-      "symbolic": 0
+      "concrete": 2,
+      "symbolic": 14
     }
   },
   "W2731247677": {
@@ -71799,7 +71859,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 4,
       "symbolic": 0
     }
   },
@@ -71963,7 +72023,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 2,
+      "concrete": 3,
       "symbolic": 0
     }
   },
@@ -72596,8 +72656,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 5,
+      "symbolic": 3
     }
   },
   "W4387350615": {
@@ -73788,7 +73848,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 10
+      "symbolic": 14
     }
   },
   "W3119472118": {
@@ -74578,7 +74638,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 7
+      "symbolic": 15
     }
   },
   "W4383108474": {
@@ -75525,7 +75585,7 @@
     },
     "formula_estimates": {
       "concrete": 5,
-      "symbolic": 6
+      "symbolic": 8
     }
   },
   "W4401414517": {
@@ -75630,7 +75690,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 7,
+      "concrete": 20,
       "symbolic": 0
     }
   },
@@ -75999,6 +76059,10 @@
         "arxiv_oai": [],
         "pdf_metadata": []
       }
+    },
+    "formula_estimates": {
+      "concrete": 0,
+      "symbolic": 0
     }
   },
   "W4405261798": {
@@ -77553,8 +77617,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 3,
+      "symbolic": 16
     }
   },
   "W2597864338": {
@@ -78175,7 +78239,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 0
+      "symbolic": 11
     }
   },
   "W3123921638": {
@@ -79335,7 +79399,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 0
+      "symbolic": 9
     }
   },
   "W3103842254": {
@@ -79514,8 +79578,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 2,
+      "symbolic": 25
     }
   },
   "W2978245725": {
@@ -79653,8 +79717,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 4
+      "concrete": 11,
+      "symbolic": 28
     }
   },
   "W3182258635": {
@@ -79723,7 +79787,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 0
+      "symbolic": 7
     }
   },
   "W2960491070": {
@@ -80072,7 +80136,7 @@
     },
     "formula_estimates": {
       "concrete": 2,
-      "symbolic": 4
+      "symbolic": 1
     }
   },
   "W2288469744": {
@@ -80130,7 +80194,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 0
+      "symbolic": 4
     }
   },
   "W2809947384": {
@@ -80532,8 +80596,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 6,
+      "symbolic": 3
     }
   },
   "W2171833853": {
@@ -80639,7 +80703,7 @@
     },
     "formula_estimates": {
       "concrete": 1,
-      "symbolic": 7
+      "symbolic": 11
     }
   },
   "W3130555041": {
@@ -80703,7 +80767,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 0
+      "symbolic": 7
     }
   },
   "W3163112615": {
@@ -81010,8 +81074,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 27,
+      "symbolic": 64
     }
   },
   "W2593656497": {
@@ -81233,7 +81297,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 3
+      "symbolic": 13
     }
   },
   "W2945642987": {
@@ -81304,8 +81368,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 16,
+      "symbolic": 1
     }
   },
   "W2964140991": {
@@ -81367,8 +81431,8 @@
       "W2567579026"
     ],
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 1,
+      "symbolic": 11
     }
   },
   "W3182501195": {
@@ -82167,8 +82231,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 1,
-      "symbolic": 101
+      "concrete": 7,
+      "symbolic": 149
     }
   },
   "W3136855603": {
@@ -82293,8 +82357,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 15,
+      "symbolic": 80
     }
   },
   "W387299530": {
@@ -82350,8 +82414,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 21,
+      "symbolic": 75
     }
   },
   "W4310998906": {
@@ -82469,7 +82533,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 2,
       "symbolic": 0
     }
   },
@@ -83722,7 +83786,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 0
+      "symbolic": 13
     }
   },
   "W2751134272": {
@@ -83941,7 +84005,7 @@
     },
     "formula_estimates": {
       "concrete": 5,
-      "symbolic": 12
+      "symbolic": 2
     }
   },
   "W2793381896": {
@@ -84603,7 +84667,7 @@
       "W3038513599"
     ],
     "formula_estimates": {
-      "concrete": 9,
+      "concrete": 10,
       "symbolic": 7
     }
   },
@@ -84810,7 +84874,7 @@
     ],
     "formula_estimates": {
       "concrete": 1,
-      "symbolic": 8
+      "symbolic": 12
     }
   },
   "W3009803742": {
@@ -85111,8 +85175,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 3
+      "concrete": 7,
+      "symbolic": 19
     }
   },
   "W3049290023": {
@@ -85360,8 +85424,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 5,
+      "symbolic": 1
     }
   },
   "W3105419158": {
@@ -85626,7 +85690,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 3,
       "symbolic": 0
     }
   },
@@ -86074,7 +86138,7 @@
     },
     "formula_estimates": {
       "concrete": 3,
-      "symbolic": 0
+      "symbolic": 1
     }
   },
   "W3204982402": {
@@ -87409,7 +87473,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 5
+      "symbolic": 9
     }
   },
   "W4386233860": {
@@ -87780,7 +87844,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 1,
       "symbolic": 0
     }
   },
@@ -88707,8 +88771,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 4,
-      "symbolic": 0
+      "concrete": 6,
+      "symbolic": 7
     }
   },
   "W4401416727": {
@@ -88758,7 +88822,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 3
+      "symbolic": 8
     }
   },
   "W4402457391": {
@@ -90066,7 +90130,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 4,
       "symbolic": 0
     }
   },
@@ -90239,7 +90303,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 11,
       "symbolic": 0
     }
   },
@@ -90405,7 +90469,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 13,
       "symbolic": 0
     }
   },
@@ -90875,8 +90939,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 10,
-      "symbolic": 1
+      "concrete": 11,
+      "symbolic": 13
     }
   },
   "W4410772248": {
@@ -91657,7 +91721,7 @@
     },
     "formula_estimates": {
       "concrete": 10,
-      "symbolic": 8
+      "symbolic": 10
     }
   },
   "W4413918034": {
@@ -91721,7 +91785,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 0
+      "symbolic": 1
     }
   },
   "W4413978606": {
@@ -92157,8 +92221,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 5,
+      "symbolic": 4
     }
   },
   "W4414648563": {
@@ -92789,7 +92853,7 @@
     },
     "formula_estimates": {
       "concrete": 13,
-      "symbolic": 5
+      "symbolic": 8
     }
   },
   "W4416748945": {
@@ -93075,7 +93139,7 @@
     },
     "formula_estimates": {
       "concrete": 59,
-      "symbolic": 12
+      "symbolic": 17
     }
   },
   "W4417322400": {
@@ -93473,6 +93537,10 @@
         "arxiv_oai": [],
         "pdf_metadata": []
       }
+    },
+    "formula_estimates": {
+      "concrete": 41,
+      "symbolic": 0
     }
   },
   "W7123343122": {
@@ -93576,8 +93644,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 2,
-      "symbolic": 6
+      "concrete": 5,
+      "symbolic": 11
     }
   },
   "W7123354606": {
@@ -93682,8 +93750,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 4,
+      "symbolic": 26
     }
   },
   "W7124465262": {
@@ -95693,8 +95761,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 8,
+      "symbolic": 22
     }
   },
   "W7161935414": {
@@ -95801,7 +95869,7 @@
     },
     "formula_estimates": {
       "concrete": 11,
-      "symbolic": 0
+      "symbolic": 2
     }
   },
   "W7162627965": {
@@ -96713,7 +96781,7 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 3,
       "symbolic": 0
     }
   },
@@ -97105,8 +97173,8 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 5,
+      "symbolic": 8
     }
   },
   "W7169180498": {
@@ -97776,7 +97844,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 0
+      "symbolic": 14
     }
   },
   "W7171820144": {
@@ -98744,7 +98812,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 0
+      "symbolic": 6
     }
   },
   "W2189285614": {
@@ -99261,7 +99329,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 2
+      "symbolic": 7
     }
   },
   "W3198952749": {
@@ -99317,8 +99385,8 @@
       ]
     },
     "formula_estimates": {
-      "concrete": 1,
-      "symbolic": 0
+      "concrete": 17,
+      "symbolic": 6
     }
   },
   "W2938769851": {
@@ -99791,7 +99859,7 @@
     },
     "formula_estimates": {
       "concrete": 7,
-      "symbolic": 21
+      "symbolic": 23
     }
   },
   "W4396712964": {
@@ -100119,8 +100187,8 @@
       ]
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 21,
+      "symbolic": 3
     }
   },
   "W3022885780": {
@@ -100226,7 +100294,7 @@
       ]
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 1,
       "symbolic": 0
     }
   },
@@ -100346,7 +100414,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 8
+      "symbolic": 13
     }
   },
   "W2794662040": {
@@ -100522,8 +100590,8 @@
       ]
     },
     "formula_estimates": {
-      "concrete": 5,
-      "symbolic": 7
+      "concrete": 7,
+      "symbolic": 15
     }
   },
   "W4410580354": {
@@ -100695,8 +100763,8 @@
       ]
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 1,
+      "symbolic": 8
     }
   },
   "W7214717414": {
@@ -101205,8 +101273,8 @@
       ]
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 2,
+      "symbolic": 10
     }
   },
   "W3153343958": {
@@ -101411,7 +101479,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 0
+      "symbolic": 5
     }
   },
   "W3216111090": {
@@ -102143,7 +102211,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 4
+      "symbolic": 19
     }
   },
   "W3119772282": {
@@ -102404,8 +102472,8 @@
       ]
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 12,
+      "symbolic": 29
     }
   },
   "W2932622350": {
@@ -102469,7 +102537,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 0
+      "symbolic": 2
     }
   },
   "W3120851383": {
@@ -102644,8 +102712,8 @@
       ]
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 2,
+      "symbolic": 10
     }
   },
   "W3185752730": {
@@ -102965,7 +103033,7 @@
     },
     "formula_estimates": {
       "concrete": 8,
-      "symbolic": 4
+      "symbolic": 5
     }
   },
   "W4406233973": {
@@ -103026,7 +103094,7 @@
     },
     "formula_estimates": {
       "concrete": 14,
-      "symbolic": 1
+      "symbolic": 25
     }
   },
   "W4403448015": {
@@ -104132,8 +104200,8 @@
       ]
     },
     "formula_estimates": {
-      "concrete": 2,
-      "symbolic": 0
+      "concrete": 4,
+      "symbolic": 13
     }
   },
   "W2746018566": {
@@ -104272,8 +104340,8 @@
       ]
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 2,
+      "symbolic": 6
     }
   },
   "W3186567150": {
@@ -104474,8 +104542,8 @@
       ]
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 5,
+      "symbolic": 28
     }
   },
   "W4402425246": {
@@ -105647,8 +105715,8 @@
       ]
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 6,
+      "symbolic": 9
     }
   },
   "W4392042275": {
@@ -105819,7 +105887,7 @@
       ]
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 11,
       "symbolic": 0
     }
   },
@@ -105969,8 +106037,8 @@
       ]
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 1,
+      "symbolic": 1
     }
   },
   "W4408360422": {
@@ -106492,8 +106560,8 @@
       ]
     },
     "formula_estimates": {
-      "concrete": 1,
-      "symbolic": 0
+      "concrete": 17,
+      "symbolic": 6
     }
   },
   "W4391871279": {
@@ -106658,8 +106726,8 @@
       ]
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 4,
+      "symbolic": 15
     }
   },
   "W2604968291": {
@@ -106831,8 +106899,8 @@
       ]
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 17,
+      "symbolic": 3
     }
   },
   "W1963943927": {
@@ -107769,8 +107837,8 @@
       ]
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 12,
+      "symbolic": 9
     }
   },
   "W4391020466": {
@@ -108821,7 +108889,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 0
+      "symbolic": 2
     }
   },
   "W3206495240": {
@@ -109284,7 +109352,7 @@
     },
     "formula_estimates": {
       "concrete": 1,
-      "symbolic": 8
+      "symbolic": 13
     }
   },
   "W2735493790": {
@@ -121732,7 +121800,7 @@
       ]
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 4,
       "symbolic": 0
     }
   },
@@ -121793,8 +121861,8 @@
       ]
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 35,
+      "symbolic": 6
     }
   },
   "W7124888823": {
@@ -122252,7 +122320,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 2
+      "symbolic": 7
     }
   },
   "W3159914458": {
@@ -122658,7 +122726,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 5
+      "symbolic": 7
     }
   },
   "W2758515770": {
@@ -122927,7 +122995,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 3
+      "symbolic": 6
     }
   },
   "W4297537739": {
@@ -123233,7 +123301,7 @@
       "parent_ids": []
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 1,
       "symbolic": 0
     }
   },
@@ -124827,7 +124895,7 @@
       ]
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 2,
       "symbolic": 0
     }
   },
@@ -128709,7 +128777,7 @@
       "parent_ids": []
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 2,
       "symbolic": 0
     }
   },
@@ -128767,7 +128835,7 @@
       ]
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 3,
       "symbolic": 0
     }
   },
@@ -131643,7 +131711,7 @@
       ]
     },
     "formula_estimates": {
-      "concrete": 1,
+      "concrete": 0,
       "symbolic": 0
     }
   },
@@ -132501,7 +132569,7 @@
       ]
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 1,
       "symbolic": 0
     }
   },
@@ -132553,8 +132621,8 @@
       ]
     },
     "formula_estimates": {
-      "concrete": 5,
-      "symbolic": 0
+      "concrete": 11,
+      "symbolic": 3
     }
   },
   "W1618267488": {
@@ -132605,8 +132673,8 @@
       ]
     },
     "formula_estimates": {
-      "concrete": 4,
-      "symbolic": 0
+      "concrete": 23,
+      "symbolic": 2
     }
   },
   "W7118027563": {
@@ -133045,7 +133113,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 0
+      "symbolic": 7
     }
   },
   "W84148826": {
@@ -133349,7 +133417,7 @@
       ]
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 6,
       "symbolic": 0
     }
   },
@@ -138369,7 +138437,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 0
+      "symbolic": 8
     }
   },
   "W4383723142": {
@@ -145660,7 +145728,7 @@
       ]
     },
     "formula_estimates": {
-      "concrete": 11,
+      "concrete": 15,
       "symbolic": 0
     }
   },
@@ -156933,7 +157001,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 0
+      "symbolic": 3
     }
   },
   "W3092003702": {
@@ -169070,7 +169138,7 @@
     },
     "formula_estimates": {
       "concrete": 5,
-      "symbolic": 2
+      "symbolic": 3
     }
   },
   "W1795569145": {
@@ -175671,7 +175739,7 @@
       ]
     },
     "formula_estimates": {
-      "concrete": 5,
+      "concrete": 11,
       "symbolic": 0
     }
   },
@@ -204178,7 +204246,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 0
+      "symbolic": 5
     }
   },
   "W2979675173": {
@@ -208093,8 +208161,8 @@
       ]
     },
     "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0
+      "concrete": 6,
+      "symbolic": 9
     }
   },
   "W4296472522": {
@@ -219455,8 +219523,8 @@
       ]
     },
     "formula_estimates": {
-      "concrete": 28,
-      "symbolic": 0
+      "concrete": 48,
+      "symbolic": 4
     }
   },
   "W7155058306": {
@@ -221605,8 +221673,8 @@
       ]
     },
     "formula_estimates": {
-      "concrete": 1,
-      "symbolic": 22
+      "concrete": 0,
+      "symbolic": 0
     }
   },
   "W3125457871": {
@@ -248847,7 +248915,7 @@
       ]
     },
     "formula_estimates": {
-      "concrete": 1,
+      "concrete": 0,
       "symbolic": 0
     }
   },
@@ -288626,7 +288694,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 0
+      "symbolic": 1
     }
   },
   "W4414118682": {
@@ -293308,7 +293376,7 @@
     },
     "formula_estimates": {
       "concrete": 15,
-      "symbolic": 21
+      "symbolic": 27
     }
   },
   "W3104896567": {
@@ -295856,7 +295924,7 @@
       ]
     },
     "formula_estimates": {
-      "concrete": 1,
+      "concrete": 0,
       "symbolic": 0
     }
   },
@@ -300027,8 +300095,8 @@
       ]
     },
     "formula_estimates": {
-      "concrete": 5,
-      "symbolic": 8
+      "concrete": 6,
+      "symbolic": 12
     }
   },
   "W4404915571": {
@@ -310169,7 +310237,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 0
+      "symbolic": 2
     }
   },
   "W2896953796": {
@@ -317679,7 +317747,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 0
+      "symbolic": 1
     }
   },
   "W4221167118": {
@@ -320318,7 +320386,7 @@
       ]
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 4,
       "symbolic": 0
     }
   },
@@ -321666,7 +321734,7 @@
       ]
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 7,
       "symbolic": 0
     }
   },
@@ -374843,7 +374911,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 0
+      "symbolic": 22
     }
   },
   "W4412346484": {
@@ -388530,7 +388598,7 @@
     },
     "formula_estimates": {
       "concrete": 0,
-      "symbolic": 0
+      "symbolic": 1
     }
   },
   "W2795926591": {
@@ -406909,7 +406977,7 @@
     },
     "formula_estimates": {
       "concrete": 11,
-      "symbolic": 9
+      "symbolic": 10
     }
   },
   "W3186866747": {
@@ -412739,7 +412807,7 @@
       ]
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 3,
       "symbolic": 0
     }
   },
@@ -421495,6 +421563,10 @@
       "parent_ids": [
         "W3136855603"
       ]
+    },
+    "formula_estimates": {
+      "concrete": 0,
+      "symbolic": 0
     }
   },
   "W4405128542": {

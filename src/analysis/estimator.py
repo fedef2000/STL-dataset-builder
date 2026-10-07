@@ -45,9 +45,16 @@ PDF_CONCRETE_PATTERN = re.compile(
     rf"\s*[\[_\{{]\s*{NUM}\s*,\s*{NUM}\s*[\]\}}]"
 )
 
+# Blocks that authors disabled without using %: the comment environment and \iffalse ... \fi
+DISABLED_BLOCK_PATTERN = re.compile(
+    r"\\begin\{comment\}.*?\\end\{comment\}|\\iffalse(?![a-zA-Z]).*?\\fi(?![a-zA-Z])",
+    re.DOTALL,
+)
+
 def strip_latex_comments(text: str) -> str:
-    """Removes commented-out lines to prevent counting formulas that authors deleted/disabled."""
-    return "\n".join(re.sub(r"(?<!\\)%.*$", "", line) for line in text.splitlines())
+    """Removes commented-out lines and disabled blocks to prevent counting formulas that authors deleted/disabled."""
+    text = "\n".join(re.sub(r"(?<!\\)%.*$", "", line) for line in text.splitlines())
+    return DISABLED_BLOCK_PATTERN.sub("", text)
 
 def read_braced_group(text: str, start: int, limit: int = 2000) -> str:
     """Returns the content of the balanced {...} group opening at text[start] ('' if unbalanced)."""
