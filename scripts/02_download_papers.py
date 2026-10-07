@@ -15,6 +15,7 @@ from src.harvesting.downloader import (
     find_arxiv_by_title,
     find_via_hal,
     find_via_semantic_scholar,
+    rate_limit_hits,
     verify_disk_status,
 )
 from src.storage import CorpusStore
@@ -77,6 +78,7 @@ def main():
         pdf_path = RAW_PDF_DIR / f"{pid}.pdf"
         downloaded = False
         status_label = ""
+        rate_limit_hits_before = sum(rate_limit_hits.values())
         if paper.get("is_oa") is False:
             current_failure_reason = "Closed Access / Paywalled"
         else:
@@ -138,6 +140,9 @@ def main():
                 "path": None,
                 "failure_reason": current_failure_reason
             }
+            # A throttled recovery lookup is not a real "not found": mark it so the paper can be retried
+            if sum(rate_limit_hits.values()) > rate_limit_hits_before:
+                paper["local_files"]["recovery_rate_limited"] = True
             counts["unavailable"] += 1
             failure_stats[current_failure_reason] += 1
             status_label = f"FAILED  [{current_failure_reason[:30]}] {pid}"
@@ -146,6 +151,8 @@ def main():
         logging.info(f"[{attempted}/{len(queue)}] {status_label}")
 
     logging.info("=== STEP 2 FINISHED ===")
+    for service, hits in rate_limit_hits.most_common():
+        logging.info(f"Recovery lookups abandoned due to rate limiting | {service}: {hits}")
     
     # Print Statistical Report
     if failure_stats:
