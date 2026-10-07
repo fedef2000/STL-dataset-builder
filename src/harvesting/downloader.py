@@ -280,20 +280,26 @@ def find_via_semantic_scholar(doi: str | None) -> tuple[str | None, str | None]:
 
 
 def check_semantic_scholar() -> str:
-    """One test lookup, so a blocked IP or a rejected API key is visible before a long run."""
+    """A test lookup, so a blocked IP or a rejected API key is visible before a long run."""
     mode = "with API key" if SEMANTIC_SCHOLAR_API_KEY else "anonymous, SEMANTIC_SCHOLAR_API_KEY not set"
     url = "https://api.semanticscholar.org/graph/v1/paper/DOI:10.1007/978-3-540-30206-3_12?fields=externalIds"
-    try:
-        resp = requests.get(url, headers=S2_HEADERS, timeout=15)
-    except requests.exceptions.RequestException:
-        return f"unreachable ({mode})"
-    _last_request_at["Semantic Scholar"] = time.monotonic()
+    # Semantic Scholar answers the odd request with 429 even when all is well, so only report it if it persists
+    for wait in (*RETRY_WAITS, None):
+        try:
+            resp = requests.get(url, headers=S2_HEADERS, timeout=15)
+        except requests.exceptions.RequestException:
+            return f"unreachable ({mode})"
+        _last_request_at["Semantic Scholar"] = time.monotonic()
+        if resp.status_code != 429 or wait is None:
+            break
+        time.sleep(wait)
+
     if resp.status_code == 200:
         return f"OK ({mode})"
     if resp.status_code in (401, 403) and SEMANTIC_SCHOLAR_API_KEY:
         return f"API key rejected (HTTP {resp.status_code})"
     if resp.status_code == 429:
-        return f"rate-limited or blocked (HTTP 429, {mode})"
+        return f"still rate-limited after {len(RETRY_WAITS)} retries (HTTP 429, {mode})"
     return f"HTTP {resp.status_code} ({mode})"
 
 

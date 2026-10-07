@@ -31,8 +31,7 @@
     "local_files": {
       "status": "unavailable",
       "path": null,
-      "failure_reason": "PDF Mirrors: HTML Landing Page (Not a %PDF file)",
-      "recovery_rate_limited": true
+      "failure_reason": "PDF Mirrors: HTML Landing Page (Not a %PDF file)"
     },
     "license_info": {
       "effective_license": null,
@@ -79,8 +78,7 @@
     "local_files": {
       "status": "unavailable",
       "path": null,
-      "failure_reason": "Closed Access / Paywalled",
-      "recovery_rate_limited": true
+      "failure_reason": "Closed Access / Paywalled"
     },
     "license_info": {
       "effective_license": null,
