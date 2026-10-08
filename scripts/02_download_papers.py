@@ -123,6 +123,10 @@ def main():
     attempted = 0
     for pid in queue:
         attempted += 1
+        if pid not in store.papers:
+            # Merged into another entry earlier in this run
+            logging.info(f"[{attempted}/{len(queue)}] SKIPPED [merged duplicate] {pid}")
+            continue
         paper = store.papers[pid]
         urls = paper.get("urls") or {}
         eprint_url = urls.get("eprint_source")
@@ -151,6 +155,13 @@ def main():
         if not downloaded and args.with_recovery:
             s2_arxiv, s2_pdf = find_via_semantic_scholar(paper.get("doi"))
             rec_arxiv = s2_arxiv or find_arxiv_by_title(paper.get("title") or "")
+            # The arXiv version may already be in the corpus under another entry: merge instead of downloading it twice
+            duplicate_of = store.find_arxiv_owner(rec_arxiv, other_than=pid) if rec_arxiv else None
+            if duplicate_of:
+                kept = store.merge_papers(pid, duplicate_of)
+                store.save()
+                logging.info(f"[{attempted}/{len(queue)}] MERGED  [same arXiv paper {rec_arxiv}] {pid} + {duplicate_of} -> {kept}")
+                continue
             if rec_arxiv and not eprint_url:
                 rec_eprint = f"https://export.arxiv.org/e-print/{rec_arxiv}"
                 paper["arxiv_id"] = rec_arxiv

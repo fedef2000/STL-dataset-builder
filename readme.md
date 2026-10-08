@@ -135,6 +135,9 @@ python scripts/01_build_corpus.py --mode all --hops 2
 # Show the discovery statistics of the existing corpus
 python scripts/01_build_corpus.py --stats
 
+# Merge entries that turned out to be the same paper
+python scripts/01_build_corpus.py --merge-duplicates
+
 ```
 
 | Flag | Default | What it does |
@@ -144,6 +147,7 @@ python scripts/01_build_corpus.py --stats
 | `--min-hop1-citations N` | `5` | With `--hops 2`: only Hop-1 papers with at least `N` citations are expanded. |
 | `--hop2-require-stl-text` / `--no-hop2-require-stl-text` | on | With `--hops 2`: keep a Hop-2 paper only if its title or abstract matches the STL relevance terms. The `--no-` form keeps every Hop-2 paper (much larger, off-topic corpus). |
 | `--stats` | off | Prints the discovery statistics of the existing corpus (hops, discovery methods, metadata), then exits. No API is queried. |
+| `--merge-duplicates` | off | Merges entries of the existing corpus that share an arXiv ID or a DOI, then exits. The published OpenAlex record is kept, the other ID is recorded under `alternate_ids`, and the duplicate download is deleted. No API is queried. |
 | `--keywords K [K ...]` | `"Signal Temporal Logic" "Metric Temporal Logic" "STL specification" "STL formulas"` | Search phrases for the keyword search. Quote each phrase. Ignored with `--mode citations`. |
 
 ### Step 2: Download Papers Locally (`.tex` & `.pdf`)
@@ -169,7 +173,7 @@ Each run first compares `data/corpus.json` with the files on disk and corrects t
 
 | Flag | What it does |
 |---|---|
-| `--with-recovery` | For a paper without a working arXiv source, also asks Semantic Scholar (by DOI), the arXiv title search and HAL (by title) for an arXiv version or an open PDF. Slower: the lookups are paced to respect each service's rate limit. |
+| `--with-recovery` | For a paper without a working arXiv source, also asks Semantic Scholar (by DOI), the arXiv title search and HAL (by title) for an arXiv version or an open PDF. Slower: the lookups are paced to respect each service's rate limit. If the arXiv version found is already in the corpus under another entry, the two entries are merged instead of downloading it twice. |
 | `--retry-unavailable` | Also retries **every** paper marked `unavailable`, whatever the reason. |
 | `--retry-rate-limited` | Also retries the `unavailable` papers whose recovery lookup was abandoned (rate limit, cooldown, or no answer). Only useful together with `--with-recovery`. |
 | `--retry-transient` | Also retries the `unavailable` papers whose failure reason is a connection error, a timeout, HTTP 429 or HTTP 500/502/503/504. |
@@ -297,7 +301,8 @@ python scripts/04_estimate_formulas.py --stats
 
 | Field | Notes |
 |---|---|
-| `alternate_ids` | Other OpenAlex IDs that were merged into this entry as duplicates. |
+| `alternate_ids` | IDs of other entries that were merged into this one as duplicates (e.g. the preprint record of a published paper). A later crawl resolves them to this entry instead of adding them again. |
+| `alternate_dois` | DOIs of the merged entries, when they differ from `doi`. |
 | `discovery.methods` | How the paper was found: `citation_hop_1`, `citation_hop_2`, `openalex_kw:<keyword>`, `arxiv_kw:<keyword>`. A paper can have several. |
 | `discovery.hop_distance` | `1` or `2` for papers from the citation crawl, `null` for papers found only by keyword. |
 | `discovery.parent_ids` | The papers of the previous hop that this paper cites (the seed papers for Hop-1). |

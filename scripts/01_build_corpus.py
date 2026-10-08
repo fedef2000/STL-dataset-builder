@@ -94,9 +94,22 @@ def main():
         action="store_true",
         help="Print the discovery statistics of the existing corpus and exit, without querying any API.",
     )
+    parser.add_argument(
+        "--merge-duplicates",
+        action="store_true",
+        help="Merge entries of the existing corpus that share an arXiv ID or a DOI (deleting the duplicate downloads) and exit.",
+    )
     args = parser.parse_args()
 
     store = CorpusStore()
+    if args.merge_duplicates:
+        merged = store.merge_duplicates()
+        store.save()
+        for kept, dropped in merged:
+            print(f"  merged {dropped} into {kept}")
+        print(f"Merged {len(merged)} duplicate entries. Corpus now has {len(store.papers)} unique papers.")
+        return
+
     if args.stats:
         print_corpus_stats(store)
         return
