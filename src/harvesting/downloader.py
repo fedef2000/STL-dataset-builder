@@ -127,6 +127,28 @@ def download_and_extract_arxiv_tex(eprint_url: str, target_folder: Path) -> tupl
         return False, f"arXiv Error: Network/System Exception"
 
 
+# What the less common HTTP answers from PDF hosts mean in practice
+PDF_STATUS_NOTES = {
+    202: "Bot Protection Challenge",
+    401: "Login Required",
+    405: "Bot Protection",
+    406: "Bot Protection",
+    410: "Removed by Host",
+    418: "Bot Protection",
+    429: "Rate Limited",
+}
+
+# Failure reasons worth trying again later: network trouble, rate limits and server-side errors
+TRANSIENT_FAILURE_MARKERS = (
+    "Connection Error", "Connection Timeout", "Network/System Exception",
+    "HTTP 429", "HTTP 500", "HTTP 502", "HTTP 503", "HTTP 504",
+)
+
+
+def is_transient_failure(failure_reason: str | None) -> bool:
+    return any(marker in (failure_reason or "") for marker in TRANSIENT_FAILURE_MARKERS)
+
+
 def download_pdf_from_mirrors(
     pdf_urls: list[str], dest_path: Path, use_browser_headers: bool = True
 ) -> tuple[bool, str]:
@@ -150,7 +172,8 @@ def download_pdf_from_mirrors(
                 last_reason = "HTTP 404 (Dead Link)"
                 continue
             if resp.status_code != 200:
-                last_reason = f"HTTP {resp.status_code}"
+                note = PDF_STATUS_NOTES.get(resp.status_code)
+                last_reason = f"HTTP {resp.status_code} ({note})" if note else f"HTTP {resp.status_code}"
                 continue
 
             # Check magic bytes to ensure it's actually a PDF and not an HTML login page
@@ -175,7 +198,7 @@ RETRY_WAITS = (2, 5, 10)
 MAX_CONSECUTIVE_GIVE_UPS = 5
 SERVICE_COOLDOWN_SEC = 900
 # Semantic Scholar allows about 1 request/second per API key
-MIN_INTERVAL_SEC = {"Semantic Scholar": 1.1}
+MIN_INTERVAL_SEC = {"Semantic Scholar": 1.1, "arXiv title search": 3.1}  # arXiv asks for one request every 3 seconds
 
 # Semantic Scholar gets its own headers: its API key, and not the OpenAlex token carried by HEADERS
 S2_HEADERS = {"User-Agent": HEADERS["User-Agent"]}
@@ -208,7 +231,12 @@ def get_with_backoff(service: str, url: str, timeout: int, headers: dict = HEADE
         if gap > 0:
             time.sleep(gap)
         _last_request_at[service] = time.monotonic()
-        resp = requests.get(url, headers=headers, timeout=timeout)
+        try:
+            resp = requests.get(url, headers=headers, timeout=timeout)
+        except requests.exceptions.RequestException:
+            # No answer at all (e.g. the connection dropped): not a "not found" either, so mark it for a retry
+            rate_limit_hits[service] += 1
+            raise
         if resp.status_code not in (429, 503):
             _consecutive_give_ups[service] = 0
             return resp

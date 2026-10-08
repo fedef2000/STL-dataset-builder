@@ -16,6 +16,7 @@ from src.harvesting.downloader import (
     find_arxiv_by_title,
     find_via_hal,
     find_via_semantic_scholar,
+    is_transient_failure,
     rate_limit_hits,
     verify_disk_status,
 )
@@ -49,7 +50,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--with-recovery", action="store_true")
     parser.add_argument("--retry-unavailable", action="store_true")
-    parser.add_argument("--retry-rate-limited", action="store_true", help="Retry only unavailable papers whose recovery lookups were rate-limited.")
+    parser.add_argument("--retry-rate-limited", action="store_true", help="Retry only unavailable papers whose recovery lookups were rate-limited or got no answer.")
+    parser.add_argument("--retry-transient", action="store_true", help="Retry only unavailable papers that failed on a connection error, timeout, rate limit or server error.")
     parser.add_argument("--limit", type=int, default=None)
     args = parser.parse_args()
 
@@ -63,10 +65,14 @@ def main():
         target_statuses.add("unavailable")
 
     queue = [pid for pid, p in store.papers.items() if p.get("local_files", {}).get("status") in target_statuses]
-    if args.retry_rate_limited and not args.retry_unavailable:
+    if (args.retry_rate_limited or args.retry_transient) and not args.retry_unavailable:
         queue += [
             pid for pid, p in store.papers.items()
-            if p.get("local_files", {}).get("status") == "unavailable" and p["local_files"].get("recovery_rate_limited")
+            if p.get("local_files", {}).get("status") == "unavailable"
+            and (
+                (args.retry_rate_limited and p["local_files"].get("recovery_rate_limited"))
+                or (args.retry_transient and is_transient_failure(p["local_files"].get("failure_reason")))
+            )
         ]
     if args.limit:
         queue = queue[: args.limit]
