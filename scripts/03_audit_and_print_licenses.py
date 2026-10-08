@@ -54,4 +54,4 @@ def main():
     generate_license_report(store)
 
 if __name__ == "__main__":
-    main()
+    main()
