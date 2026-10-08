@@ -1,4 +1,5 @@
 import argparse
+from collections import Counter
 from pathlib import Path
 import sys
 
@@ -13,6 +14,44 @@ from src.discovery.openalex_client import (
     search_openalex_by_keywords,
 )
 from src.storage import CorpusStore
+
+
+def print_corpus_stats(store: CorpusStore) -> None:
+    papers = list(store.papers.values())
+    total = max(1, len(papers))
+
+    def row(count: int, label: str) -> None:
+        print(f"{count:>5} | {label} ({count / total * 100:.1f}%)")
+
+    hops = Counter(p.get("discovery", {}).get("hop_distance") for p in papers)
+    methods = Counter(m for p in papers for m in p.get("discovery", {}).get("methods", []))
+    by_citation = sum(1 for p in papers if any(m.startswith("citation_") for m in p.get("discovery", {}).get("methods", [])))
+    by_keyword = sum(1 for p in papers if any("_kw:" in m for m in p.get("discovery", {}).get("methods", [])))
+    hop1_expanded = sum(1 for p in papers if p.get("discovery", {}).get("expanded_hop_2"))
+
+    print("\n" + "=" * 68)
+    print("                     CORPUS DISCOVERY STATS")
+    print("=" * 68)
+    print(f"{len(papers):>5} | Total unique papers")
+    print("-" * 68)
+    print("By citation distance from the seed papers:")
+    row(hops.get(1, 0), "Hop 1 (cite a seed paper)")
+    row(hops.get(2, 0), "Hop 2 (cite a Hop-1 paper)")
+    row(hops.get(None, 0), "Found by keyword only")
+    print(f"{hop1_expanded:>5} | Hop-1 papers already expanded to Hop 2")
+    print("-" * 68)
+    print("By discovery method (a paper can be found by several):")
+    row(by_citation, "Citation crawl")
+    row(by_keyword, "Keyword search")
+    row(sum(1 for p in papers if len(p.get("discovery", {}).get("methods", [])) > 1), "Found by more than one method")
+    for method, count in methods.most_common():
+        print(f"{count:>5} |     {method}")
+    print("-" * 68)
+    print("Metadata:")
+    row(sum(1 for p in papers if p.get("is_oa")), "Open access according to OpenAlex")
+    row(sum(1 for p in papers if p.get("arxiv_id")), "With an arXiv ID")
+    row(sum(1 for p in papers if p.get("doi")), "With a DOI")
+    print("=" * 68)
 
 
 def main():
@@ -50,9 +89,18 @@ def main():
         default=DEFAULT_KEYWORDS,
         help="Custom list of keywords for --mode keywords.",
     )
+    parser.add_argument(
+        "--stats",
+        action="store_true",
+        help="Print the discovery statistics of the existing corpus and exit, without querying any API.",
+    )
     args = parser.parse_args()
 
     store = CorpusStore()
+    if args.stats:
+        print_corpus_stats(store)
+        return
+
     initial_count = len(store.papers)
     print(f"Loaded existing corpus with {initial_count} unique papers.")
 

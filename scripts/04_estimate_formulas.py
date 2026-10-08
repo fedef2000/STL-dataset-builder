@@ -11,12 +11,68 @@ from src.analysis.estimator import estimate_paper_formulas
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 
+def print_report(top_papers: list, scanned: int) -> None:
+    """Prints the yield report from (concrete, symbolic, paper_id, title, status) rows."""
+    total_concrete = sum(c for c, *_ in top_papers)
+    total_symbolic = sum(s for _, s, *_ in top_papers)
+    papers_with_concrete = sum(1 for c, *_ in top_papers if c > 0)
+
+    # ---------------------------------------------------------
+    # PRINT ESTIMATION REPORT
+    # ---------------------------------------------------------
+    print("\n" + "=" * 80)
+    print("                 STL FORMULA YIELD ESTIMATION REPORT")
+    print("=" * 80)
+    print(f"Total Papers Scanned:         {scanned}")
+    print(f"Papers with >= 1 Formula:     {papers_with_concrete} ({(papers_with_concrete/max(1, scanned))*100:.1f}%)")
+    print("-" * 80)
+    print(f"Total Concrete Formulas:      {total_concrete}")
+    print(f"Total Symbolic/Parametric:    {total_symbolic}")
+    print("-" * 80)
+    for label, key in (("LaTeX", "downloaded_latex"), ("PDF", "downloaded_pdf")):
+        rows = [r for r in top_papers if r[4] == key]
+        print(f"{label + ' papers:':<14}{len(rows):>5} scanned | {sum(1 for r in rows if r[0] > 0):>5} with >= 1 formula | "
+              f"{sum(r[0] for r in rows):>6} concrete | {sum(r[1] for r in rows):>6} symbolic")
+    print("=" * 80)
+    
+    print("\nTOP 20 MOST PROMISING PAPERS:")
+    print(f"{'Concrete':<9} | {'Symbolic':<9} | {'Source':<12} | {'Paper ID':<15} | {'Title'}")
+    print("-" * 120)
+    
+    # Sort by highest concrete formulas, then symbolic
+    top_papers.sort(key=lambda x: (-x[0], -x[1]))
+    
+    for c, s, pid, title, status in top_papers[:20]:
+        src_label = "LaTeX" if "latex" in (status or "") else "PDF"
+        short_title = title[:60] + "..." if len(title) > 60 else title
+        print(f"{c:<9} | {s:<9} | {src_label:<12} | {pid:<15} | {short_title}")
+    print("=" * 120)
+    print("\nNote: These are regex-based estimates intended to help rank papers for rigorous extraction.")
+    print("Formula counts have been saved to 'formula_estimates' in data/corpus.json.")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Step 4: Estimate STL formula yield in downloaded papers.")
     parser.add_argument("--limit", type=int, default=None, help="Process only N papers (for testing).")
+    parser.add_argument("--stats", action="store_true", help="Print the report from the estimates already stored in data/corpus.json and exit, without scanning any file.")
     args = parser.parse_args()
 
     store = CorpusStore()
+
+    if args.stats:
+        rows = [
+            (p["formula_estimates"]["concrete"], p["formula_estimates"]["symbolic"], pid, p.get("title") or "Unknown Title", p.get("local_files", {}).get("status"))
+            for pid, p in store.papers.items()
+            if p.get("formula_estimates") and p.get("local_files", {}).get("status") in ("downloaded_latex", "downloaded_pdf")
+        ]
+        not_scanned = sum(
+            1 for p in store.papers.values()
+            if p.get("local_files", {}).get("status") in ("downloaded_latex", "downloaded_pdf") and not p.get("formula_estimates")
+        )
+        print_report(rows, len(rows))
+        if not_scanned:
+            print(f"\n{not_scanned} downloaded papers have no stored estimate yet: run this script without --stats to scan them.")
+        return
     
     queue = [
         pid for pid, p in store.papers.items()
@@ -60,33 +116,7 @@ def main():
             
     store.save()
     
-    # ---------------------------------------------------------
-    # PRINT ESTIMATION REPORT
-    # ---------------------------------------------------------
-    print("\n" + "=" * 80)
-    print("                 STL FORMULA YIELD ESTIMATION REPORT")
-    print("=" * 80)
-    print(f"Total Papers Scanned:         {len(queue)}")
-    print(f"Papers with >= 1 Formula:     {papers_with_concrete} ({(papers_with_concrete/max(1, len(queue)))*100:.1f}%)")
-    print("-" * 80)
-    print(f"Total Concrete Formulas:      {total_concrete}")
-    print(f"Total Symbolic/Parametric:    {total_symbolic}")
-    print("=" * 80)
-    
-    print("\nTOP 20 MOST PROMISING PAPERS:")
-    print(f"{'Concrete':<9} | {'Symbolic':<9} | {'Source':<12} | {'Paper ID':<15} | {'Title'}")
-    print("-" * 120)
-    
-    # Sort by highest concrete formulas, then symbolic
-    top_papers.sort(key=lambda x: (-x[0], -x[1]))
-    
-    for c, s, pid, title, status in top_papers[:20]:
-        src_label = "LaTeX" if "latex" in status else "PDF"
-        short_title = title[:60] + "..." if len(title) > 60 else title
-        print(f"{c:<9} | {s:<9} | {src_label:<12} | {pid:<15} | {short_title}")
-    print("=" * 120)
-    print("\nNote: These are regex-based estimates intended to help rank papers for rigorous extraction.")
-    print("Formula counts have been saved to 'formula_estimates' in data/corpus.json.")
+    print_report(top_papers, len(queue))
 
 if __name__ == "__main__":
     main()

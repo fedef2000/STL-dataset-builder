@@ -111,6 +111,8 @@ All steps read from and update **`data/corpus.json`** incrementally. You can int
 
 Every script also accepts `-h` / `--help`, which prints its flags and exits.
 
+Each step can print its statistics from `data/corpus.json` without redoing the work: `--stats` on any of the four scripts.
+
 ### Step 1: Build & Expand the Paper Corpus
 
 Discover papers via 1-hop foundational citations, 2-hop citation cycles, or keyword searches:
@@ -128,6 +130,9 @@ python scripts/01_build_corpus.py --mode keywords --keywords "Signal Temporal Lo
 # Run all discovery modes together
 python scripts/01_build_corpus.py --mode all --hops 2
 
+# Show the discovery statistics of the existing corpus
+python scripts/01_build_corpus.py --stats
+
 ```
 
 | Flag | Default | What it does |
@@ -136,6 +141,7 @@ python scripts/01_build_corpus.py --mode all --hops 2
 | `--hops {1,2}` | `1` | Citation depth. `1` fetches (or refreshes) the papers citing the 4 seed papers. `2` also fetches the papers citing those Hop-1 papers; Hop-1 itself is only fetched if it is not in the corpus yet. Ignored with `--mode keywords`. |
 | `--min-hop1-citations N` | `5` | With `--hops 2`: only Hop-1 papers with at least `N` citations are expanded. |
 | `--hop2-require-stl-text` / `--no-hop2-require-stl-text` | on | With `--hops 2`: keep a Hop-2 paper only if its title or abstract matches the STL relevance terms. The `--no-` form keeps every Hop-2 paper (much larger, off-topic corpus). |
+| `--stats` | off | Prints the discovery statistics of the existing corpus (hops, discovery methods, metadata), then exits. No API is queried. |
 | `--keywords K [K ...]` | `"Signal Temporal Logic" "Metric Temporal Logic" "STL specification" "STL formulas"` | Search phrases for the keyword search. Quote each phrase. Ignored with `--mode citations`. |
 
 ### Step 2: Download Papers Locally (`.tex` & `.pdf`)
@@ -205,13 +211,13 @@ Scans local `.tex` files, PDF metadata, and arXiv OAI-PMH headers to verify exac
 python scripts/03_audit_and_print_licenses.py
 
 # Print the report again without re-scanning
-python scripts/03_audit_and_print_licenses.py --skip-audit
+python scripts/03_audit_and_print_licenses.py --stats
 
 ```
 
 | Flag | What it does |
 |---|---|
-| `--skip-audit` | Skips the scan and prints the report from the licences already stored in `data/corpus.json`. |
+| `--stats` | Skips the scan and prints the report from the licences already stored in `data/corpus.json`, then exits. |
 | `--limit N` | Audits only the first `N` downloaded papers (for testing). The report still covers the whole corpus. |
 
 ### Step 4: Estimate STL Formula Yield
@@ -221,11 +227,15 @@ Scans all downloaded `.tex` folders and `.pdf` files, counts concrete and symbol
 ```bash
 python scripts/04_estimate_formulas.py
 
+# Print the report again without re-scanning
+python scripts/04_estimate_formulas.py --stats
+
 ```
 
 | Flag | What it does |
 |---|---|
 | `--limit N` | Scans only the first `N` downloaded papers (for testing). |
+| `--stats` | Prints the same report from the estimates already stored in `data/corpus.json`, then exits. No file is scanned. |
 
 ---
 

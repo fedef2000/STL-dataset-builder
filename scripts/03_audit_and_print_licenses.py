@@ -15,13 +15,13 @@ logging.basicConfig(level=logging.INFO, format="%(message)s")
 
 def main():
     parser = argparse.ArgumentParser(description="Step 3: Audit exact licenses for downloaded papers and print stats.")
-    parser.add_argument("--skip-audit", action="store_true", help="Skip scanning files and just print stats from corpus.json.")
+    parser.add_argument("--stats", action="store_true", help="Print the license report from the data already stored in corpus.json and exit, without scanning any file.")
     parser.add_argument("--limit", type=int, default=None, help="Limit number of papers audited (for testing).")
     args = parser.parse_args()
 
     store = CorpusStore()
     
-    if not args.skip_audit:
+    if not args.stats:
         # Gather downloaded papers that need an audit
         queue = [
             pid for pid, p in store.papers.items()
@@ -54,4 +54,4 @@ def main():
     generate_license_report(store)
 
 if __name__ == "__main__":
-    main()
+    main()
