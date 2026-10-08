@@ -78,7 +78,7 @@ python -m venv .venv
 # Linux / macOS
 source .venv/bin/activate
 
-pip install requests pymupdf
+pip install requests pymupdf truststore
 
 ```
 

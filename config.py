@@ -1,6 +1,15 @@
 import os
 from pathlib import Path
 
+# Check HTTPS certificates the way a browser does, using the operating system's certificate store.
+# Without this, sites that send an incomplete certificate chain fail with an SSL error in Python
+# although they open fine in a browser.
+try:
+    import truststore
+    truststore.inject_into_ssl()
+except ImportError:
+    pass
+
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
 RAW_LATEX_DIR = DATA_DIR / "raw" / "latex"

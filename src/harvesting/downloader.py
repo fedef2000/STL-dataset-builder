@@ -186,6 +186,8 @@ def download_pdf_from_mirrors(
                 
         except requests.exceptions.Timeout:
             last_reason = "Connection Timeout"
+        except requests.exceptions.SSLError:
+            last_reason = "SSL Certificate Error"
         except Exception:
             last_reason = "Connection Error (Domain unreachable)"
 
