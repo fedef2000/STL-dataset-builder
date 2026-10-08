@@ -2661,10 +2661,10 @@
         "W2101804404",
         "W2131399618",
         "W2153803621",
-        "W2467659428",
         "W2616554232",
         "W2796878315",
         "W2956034981",
+        "W4283212640",
         "W618136976",
         "W618708471"
       ],
@@ -5709,10 +5709,10 @@
       "hop_distance": 1,
       "parent_ids": [
         "W1547304883",
-        "W2467659428",
         "W2604347212",
         "W2796878315",
-        "W2956034981"
+        "W2956034981",
+        "W4283212640"
       ],
       "expanded_hop_2": true
     },
@@ -20562,10 +20562,20 @@
       ],
       "hop_distance": 1,
       "parent_ids": [
+        "W1509254601",
         "W1547304883",
+        "W1705718777",
         "W181236562",
+        "W1974775743",
         "W2034837094",
-        "W371510500"
+        "W2400705866",
+        "W2785700716",
+        "W2786819761",
+        "W371510500",
+        "W4230569261",
+        "W6669264",
+        "W951335392",
+        "W95346533"
       ],
       "expanded_hop_2": true
     },
@@ -20601,7 +20611,13 @@
       "symbolic": 0,
       "formulas_concrete": 0,
       "formulas_symbolic": 0
-    }
+    },
+    "alternate_ids": [
+      "W2903656432"
+    ],
+    "alternate_dois": [
+      "https://doi.org/10.1109/tcbb.2018.2885274"
+    ]
   },
   "W2963749421": {
     "paper_id": "W2963749421",
@@ -28242,10 +28258,10 @@
         "W2056605754",
         "W2131399618",
         "W2153803621",
-        "W2467659428",
         "W2797213222",
         "W2956034981",
         "W2963231286",
+        "W4283212640",
         "W618136976",
         "W618708471"
       ],
@@ -38996,9 +39012,9 @@
         "W1547304883",
         "W189973795",
         "W2131399618",
+        "W2751570560",
         "W2787690666",
         "W2795231670",
-        "W2903656432",
         "W2961558634",
         "W828139470"
       ],
@@ -39762,13 +39778,13 @@
         "W2153803621",
         "W2172184261",
         "W2400705866",
-        "W2467659428",
         "W2564317698",
         "W2606717218",
         "W2615205923",
         "W2785700716",
         "W2789413254",
-        "W2797213222"
+        "W2797213222",
+        "W4283212640"
       ],
       "expanded_hop_2": true
     },
@@ -40196,72 +40212,6 @@
         "arxiv_oai": [],
         "pdf_metadata": []
       }
-    }
-  },
-  "W2903656432": {
-    "paper_id": "W2903656432",
-    "openalex_id": "https://openalex.org/W2903656432",
-    "arxiv_id": "1612.07770",
-    "doi": "https://doi.org/10.1109/tcbb.2018.2885274",
-    "title": "Quantitative Regular Expressions for Arrhythmia Detection",
-    "year": 2018,
-    "cited_by_count": 14,
-    "is_oa": false,
-    "discovery": {
-      "methods": [
-        "citation_hop_1",
-        "citation_hop_2"
-      ],
-      "hop_distance": 1,
-      "parent_ids": [
-        "W1509254601",
-        "W1547304883",
-        "W1705718777",
-        "W181236562",
-        "W1974775743",
-        "W2034837094",
-        "W2400705866",
-        "W2751570560",
-        "W2785700716",
-        "W2786819761",
-        "W371510500",
-        "W4230569261",
-        "W6669264",
-        "W951335392",
-        "W95346533"
-      ],
-      "expanded_hop_2": true
-    },
-    "urls": {
-      "eprint_source": "https://export.arxiv.org/e-print/1612.07770",
-      "pdf_mirrors": []
-    },
-    "local_files": {
-      "status": "downloaded_latex",
-      "path": "data/raw/latex/W2903656432"
-    },
-    "license_info": {
-      "effective_license": "arxiv-nonexclusive",
-      "effective_licenses_all": [
-        "arxiv-nonexclusive"
-      ],
-      "effective_source": "arxiv_oai",
-      "tier": "custom_or_arxiv",
-      "has_conflict": false,
-      "sources": {
-        "openalex_locations": [],
-        "tex_source": [],
-        "arxiv_oai": [
-          "arxiv-nonexclusive"
-        ],
-        "pdf_metadata": []
-      }
-    },
-    "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0,
-      "formulas_concrete": 0,
-      "formulas_symbolic": 0
     }
   },
   "W2939295339": {
@@ -41370,11 +41320,11 @@
         "W2131399618",
         "W2153803621",
         "W2167799541",
+        "W2751570560",
         "W2767407758",
         "W2787690666",
         "W2795506272",
         "W2899781265",
-        "W2903656432",
         "W2945959809",
         "W2961558634",
         "W2970458171",
@@ -43305,10 +43255,10 @@
         "W2101804404",
         "W2153803621",
         "W2167799541",
+        "W2751570560",
         "W2787690666",
         "W2795231670",
         "W2884685148",
-        "W2903656432",
         "W2945959809",
         "W2961558634",
         "W3090131141",
@@ -45993,7 +45943,6 @@
         "W2131399618",
         "W2153803621",
         "W2295828805",
-        "W2467659428",
         "W2556282465",
         "W2798302610",
         "W2944759097",
@@ -46002,6 +45951,7 @@
         "W3184406940",
         "W3184919107",
         "W3185643228",
+        "W4283212640",
         "W4385452045",
         "W618708471"
       ],
@@ -58176,10 +58126,10 @@
         "W189973795",
         "W2049399166",
         "W2167799541",
+        "W2751570560",
         "W2787690666",
         "W2795506272",
         "W2899781265",
-        "W2903656432",
         "W2945959809",
         "W2961558634",
         "W2970458171",
@@ -65604,9 +65554,9 @@
         "W2049399166",
         "W2101804404",
         "W2153803621",
+        "W2751570560",
         "W2785700716",
         "W2787690666",
-        "W2903656432",
         "W2945959809",
         "W2961558634",
         "W3090131141",
@@ -70234,7 +70184,7 @@
         "W189178477",
         "W1900583228",
         "W2150483478",
-        "W2467659428"
+        "W4283212640"
       ]
     },
     "urls": {
@@ -80298,62 +80248,6 @@
       "formulas_symbolic": 0
     }
   },
-  "W2467659428": {
-    "paper_id": "W2467659428",
-    "openalex_id": "https://openalex.org/W2467659428",
-    "arxiv_id": "1606.08514",
-    "doi": "https://doi.org/10.48550/arxiv.1606.08514",
-    "title": "Towards Verified Artificial Intelligence",
-    "year": 2016,
-    "cited_by_count": 85,
-    "is_oa": true,
-    "discovery": {
-      "methods": [
-        "citation_hop_1",
-        "citation_hop_2"
-      ],
-      "hop_distance": 1,
-      "parent_ids": [
-        "W1547304883"
-      ],
-      "expanded_hop_2": true
-    },
-    "urls": {
-      "eprint_source": "https://export.arxiv.org/e-print/1606.08514",
-      "pdf_mirrors": [
-        "https://arxiv.org/pdf/1606.08514"
-      ]
-    },
-    "local_files": {
-      "status": "downloaded_latex",
-      "path": "data/raw/latex/W2467659428"
-    },
-    "license_info": {
-      "effective_license": "arxiv-nonexclusive",
-      "effective_licenses_all": [
-        "arxiv-nonexclusive"
-      ],
-      "effective_source": "arxiv_oai",
-      "tier": "custom_or_arxiv",
-      "has_conflict": false,
-      "sources": {
-        "openalex_locations": [
-          "arxiv-nonexclusive"
-        ],
-        "tex_source": [],
-        "arxiv_oai": [
-          "arxiv-nonexclusive"
-        ],
-        "pdf_metadata": []
-      }
-    },
-    "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0,
-      "formulas_concrete": 0,
-      "formulas_symbolic": 0
-    }
-  },
   "W1985919024": {
     "paper_id": "W1985919024",
     "openalex_id": "https://openalex.org/W1985919024",
@@ -81406,7 +81300,6 @@
         "W2049399166",
         "W2056605754",
         "W2131399618",
-        "W2467659428",
         "W2621540998",
         "W2735488281",
         "W2758992328",
@@ -81414,7 +81307,8 @@
         "W2797213222",
         "W2888839644",
         "W2889490035",
-        "W2939020876"
+        "W2939020876",
+        "W4283212640"
       ],
       "expanded_hop_2": true
     },
@@ -83795,66 +83689,6 @@
       "symbolic": 79,
       "formulas_concrete": 21,
       "formulas_symbolic": 66
-    }
-  },
-  "W4310998906": {
-    "paper_id": "W4310998906",
-    "openalex_id": "https://openalex.org/W4310998906",
-    "arxiv_id": "2212.04156",
-    "doi": "https://doi.org/10.48550/arxiv.2212.04156",
-    "title": "No driver, No Regulation? --Online Legal Driving Behavior Monitoring for Self-driving Vehicles",
-    "year": 2022,
-    "cited_by_count": 1,
-    "is_oa": true,
-    "discovery": {
-      "methods": [
-        "citation_hop_1",
-        "citation_hop_2",
-        "openalex_kw:Metric Temporal Logic"
-      ],
-      "hop_distance": 1,
-      "parent_ids": [
-        "W1547304883",
-        "W2049399166",
-        "W2749567864",
-        "W2970963308",
-        "W2980133010"
-      ]
-    },
-    "urls": {
-      "eprint_source": "https://export.arxiv.org/e-print/2212.04156",
-      "pdf_mirrors": [
-        "https://arxiv.org/pdf/2212.04156"
-      ]
-    },
-    "local_files": {
-      "status": "downloaded_latex",
-      "path": "data/raw/latex/W4310998906"
-    },
-    "license_info": {
-      "effective_license": "arxiv-nonexclusive",
-      "effective_licenses_all": [
-        "arxiv-nonexclusive"
-      ],
-      "effective_source": "arxiv_oai",
-      "tier": "custom_or_arxiv",
-      "has_conflict": false,
-      "sources": {
-        "openalex_locations": [
-          "arxiv-nonexclusive"
-        ],
-        "tex_source": [],
-        "arxiv_oai": [
-          "arxiv-nonexclusive"
-        ],
-        "pdf_metadata": []
-      }
-    },
-    "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0,
-      "formulas_concrete": 0,
-      "formulas_symbolic": 0
     }
   },
   "W4385305816": {
@@ -95954,7 +95788,6 @@
         "W2796019254",
         "W2807161818",
         "W2903354964",
-        "W2903656432",
         "W2912432686",
         "W2921224415",
         "W2930654751",
@@ -97828,13 +97661,15 @@
     "title": "Task and motion planning of dynamic systems using hyperproperties for signal temporal logic",
     "year": 2026,
     "cited_by_count": 0,
-    "is_oa": false,
+    "is_oa": true,
     "discovery": {
       "methods": [
         "citation_hop_1",
         "citation_hop_2",
         "openalex_kw:Signal Temporal Logic",
-        "openalex_kw:STL specification"
+        "openalex_kw:STL specification",
+        "arxiv_kw:Signal Temporal Logic",
+        "arxiv_kw:STL specification"
       ],
       "hop_distance": 1,
       "parent_ids": [
@@ -97855,7 +97690,9 @@
     },
     "urls": {
       "eprint_source": "https://export.arxiv.org/e-print/2509.02184",
-      "pdf_mirrors": []
+      "pdf_mirrors": [
+        "https://arxiv.org/pdf/2509.02184"
+      ]
     },
     "local_files": {
       "status": "downloaded_latex",
@@ -97883,7 +97720,10 @@
       "symbolic": 12,
       "formulas_concrete": 3,
       "formulas_symbolic": 10
-    }
+    },
+    "alternate_ids": [
+      "arxiv_2509.02184"
+    ]
   },
   "W7165191167": {
     "paper_id": "W7165191167",
@@ -100776,65 +100616,6 @@
       "formulas_symbolic": 7
     }
   },
-  "W3198952749": {
-    "paper_id": "W3198952749",
-    "openalex_id": "https://openalex.org/W3198952749",
-    "arxiv_id": "2109.10294",
-    "doi": null,
-    "title": "From English to Signal Temporal Logic.",
-    "year": 2021,
-    "cited_by_count": 3,
-    "is_oa": true,
-    "urls": {
-      "eprint_source": "https://export.arxiv.org/e-print/2109.10294",
-      "pdf_mirrors": [
-        "https://arxiv.org/pdf/2109.10294"
-      ]
-    },
-    "local_files": {
-      "status": "downloaded_latex",
-      "path": "data/raw/latex/W3198952749"
-    },
-    "license_info": {
-      "effective_license": "arxiv-nonexclusive",
-      "effective_licenses_all": [
-        "arxiv-nonexclusive"
-      ],
-      "effective_source": "arxiv_oai",
-      "tier": "custom_or_arxiv",
-      "has_conflict": false,
-      "sources": {
-        "openalex_locations": [],
-        "tex_source": [],
-        "arxiv_oai": [
-          "arxiv-nonexclusive"
-        ],
-        "pdf_metadata": []
-      }
-    },
-    "discovery": {
-      "methods": [
-        "citation_hop_2",
-        "openalex_kw:Signal Temporal Logic",
-        "openalex_kw:STL formulas"
-      ],
-      "hop_distance": 2,
-      "parent_ids": [
-        "W2068619069",
-        "W2524638160",
-        "W2785700716",
-        "W2963178026",
-        "W3000408052",
-        "W3103842254"
-      ]
-    },
-    "formula_estimates": {
-      "concrete": 19,
-      "symbolic": 6,
-      "formulas_concrete": 15,
-      "formulas_symbolic": 5
-    }
-  },
   "W2938769851": {
     "paper_id": "W2938769851",
     "openalex_id": "https://openalex.org/W2938769851",
@@ -101730,12 +101511,12 @@
       "hop_distance": 2,
       "parent_ids": [
         "W1796872423",
-        "W2467659428",
         "W2474788619",
         "W2522468251",
         "W3089518496",
         "W3154466073",
-        "W4200473887"
+        "W4200473887",
+        "W4283212640"
       ]
     },
     "formula_estimates": {
@@ -102685,6 +102466,7 @@
     "urls": {
       "eprint_source": "https://export.arxiv.org/e-print/1906.07253",
       "pdf_mirrors": [
+        "https://arxiv.org/pdf/1906.07253",
         "https://dl.acm.org/doi/pdf/10.1145/3358232"
       ]
     },
@@ -102712,7 +102494,8 @@
     "discovery": {
       "methods": [
         "citation_hop_2",
-        "openalex_kw:Signal Temporal Logic"
+        "openalex_kw:Signal Temporal Logic",
+        "arxiv_kw:Signal Temporal Logic"
       ],
       "hop_distance": 2,
       "parent_ids": [
@@ -102728,7 +102511,13 @@
       "symbolic": 13,
       "formulas_concrete": 4,
       "formulas_symbolic": 10
-    }
+    },
+    "alternate_ids": [
+      "W2950518901"
+    ],
+    "alternate_dois": [
+      "https://doi.org/10.48550/arxiv.1906.07253"
+    ]
   },
   "W3153343958": {
     "paper_id": "W3153343958",
@@ -103706,61 +103495,6 @@
       ]
     }
   },
-  "W3012830339": {
-    "paper_id": "W3012830339",
-    "openalex_id": "https://openalex.org/W3012830339",
-    "arxiv_id": "2003.09918",
-    "doi": "https://doi.org/10.48550/arxiv.2003.09918",
-    "title": "Kontrol Edilebilir ptSTL Formulu Sentezi -- Synthesis of Controllable ptSTL Formulas",
-    "year": 2020,
-    "cited_by_count": 0,
-    "is_oa": true,
-    "urls": {
-      "eprint_source": "https://export.arxiv.org/e-print/2003.09918",
-      "pdf_mirrors": [
-        "https://arxiv.org/pdf/2003.09918"
-      ]
-    },
-    "local_files": {
-      "status": "downloaded_latex",
-      "path": "data/raw/latex/W3012830339"
-    },
-    "license_info": {
-      "effective_license": "arxiv-nonexclusive",
-      "effective_licenses_all": [
-        "arxiv-nonexclusive"
-      ],
-      "effective_source": "arxiv_oai",
-      "tier": "custom_or_arxiv",
-      "has_conflict": false,
-      "sources": {
-        "openalex_locations": [],
-        "tex_source": [],
-        "arxiv_oai": [
-          "arxiv-nonexclusive"
-        ],
-        "pdf_metadata": []
-      }
-    },
-    "discovery": {
-      "methods": [
-        "citation_hop_2",
-        "openalex_kw:Signal Temporal Logic",
-        "openalex_kw:STL formulas"
-      ],
-      "hop_distance": 2,
-      "parent_ids": [
-        "W181236562",
-        "W2956034981"
-      ]
-    },
-    "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 4,
-      "formulas_concrete": 0,
-      "formulas_symbolic": 4
-    }
-  },
   "W2886996591": {
     "paper_id": "W2886996591",
     "openalex_id": "https://openalex.org/W2886996591",
@@ -104044,7 +103778,13 @@
       "symbolic": 4,
       "formulas_concrete": 0,
       "formulas_symbolic": 4
-    }
+    },
+    "alternate_ids": [
+      "W3012830339"
+    ],
+    "alternate_dois": [
+      "https://doi.org/10.48550/arxiv.2003.09918"
+    ]
   },
   "W3204851156": {
     "paper_id": "W3204851156",
@@ -104105,64 +103845,6 @@
         "W3154370202",
         "W4252356254"
       ]
-    }
-  },
-  "W2950518901": {
-    "paper_id": "W2950518901",
-    "openalex_id": "https://openalex.org/W2950518901",
-    "arxiv_id": "1906.07253",
-    "doi": "https://doi.org/10.48550/arxiv.1906.07253",
-    "title": "Statistical Verification of Hyperproperties for Cyber-Physical System",
-    "year": 2019,
-    "cited_by_count": 0,
-    "is_oa": true,
-    "urls": {
-      "eprint_source": "https://export.arxiv.org/e-print/1906.07253",
-      "pdf_mirrors": [
-        "https://arxiv.org/pdf/1906.07253"
-      ]
-    },
-    "local_files": {
-      "status": "downloaded_latex",
-      "path": "data/raw/latex/W2950518901"
-    },
-    "license_info": {
-      "effective_license": "arxiv-nonexclusive",
-      "effective_licenses_all": [
-        "arxiv-nonexclusive"
-      ],
-      "effective_source": "arxiv_oai",
-      "tier": "custom_or_arxiv",
-      "has_conflict": false,
-      "sources": {
-        "openalex_locations": [],
-        "tex_source": [],
-        "arxiv_oai": [
-          "arxiv-nonexclusive"
-        ],
-        "pdf_metadata": []
-      }
-    },
-    "discovery": {
-      "methods": [
-        "citation_hop_2",
-        "arxiv_kw:Signal Temporal Logic",
-        "openalex_kw:Signal Temporal Logic"
-      ],
-      "hop_distance": 2,
-      "parent_ids": [
-        "W1224639136",
-        "W2068619069",
-        "W2470448410",
-        "W2606486293",
-        "W2757813108"
-      ]
-    },
-    "formula_estimates": {
-      "concrete": 5,
-      "symbolic": 13,
-      "formulas_concrete": 4,
-      "formulas_symbolic": 10
     }
   },
   "W3185752730": {
@@ -106173,10 +105855,10 @@
         "W2339807279",
         "W2474788619",
         "W2616554232",
+        "W2751570560",
         "W2788693738",
         "W2795506272",
         "W2807161818",
-        "W2903656432",
         "W2912432686",
         "W2930654751",
         "W2962741219",
@@ -107153,67 +106835,6 @@
       ]
     }
   },
-  "W7171993220": {
-    "paper_id": "W7171993220",
-    "openalex_id": "https://openalex.org/W7171993220",
-    "arxiv_id": "2206.14590",
-    "doi": "https://doi.org/10.1007/s10703-026-00498-5",
-    "title": "Efficient monitoring of timed properties",
-    "year": 2026,
-    "cited_by_count": 0,
-    "is_oa": true,
-    "urls": {
-      "eprint_source": "https://export.arxiv.org/e-print/2206.14590",
-      "pdf_mirrors": [
-        "https://link.springer.com/content/pdf/10.1007/s10703-026-00498-5.pdf"
-      ]
-    },
-    "local_files": {
-      "status": "downloaded_latex",
-      "path": "data/raw/latex/W7171993220"
-    },
-    "license_info": {
-      "effective_license": "cc0",
-      "effective_licenses_all": [
-        "cc0"
-      ],
-      "effective_source": "arxiv_oai",
-      "tier": "permissive_cc",
-      "has_conflict": true,
-      "sources": {
-        "openalex_locations": [
-          "cc-by"
-        ],
-        "tex_source": [],
-        "arxiv_oai": [
-          "cc0"
-        ],
-        "pdf_metadata": []
-      }
-    },
-    "discovery": {
-      "methods": [
-        "citation_hop_2",
-        "openalex_kw:Metric Temporal Logic"
-      ],
-      "hop_distance": 2,
-      "parent_ids": [
-        "W1483606732",
-        "W1535889317",
-        "W2027769154",
-        "W2400705866",
-        "W3092534483",
-        "W3096990961",
-        "W6669264"
-      ]
-    },
-    "formula_estimates": {
-      "concrete": 29,
-      "symbolic": 9,
-      "formulas_concrete": 20,
-      "formulas_symbolic": 9
-    }
-  },
   "W4392042275": {
     "paper_id": "W4392042275",
     "openalex_id": "https://openalex.org/W4392042275",
@@ -107639,9 +107260,9 @@
       "hop_distance": 2,
       "parent_ids": [
         "W2131399618",
-        "W2467659428",
         "W2604347212",
         "W2796878315",
+        "W4283212640",
         "W618708471"
       ]
     },
@@ -107849,7 +107470,7 @@
       "hop_distance": 2,
       "parent_ids": [
         "W2101623441",
-        "W2903656432",
+        "W2751570560",
         "W3090131141",
         "W3092534483",
         "W828139470"
@@ -108065,6 +107686,7 @@
         "W2785700716",
         "W2963178026",
         "W3000408052",
+        "W3103842254",
         "W3113301275"
       ]
     },
@@ -108073,7 +107695,10 @@
       "symbolic": 6,
       "formulas_concrete": 15,
       "formulas_symbolic": 5
-    }
+    },
+    "alternate_ids": [
+      "W3198952749"
+    ]
   },
   "W4391871279": {
     "paper_id": "W4391871279",
@@ -108549,6 +108174,7 @@
     "urls": {
       "eprint_source": "https://export.arxiv.org/e-print/1606.08514",
       "pdf_mirrors": [
+        "https://arxiv.org/pdf/1606.08514",
         "https://dl.acm.org/doi/pdf/10.1145/3503914"
       ]
     },
@@ -108566,6 +108192,7 @@
       "has_conflict": true,
       "sources": {
         "openalex_locations": [
+          "arxiv-nonexclusive",
           "cc-by"
         ],
         "tex_source": [],
@@ -108578,21 +108205,30 @@
     "discovery": {
       "methods": [
         "citation_hop_2",
-        "openalex_kw:Metric Temporal Logic"
+        "openalex_kw:Metric Temporal Logic",
+        "citation_hop_1"
       ],
-      "hop_distance": 2,
+      "hop_distance": 1,
       "parent_ids": [
+        "W1547304883",
         "W1900583228",
         "W2112656403",
         "W2911738095"
-      ]
+      ],
+      "expanded_hop_2": true
     },
     "formula_estimates": {
       "concrete": 0,
       "symbolic": 0,
       "formulas_concrete": 0,
       "formulas_symbolic": 0
-    }
+    },
+    "alternate_ids": [
+      "W2467659428"
+    ],
+    "alternate_dois": [
+      "https://doi.org/10.48550/arxiv.1606.08514"
+    ]
   },
   "W3109353270": {
     "paper_id": "W3109353270",
@@ -111978,8 +111614,8 @@
       "hop_distance": 2,
       "parent_ids": [
         "W2254640530",
-        "W2467659428",
-        "W2470448410"
+        "W2470448410",
+        "W4283212640"
       ]
     },
     "formula_estimates": {
@@ -115767,8 +115403,8 @@
       ],
       "hop_distance": 2,
       "parent_ids": [
-        "W2467659428",
-        "W2470448410"
+        "W2470448410",
+        "W4283212640"
       ]
     }
   },
@@ -115872,8 +115508,8 @@
         "W172589331",
         "W2113818300",
         "W216834189",
-        "W2467659428",
         "W2752666516",
+        "W4283212640",
         "W618708471",
         "W828139470"
       ]
@@ -117461,60 +117097,6 @@
       ],
       "hop_distance": 2,
       "parent_ids": []
-    },
-    "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0,
-      "formulas_concrete": 0,
-      "formulas_symbolic": 0
-    }
-  },
-  "W3126786011": {
-    "paper_id": "W3126786011",
-    "openalex_id": "https://openalex.org/W3126786011",
-    "arxiv_id": "2101.10284",
-    "doi": "https://doi.org/10.48550/arxiv.2101.10284",
-    "title": "Reinforcement Learning Based Temporal Logic Control with Soft Constraints Using Limit-deterministic Generalized Buchi Automata",
-    "year": 2021,
-    "cited_by_count": 5,
-    "is_oa": true,
-    "urls": {
-      "eprint_source": "https://export.arxiv.org/e-print/2101.10284",
-      "pdf_mirrors": [
-        "https://arxiv.org/pdf/2101.10284"
-      ]
-    },
-    "local_files": {
-      "status": "downloaded_latex",
-      "path": "data/raw/latex/W3126786011"
-    },
-    "license_info": {
-      "effective_license": "arxiv-nonexclusive",
-      "effective_licenses_all": [
-        "arxiv-nonexclusive"
-      ],
-      "effective_source": "arxiv_oai",
-      "tier": "custom_or_arxiv",
-      "has_conflict": false,
-      "sources": {
-        "openalex_locations": [],
-        "tex_source": [],
-        "arxiv_oai": [
-          "arxiv-nonexclusive"
-        ],
-        "pdf_metadata": []
-      }
-    },
-    "discovery": {
-      "methods": [
-        "citation_hop_2"
-      ],
-      "hop_distance": 2,
-      "parent_ids": [
-        "W2524638160",
-        "W2951796861",
-        "W2995074243"
-      ]
     },
     "formula_estimates": {
       "concrete": 0,
@@ -121671,8 +121253,8 @@
       "hop_distance": 2,
       "parent_ids": [
         "W2131399618",
-        "W2467659428",
-        "W2796878315"
+        "W2796878315",
+        "W4283212640"
       ]
     },
     "formula_estimates": {
@@ -124874,7 +124456,7 @@
       "hop_distance": 2,
       "parent_ids": [
         "W1506101803",
-        "W2467659428"
+        "W4283212640"
       ]
     },
     "formula_estimates": {
@@ -125035,8 +124617,8 @@
       "parent_ids": [
         "W1506101803",
         "W2039287452",
-        "W2467659428",
-        "W2796878315"
+        "W2796878315",
+        "W4283212640"
       ]
     },
     "formula_estimates": {
@@ -128616,8 +128198,17 @@
       ],
       "hop_distance": 2,
       "parent_ids": [
+        "W1762537806",
+        "W1796872423",
+        "W181236562",
+        "W1972402079",
+        "W2086359741",
         "W2339807279",
-        "W2807161818"
+        "W2474788619",
+        "W2807161818",
+        "W2956034981",
+        "W371510500",
+        "W4226341073"
       ]
     },
     "formula_estimates": {
@@ -128625,7 +128216,13 @@
       "symbolic": 0,
       "formulas_concrete": 0,
       "formulas_symbolic": 0
-    }
+    },
+    "alternate_ids": [
+      "W7118331469"
+    ],
+    "alternate_dois": [
+      "https://doi.org/10.1007/s10703-025-00489-y"
+    ]
   },
   "W4378528358": {
     "paper_id": "W4378528358",
@@ -128910,8 +128507,8 @@
       "parent_ids": [
         "W1972402079",
         "W2235028240",
-        "W2467659428",
-        "W2798501942"
+        "W2798501942",
+        "W4283212640"
       ]
     },
     "formula_estimates": {
@@ -130540,6 +130137,7 @@
     "urls": {
       "eprint_source": "https://export.arxiv.org/e-print/2212.04156",
       "pdf_mirrors": [
+        "https://arxiv.org/pdf/2212.04156",
         "https://pmc.ncbi.nlm.nih.gov/articles/PMC10776857/pdf/41467_2024_Article_44694.pdf",
         "https://www.nature.com/articles/s41467-024-44694-5.pdf"
       ]
@@ -130558,6 +130156,7 @@
       "has_conflict": true,
       "sources": {
         "openalex_locations": [
+          "arxiv-nonexclusive",
           "cc-by",
           "cc-by-sa"
         ],
@@ -130571,12 +130170,16 @@
     "discovery": {
       "methods": [
         "citation_hop_2",
-        "openalex_kw:Metric Temporal Logic"
+        "openalex_kw:Metric Temporal Logic",
+        "citation_hop_1"
       ],
-      "hop_distance": 2,
+      "hop_distance": 1,
       "parent_ids": [
+        "W1547304883",
+        "W2049399166",
         "W2749567864",
         "W2970963308",
+        "W2980133010",
         "W3045543478",
         "W3140654866",
         "W3195336386",
@@ -130589,7 +130192,13 @@
       "symbolic": 0,
       "formulas_concrete": 0,
       "formulas_symbolic": 0
-    }
+    },
+    "alternate_ids": [
+      "W4310998906"
+    ],
+    "alternate_dois": [
+      "https://doi.org/10.48550/arxiv.2212.04156"
+    ]
   },
   "W4393870967": {
     "paper_id": "W4393870967",
@@ -138687,7 +138296,7 @@
       "hop_distance": 2,
       "parent_ids": [
         "W2256658272",
-        "W2467659428"
+        "W4283212640"
       ]
     },
     "formula_estimates": {
@@ -144269,7 +143878,7 @@
         "W1900583228",
         "W1933146504",
         "W2095274657",
-        "W2467659428"
+        "W4283212640"
       ]
     }
   },
@@ -144371,10 +143980,10 @@
       "hop_distance": 2,
       "parent_ids": [
         "W172589331",
-        "W2467659428",
         "W2604347212",
         "W2797213222",
-        "W2963003663"
+        "W2963003663",
+        "W4283212640"
       ]
     },
     "formula_estimates": {
@@ -145827,10 +145436,12 @@
     "title": "Adaptive Stress Testing with Reward Augmentation for Autonomous Vehicle Validatio",
     "year": 2019,
     "cited_by_count": 93,
-    "is_oa": false,
+    "is_oa": true,
     "urls": {
       "eprint_source": "https://export.arxiv.org/e-print/1908.01046",
-      "pdf_mirrors": []
+      "pdf_mirrors": [
+        "https://arxiv.org/pdf/1908.01046"
+      ]
     },
     "local_files": {
       "status": "downloaded_latex",
@@ -145867,7 +145478,13 @@
       "symbolic": 0,
       "formulas_concrete": 0,
       "formulas_symbolic": 0
-    }
+    },
+    "alternate_ids": [
+      "W2966688529"
+    ],
+    "alternate_dois": [
+      "https://doi.org/10.48550/arxiv.1908.01046"
+    ]
   },
   "W4404292504": {
     "paper_id": "W4404292504",
@@ -148493,12 +148110,12 @@
       ],
       "hop_distance": 2,
       "parent_ids": [
-        "W2467659428",
         "W2796878315",
         "W2907789142",
         "W2913362569",
         "W2914605630",
-        "W2965407852"
+        "W2965407852",
+        "W4283212640"
       ]
     },
     "formula_estimates": {
@@ -148917,6 +148534,7 @@
     "urls": {
       "eprint_source": "https://export.arxiv.org/e-print/2106.04823",
       "pdf_mirrors": [
+        "https://arxiv.org/pdf/2106.04823.pdf",
         "https://dl.acm.org/doi/pdf/10.1145/3551385"
       ]
     },
@@ -148949,9 +148567,9 @@
       ],
       "hop_distance": 2,
       "parent_ids": [
-        "W2467659428",
         "W2604347212",
-        "W2785700716"
+        "W2785700716",
+        "W4283212640"
       ]
     },
     "formula_estimates": {
@@ -148959,7 +148577,10 @@
       "symbolic": 0,
       "formulas_concrete": 0,
       "formulas_symbolic": 0
-    }
+    },
+    "alternate_ids": [
+      "W3168689329"
+    ]
   },
   "W3166160117": {
     "paper_id": "W3166160117",
@@ -153019,8 +152640,8 @@
       ],
       "hop_distance": 2,
       "parent_ids": [
-        "W2467659428",
-        "W2797213222"
+        "W2797213222",
+        "W4283212640"
       ]
     },
     "formula_estimates": {
@@ -159512,14 +159133,14 @@
       "hop_distance": 2,
       "parent_ids": [
         "W2256658272",
-        "W2467659428",
         "W2573662064",
         "W2617250276",
         "W2752666516",
         "W2765356358",
         "W2900065648",
         "W2946458591",
-        "W4230569261"
+        "W4230569261",
+        "W4283212640"
       ]
     },
     "formula_estimates": {
@@ -161261,10 +160882,12 @@
     "title": "Reactive Task Allocation and Planning for Quadrupedal and Wheeled Robot Teaming",
     "year": 2022,
     "cited_by_count": 27,
-    "is_oa": false,
+    "is_oa": true,
     "urls": {
       "eprint_source": "https://export.arxiv.org/e-print/2110.08436",
-      "pdf_mirrors": []
+      "pdf_mirrors": [
+        "https://arxiv.org/pdf/2110.08436.pdf"
+      ]
     },
     "local_files": {
       "status": "downloaded_latex",
@@ -161303,7 +160926,10 @@
       "symbolic": 0,
       "formulas_concrete": 0,
       "formulas_symbolic": 0
-    }
+    },
+    "alternate_ids": [
+      "W3205981925"
+    ]
   },
   "W4383872698": {
     "paper_id": "W4383872698",
@@ -162090,6 +161716,7 @@
     "urls": {
       "eprint_source": "https://export.arxiv.org/e-print/2105.12322",
       "pdf_mirrors": [
+        "https://arxiv.org/pdf/2105.12322",
         "https://link.springer.com/content/pdf/10.1007/978-3-030-81688-9_26.pdf"
       ]
     },
@@ -162132,7 +161759,13 @@
       "symbolic": 0,
       "formulas_concrete": 0,
       "formulas_symbolic": 0
-    }
+    },
+    "alternate_ids": [
+      "W3165766789"
+    ],
+    "alternate_dois": [
+      "https://doi.org/10.48550/arxiv.2105.12322"
+    ]
   },
   "W3210861643": {
     "paper_id": "W3210861643",
@@ -167279,8 +166912,8 @@
       "hop_distance": 2,
       "parent_ids": [
         "W1933146504",
-        "W2467659428",
-        "W2797213222"
+        "W2797213222",
+        "W4283212640"
       ]
     }
   },
@@ -174963,20 +174596,20 @@
     "urls": {
       "eprint_source": "https://export.arxiv.org/e-print/2108.07134",
       "pdf_mirrors": [
+        "https://arxiv.org/pdf/2108.07134v2",
         "https://link.springer.com/chapter/10.1007/978-3-030-88494-9_7"
       ]
     },
     "local_files": {
-      "status": "unavailable",
-      "path": null,
-      "failure_reason": "PDF Mirrors: HTML Landing Page (Not a %PDF file)"
+      "status": "downloaded_pdf",
+      "path": "data/raw/pdfs/W3208913200.pdf"
     },
     "license_info": {
-      "effective_license": "other-oa",
+      "effective_license": "arxiv-nonexclusive",
       "effective_licenses_all": [
-        "other-oa"
+        "arxiv-nonexclusive"
       ],
-      "effective_source": "openalex_locations",
+      "effective_source": "arxiv_oai",
       "tier": "custom_or_arxiv",
       "has_conflict": false,
       "sources": {
@@ -174984,7 +174617,9 @@
           "other-oa"
         ],
         "tex_source": [],
-        "arxiv_oai": [],
+        "arxiv_oai": [
+          "arxiv-nonexclusive"
+        ],
         "pdf_metadata": []
       }
     },
@@ -175001,6 +174636,15 @@
         "W3081262891",
         "W3154370202"
       ]
+    },
+    "alternate_ids": [
+      "W3194667842"
+    ],
+    "formula_estimates": {
+      "concrete": 1,
+      "symbolic": 0,
+      "formulas_concrete": 1,
+      "formulas_symbolic": 0
     }
   },
   "W2884955533": {
@@ -181674,9 +181318,9 @@
       ],
       "hop_distance": 2,
       "parent_ids": [
-        "W2467659428",
         "W2797213222",
-        "W2946458591"
+        "W2946458591",
+        "W4283212640"
       ]
     },
     "formula_estimates": {
@@ -182097,10 +181741,10 @@
         "W2039287452",
         "W2131399618",
         "W2172184261",
-        "W2467659428",
         "W2972445899",
         "W3090137276",
-        "W3119572193"
+        "W3119572193",
+        "W4283212640"
       ]
     },
     "formula_estimates": {
@@ -183495,7 +183139,7 @@
       "hop_distance": 2,
       "parent_ids": [
         "W2101623441",
-        "W2467659428"
+        "W4283212640"
       ]
     },
     "formula_estimates": {
@@ -193707,11 +193351,11 @@
       "parent_ids": [
         "W1900583228",
         "W1933146504",
-        "W2467659428",
         "W2796878315",
         "W2905586589",
         "W2944759097",
-        "W2961558634"
+        "W2961558634",
+        "W4283212640"
       ]
     },
     "formula_estimates": {
@@ -200089,13 +199733,14 @@
     "title": "Runtime Verification",
     "year": 2022,
     "cited_by_count": 11,
-    "is_oa": false,
+    "is_oa": true,
     "urls": {
       "eprint_source": "https://export.arxiv.org/e-print/2011.13344",
       "pdf_mirrors": [
         "https://arxiv.org/pdf/2011.13344",
         "https://doi.org/10.1007/978-3-030-03769-7",
-        "https://doi.org/10.1007/978-3-030-32079-9"
+        "https://doi.org/10.1007/978-3-030-32079-9",
+        "https://figshare.com/articles/conference_contribution/Automatic_Optimizations_for_Stream-based_Monitoring_Languages/24613302"
       ]
     },
     "local_files": {
@@ -200133,10 +199778,16 @@
         "W2522351640",
         "W2752140520",
         "W2752666516",
+        "W2767407758",
         "W2888811801",
         "W2899781265",
         "W2899959124",
         "W2961558634",
+        "W2979502960",
+        "W3016768049",
+        "W3092507083",
+        "W3092534483",
+        "W3092649410",
         "W3202302376",
         "W3202468961",
         "W3205487340",
@@ -200148,7 +199799,13 @@
       "symbolic": 0,
       "formulas_concrete": 0,
       "formulas_symbolic": 0
-    }
+    },
+    "alternate_ids": [
+      "W3092386702"
+    ],
+    "alternate_dois": [
+      "https://doi.org/10.1007/978-3-030-60508-7_25"
+    ]
   },
   "W4313563892": {
     "paper_id": "W4313563892",
@@ -202077,11 +201734,12 @@
     "doi": "https://doi.org/10.1016/j.jai.2024.12.005",
     "title": "Reinforcement learning with soft temporal logic constraints using limit-deterministic generalized Büchi automaton",
     "year": 2024,
-    "cited_by_count": 4,
+    "cited_by_count": 5,
     "is_oa": true,
     "urls": {
       "eprint_source": "https://export.arxiv.org/e-print/2101.10284",
       "pdf_mirrors": [
+        "https://arxiv.org/pdf/2101.10284",
         "https://doi.org/10.1016/j.jai.2024.12.005"
       ]
     },
@@ -202128,7 +201786,13 @@
       "symbolic": 0,
       "formulas_concrete": 0,
       "formulas_symbolic": 0
-    }
+    },
+    "alternate_ids": [
+      "W3126786011"
+    ],
+    "alternate_dois": [
+      "https://doi.org/10.48550/arxiv.2101.10284"
+    ]
   },
   "W4406857335": {
     "paper_id": "W4406857335",
@@ -206786,6 +206450,7 @@
     "urls": {
       "eprint_source": "https://export.arxiv.org/e-print/1507.06248",
       "pdf_mirrors": [
+        "https://arxiv.org/pdf/1507.06248",
         "https://doi.org/10.1016/j.ifacol.2015.11.144"
       ]
     },
@@ -206825,7 +206490,13 @@
       "symbolic": 0,
       "formulas_concrete": 0,
       "formulas_symbolic": 0
-    }
+    },
+    "alternate_ids": [
+      "W965675865"
+    ],
+    "alternate_dois": [
+      "https://doi.org/10.48550/arxiv.1507.06248"
+    ]
   },
   "W2967392653": {
     "paper_id": "W2967392653",
@@ -211927,10 +211598,12 @@
     "title": "Formal Verification of Cyber-Physical Systems Using Theorem Proving",
     "year": 2020,
     "cited_by_count": 5,
-    "is_oa": false,
+    "is_oa": true,
     "urls": {
       "eprint_source": "https://export.arxiv.org/e-print/2003.03729",
-      "pdf_mirrors": []
+      "pdf_mirrors": [
+        "https://arxiv.org/pdf/2003.03729"
+      ]
     },
     "local_files": {
       "status": "downloaded_latex",
@@ -211967,7 +211640,13 @@
       "symbolic": 0,
       "formulas_concrete": 0,
       "formulas_symbolic": 0
-    }
+    },
+    "alternate_ids": [
+      "W3009531204"
+    ],
+    "alternate_dois": [
+      "https://doi.org/10.48550/arxiv.2003.03729"
+    ]
   },
   "W3115326217": {
     "paper_id": "W3115326217",
@@ -212558,12 +212237,13 @@
     "title": "Monitoring Timed Properties (Revisited)",
     "year": 2022,
     "cited_by_count": 5,
-    "is_oa": false,
+    "is_oa": true,
     "urls": {
       "eprint_source": "https://export.arxiv.org/e-print/2206.14590",
       "pdf_mirrors": [
         "http://arxiv.org/pdf/2206.14590.pdf",
-        "https://arxiv.org/pdf/2206.14590"
+        "https://arxiv.org/pdf/2206.14590",
+        "https://link.springer.com/content/pdf/10.1007/s10703-026-00498-5.pdf"
       ]
     },
     "local_files": {
@@ -212580,6 +212260,7 @@
       "has_conflict": true,
       "sources": {
         "openalex_locations": [
+          "cc-by",
           "public-domain"
         ],
         "tex_source": [],
@@ -212596,10 +212277,13 @@
       ],
       "hop_distance": 2,
       "parent_ids": [
+        "W1483606732",
         "W1535889317",
         "W16991763",
         "W2027769154",
+        "W2400705866",
         "W3092534483",
+        "W3096990961",
         "W6669264"
       ]
     },
@@ -212608,7 +212292,13 @@
       "symbolic": 9,
       "formulas_concrete": 20,
       "formulas_symbolic": 9
-    }
+    },
+    "alternate_ids": [
+      "W7171993220"
+    ],
+    "alternate_dois": [
+      "https://doi.org/10.1007/s10703-026-00498-5"
+    ]
   },
   "W4296472522": {
     "paper_id": "W4296472522",
@@ -244363,58 +244053,6 @@
       "formulas_symbolic": 0
     }
   },
-  "W2966688529": {
-    "paper_id": "W2966688529",
-    "openalex_id": "https://openalex.org/W2966688529",
-    "arxiv_id": "1908.01046",
-    "doi": "https://doi.org/10.48550/arxiv.1908.01046",
-    "title": "Adaptive Stress Testing with Reward Augmentation for Autonomous Vehicle Validation",
-    "year": 2019,
-    "cited_by_count": 21,
-    "is_oa": true,
-    "urls": {
-      "eprint_source": "https://export.arxiv.org/e-print/1908.01046",
-      "pdf_mirrors": [
-        "https://arxiv.org/pdf/1908.01046"
-      ]
-    },
-    "local_files": {
-      "status": "downloaded_latex",
-      "path": "data/raw/latex/W2966688529"
-    },
-    "license_info": {
-      "effective_license": "arxiv-nonexclusive",
-      "effective_licenses_all": [
-        "arxiv-nonexclusive"
-      ],
-      "effective_source": "arxiv_oai",
-      "tier": "custom_or_arxiv",
-      "has_conflict": false,
-      "sources": {
-        "openalex_locations": [],
-        "tex_source": [],
-        "arxiv_oai": [
-          "arxiv-nonexclusive"
-        ],
-        "pdf_metadata": []
-      }
-    },
-    "discovery": {
-      "methods": [
-        "citation_hop_2"
-      ],
-      "hop_distance": 2,
-      "parent_ids": [
-        "W2797213222"
-      ]
-    },
-    "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0,
-      "formulas_concrete": 0,
-      "formulas_symbolic": 0
-    }
-  },
   "W4214722091": {
     "paper_id": "W4214722091",
     "openalex_id": "https://openalex.org/W4214722091",
@@ -244705,9 +244343,9 @@
       "hop_distance": 2,
       "parent_ids": [
         "W2131399618",
-        "W2467659428",
         "W2796878315",
         "W2797213222",
+        "W4283212640",
         "W618708471"
       ]
     },
@@ -245167,60 +244805,6 @@
         "W2564317698",
         "W2797213222",
         "W618136976"
-      ]
-    },
-    "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0,
-      "formulas_concrete": 0,
-      "formulas_symbolic": 0
-    }
-  },
-  "W3168689329": {
-    "paper_id": "W3168689329",
-    "openalex_id": "https://openalex.org/W3168689329",
-    "arxiv_id": "2106.04823",
-    "doi": null,
-    "title": "Practical Machine Learning Safety: A Survey and Primer",
-    "year": 2021,
-    "cited_by_count": 8,
-    "is_oa": true,
-    "urls": {
-      "eprint_source": "https://export.arxiv.org/e-print/2106.04823",
-      "pdf_mirrors": [
-        "https://arxiv.org/pdf/2106.04823.pdf"
-      ]
-    },
-    "local_files": {
-      "status": "downloaded_latex",
-      "path": "data/raw/latex/W3168689329"
-    },
-    "license_info": {
-      "effective_license": "arxiv-nonexclusive",
-      "effective_licenses_all": [
-        "arxiv-nonexclusive"
-      ],
-      "effective_source": "arxiv_oai",
-      "tier": "custom_or_arxiv",
-      "has_conflict": false,
-      "sources": {
-        "openalex_locations": [],
-        "tex_source": [],
-        "arxiv_oai": [
-          "arxiv-nonexclusive"
-        ],
-        "pdf_metadata": []
-      }
-    },
-    "discovery": {
-      "methods": [
-        "citation_hop_2"
-      ],
-      "hop_distance": 2,
-      "parent_ids": [
-        "W2467659428",
-        "W2604347212",
-        "W2785700716"
       ]
     },
     "formula_estimates": {
@@ -245753,61 +245337,6 @@
       "formulas_symbolic": 0
     }
   },
-  "W3045834210": {
-    "paper_id": "W3045834210",
-    "openalex_id": "https://openalex.org/W3045834210",
-    "arxiv_id": "2007.14325",
-    "doi": null,
-    "title": "Optimal Probabilistic Motion Planning with Partially Infeasible LTL Constraints.",
-    "year": 2020,
-    "cited_by_count": 5,
-    "is_oa": true,
-    "urls": {
-      "eprint_source": "https://export.arxiv.org/e-print/2007.14325",
-      "pdf_mirrors": [
-        "http://export.arxiv.org/pdf/2007.14325"
-      ]
-    },
-    "local_files": {
-      "status": "downloaded_latex",
-      "path": "data/raw/latex/W3045834210"
-    },
-    "license_info": {
-      "effective_license": "arxiv-nonexclusive",
-      "effective_licenses_all": [
-        "arxiv-nonexclusive"
-      ],
-      "effective_source": "arxiv_oai",
-      "tier": "custom_or_arxiv",
-      "has_conflict": false,
-      "sources": {
-        "openalex_locations": [],
-        "tex_source": [],
-        "arxiv_oai": [
-          "arxiv-nonexclusive"
-        ],
-        "pdf_metadata": []
-      }
-    },
-    "discovery": {
-      "methods": [
-        "citation_hop_2"
-      ],
-      "hop_distance": 2,
-      "parent_ids": [
-        "W2804655496",
-        "W2911738095",
-        "W2951796861",
-        "W3161433433"
-      ]
-    },
-    "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0,
-      "formulas_concrete": 0,
-      "formulas_symbolic": 0
-    }
-  },
   "W3086476907": {
     "paper_id": "W3086476907",
     "openalex_id": "https://openalex.org/W3086476907",
@@ -246328,59 +245857,6 @@
       "parent_ids": [
         "W172589331",
         "W2604347212"
-      ]
-    },
-    "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0,
-      "formulas_concrete": 0,
-      "formulas_symbolic": 0
-    }
-  },
-  "W3198607174": {
-    "paper_id": "W3198607174",
-    "openalex_id": "https://openalex.org/W3198607174",
-    "arxiv_id": "2109.02791",
-    "doi": null,
-    "title": "Safety-Critical Modular Deep Reinforcement Learning with Temporal Logic through Gaussian Processes and Control Barrier Functions",
-    "year": 2021,
-    "cited_by_count": 4,
-    "is_oa": true,
-    "urls": {
-      "eprint_source": "https://export.arxiv.org/e-print/2109.02791",
-      "pdf_mirrors": [
-        "http://export.arxiv.org/pdf/2109.02791"
-      ]
-    },
-    "local_files": {
-      "status": "downloaded_latex",
-      "path": "data/raw/latex/W3198607174"
-    },
-    "license_info": {
-      "effective_license": "arxiv-nonexclusive",
-      "effective_licenses_all": [
-        "arxiv-nonexclusive"
-      ],
-      "effective_source": "arxiv_oai",
-      "tier": "custom_or_arxiv",
-      "has_conflict": false,
-      "sources": {
-        "openalex_locations": [],
-        "tex_source": [],
-        "arxiv_oai": [
-          "arxiv-nonexclusive"
-        ],
-        "pdf_metadata": []
-      }
-    },
-    "discovery": {
-      "methods": [
-        "citation_hop_2"
-      ],
-      "hop_distance": 2,
-      "parent_ids": [
-        "W2524638160",
-        "W2995074243"
       ]
     },
     "formula_estimates": {
@@ -247585,63 +247061,6 @@
       "formulas_symbolic": 0
     }
   },
-  "W3194667842": {
-    "paper_id": "W3194667842",
-    "openalex_id": "https://openalex.org/W3194667842",
-    "arxiv_id": "2108.07134",
-    "doi": null,
-    "title": "Neural Predictive Monitoring under Partial Observabilit",
-    "year": 2021,
-    "cited_by_count": 2,
-    "is_oa": true,
-    "urls": {
-      "eprint_source": "https://export.arxiv.org/e-print/2108.07134",
-      "pdf_mirrors": [
-        "https://arxiv.org/pdf/2108.07134v2"
-      ]
-    },
-    "local_files": {
-      "status": "downloaded_pdf",
-      "path": "data/raw/pdfs/W3194667842.pdf"
-    },
-    "license_info": {
-      "effective_license": "arxiv-nonexclusive",
-      "effective_licenses_all": [
-        "arxiv-nonexclusive"
-      ],
-      "effective_source": "arxiv_oai",
-      "tier": "custom_or_arxiv",
-      "has_conflict": false,
-      "sources": {
-        "openalex_locations": [],
-        "tex_source": [],
-        "arxiv_oai": [
-          "arxiv-nonexclusive"
-        ],
-        "pdf_metadata": []
-      }
-    },
-    "discovery": {
-      "methods": [
-        "citation_hop_2"
-      ],
-      "hop_distance": 2,
-      "parent_ids": [
-        "W172589331",
-        "W2157413433",
-        "W2785700716",
-        "W2978287595",
-        "W3081262891",
-        "W3154370202"
-      ]
-    },
-    "formula_estimates": {
-      "concrete": 1,
-      "symbolic": 0,
-      "formulas_concrete": 1,
-      "formulas_symbolic": 0
-    }
-  },
   "W4235006395": {
     "paper_id": "W4235006395",
     "openalex_id": "https://openalex.org/W4235006395",
@@ -248276,62 +247695,6 @@
       "hop_distance": 2,
       "parent_ids": [
         "W2797213222"
-      ]
-    },
-    "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0,
-      "formulas_concrete": 0,
-      "formulas_symbolic": 0
-    }
-  },
-  "W3165766789": {
-    "paper_id": "W3165766789",
-    "openalex_id": "https://openalex.org/W3165766789",
-    "arxiv_id": "2105.12322",
-    "doi": "https://doi.org/10.48550/arxiv.2105.12322",
-    "title": "Runtime Monitoring for Markov Decision Processes",
-    "year": 2021,
-    "cited_by_count": 1,
-    "is_oa": true,
-    "urls": {
-      "eprint_source": "https://export.arxiv.org/e-print/2105.12322",
-      "pdf_mirrors": [
-        "https://arxiv.org/pdf/2105.12322"
-      ]
-    },
-    "local_files": {
-      "status": "downloaded_latex",
-      "path": "data/raw/latex/W3165766789"
-    },
-    "license_info": {
-      "effective_license": "http://creativecommons.org/licenses/by/4.0/",
-      "effective_licenses_all": [
-        "http://creativecommons.org/licenses/by/4.0/"
-      ],
-      "effective_source": "arxiv_oai",
-      "tier": "custom_or_arxiv",
-      "has_conflict": true,
-      "sources": {
-        "openalex_locations": [
-          "cc-by"
-        ],
-        "tex_source": [],
-        "arxiv_oai": [
-          "http://creativecommons.org/licenses/by/4.0/"
-        ],
-        "pdf_metadata": []
-      }
-    },
-    "discovery": {
-      "methods": [
-        "citation_hop_2"
-      ],
-      "hop_distance": 2,
-      "parent_ids": [
-        "W2785700716",
-        "W2901580792",
-        "W2978287595"
       ]
     },
     "formula_estimates": {
@@ -252495,58 +251858,6 @@
       "formulas_symbolic": 0
     }
   },
-  "W3009531204": {
-    "paper_id": "W3009531204",
-    "openalex_id": "https://openalex.org/W3009531204",
-    "arxiv_id": "2003.03729",
-    "doi": "https://doi.org/10.48550/arxiv.2003.03729",
-    "title": "Formal Verification of Cyber-Physical Systems using Theorem Proving (Invited Paper)",
-    "year": 2020,
-    "cited_by_count": 0,
-    "is_oa": true,
-    "urls": {
-      "eprint_source": "https://export.arxiv.org/e-print/2003.03729",
-      "pdf_mirrors": [
-        "https://arxiv.org/pdf/2003.03729"
-      ]
-    },
-    "local_files": {
-      "status": "downloaded_latex",
-      "path": "data/raw/latex/W3009531204"
-    },
-    "license_info": {
-      "effective_license": "arxiv-nonexclusive",
-      "effective_licenses_all": [
-        "arxiv-nonexclusive"
-      ],
-      "effective_source": "arxiv_oai",
-      "tier": "custom_or_arxiv",
-      "has_conflict": false,
-      "sources": {
-        "openalex_locations": [],
-        "tex_source": [],
-        "arxiv_oai": [
-          "arxiv-nonexclusive"
-        ],
-        "pdf_metadata": []
-      }
-    },
-    "discovery": {
-      "methods": [
-        "citation_hop_2"
-      ],
-      "hop_distance": 2,
-      "parent_ids": [
-        "W175120007"
-      ]
-    },
-    "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0,
-      "formulas_concrete": 0,
-      "formulas_symbolic": 0
-    }
-  },
   "W3014369012": {
     "paper_id": "W3014369012",
     "openalex_id": "https://openalex.org/W3014369012",
@@ -254371,60 +253682,6 @@
         "W2899532715",
         "W4230569261"
       ]
-    }
-  },
-  "W3205981925": {
-    "paper_id": "W3205981925",
-    "openalex_id": "https://openalex.org/W3205981925",
-    "arxiv_id": "2110.08436",
-    "doi": null,
-    "title": "Reactive Task Allocation and Planning of A Heterogeneous Multi-Robot System.",
-    "year": 2021,
-    "cited_by_count": 0,
-    "is_oa": true,
-    "urls": {
-      "eprint_source": "https://export.arxiv.org/e-print/2110.08436",
-      "pdf_mirrors": [
-        "https://arxiv.org/pdf/2110.08436.pdf"
-      ]
-    },
-    "local_files": {
-      "status": "downloaded_latex",
-      "path": "data/raw/latex/W3205981925"
-    },
-    "license_info": {
-      "effective_license": "cc-by-nc-sa",
-      "effective_licenses_all": [
-        "cc-by-nc-sa"
-      ],
-      "effective_source": "arxiv_oai",
-      "tier": "restricted_cc",
-      "has_conflict": false,
-      "sources": {
-        "openalex_locations": [],
-        "tex_source": [],
-        "arxiv_oai": [
-          "cc-by-nc-sa"
-        ],
-        "pdf_metadata": []
-      }
-    },
-    "discovery": {
-      "methods": [
-        "citation_hop_2"
-      ],
-      "hop_distance": 2,
-      "parent_ids": [
-        "W2804655496",
-        "W2899953468",
-        "W3089553867"
-      ]
-    },
-    "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0,
-      "formulas_concrete": 0,
-      "formulas_symbolic": 0
     }
   },
   "W3208656554": {
@@ -263959,68 +263216,6 @@
       ]
     }
   },
-  "W7118331469": {
-    "paper_id": "W7118331469",
-    "openalex_id": "https://openalex.org/W7118331469",
-    "arxiv_id": "2110.06726",
-    "doi": "https://doi.org/10.1007/s10703-025-00489-y",
-    "title": "A scalable anytime algorithm for learning fragments of linear temporal logic",
-    "year": 2026,
-    "cited_by_count": 0,
-    "is_oa": false,
-    "urls": {
-      "eprint_source": "https://export.arxiv.org/e-print/2110.06726",
-      "pdf_mirrors": [
-        "http://arxiv.org/pdf/2110.06726.pdf"
-      ]
-    },
-    "local_files": {
-      "status": "downloaded_latex",
-      "path": "data/raw/latex/W7118331469"
-    },
-    "license_info": {
-      "effective_license": "arxiv-nonexclusive",
-      "effective_licenses_all": [
-        "arxiv-nonexclusive"
-      ],
-      "effective_source": "arxiv_oai",
-      "tier": "custom_or_arxiv",
-      "has_conflict": false,
-      "sources": {
-        "openalex_locations": [],
-        "tex_source": [],
-        "arxiv_oai": [
-          "arxiv-nonexclusive"
-        ],
-        "pdf_metadata": []
-      }
-    },
-    "discovery": {
-      "methods": [
-        "citation_hop_2"
-      ],
-      "hop_distance": 2,
-      "parent_ids": [
-        "W1762537806",
-        "W1796872423",
-        "W181236562",
-        "W1972402079",
-        "W2086359741",
-        "W2339807279",
-        "W2474788619",
-        "W2807161818",
-        "W2956034981",
-        "W371510500",
-        "W4226341073"
-      ]
-    },
-    "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0,
-      "formulas_concrete": 0,
-      "formulas_symbolic": 0
-    }
-  },
   "W7123360816": {
     "paper_id": "W7123360816",
     "openalex_id": "https://openalex.org/W7123360816",
@@ -271411,6 +270606,7 @@
     "urls": {
       "eprint_source": "https://export.arxiv.org/e-print/1907.01216",
       "pdf_mirrors": [
+        "https://arxiv.org/pdf/1907.01216",
         "https://zenodo.org/record/4543862"
       ]
     },
@@ -271451,7 +270647,13 @@
       "symbolic": 0,
       "formulas_concrete": 0,
       "formulas_symbolic": 0
-    }
+    },
+    "alternate_ids": [
+      "W2954088888"
+    ],
+    "alternate_dois": [
+      "https://doi.org/10.48550/arxiv.1907.01216"
+    ]
   },
   "W4403371192": {
     "paper_id": "W4403371192",
@@ -272081,8 +271283,8 @@
       ],
       "hop_distance": 2,
       "parent_ids": [
-        "W2467659428",
-        "W2796878315"
+        "W2796878315",
+        "W4283212640"
       ]
     }
   },
@@ -273294,10 +272496,12 @@
     "title": "Ellipsotopes: Uniting Ellipsoids and Zonotopes for Reachability Analysis and Fault Detection",
     "year": 2022,
     "cited_by_count": 55,
-    "is_oa": false,
+    "is_oa": true,
     "urls": {
       "eprint_source": "https://export.arxiv.org/e-print/2108.01750",
-      "pdf_mirrors": []
+      "pdf_mirrors": [
+        "https://arxiv.org/pdf/2108.01750"
+      ]
     },
     "local_files": {
       "status": "downloaded_latex",
@@ -273334,7 +272538,13 @@
       "symbolic": 0,
       "formulas_concrete": 0,
       "formulas_symbolic": 0
-    }
+    },
+    "alternate_ids": [
+      "W3191843641"
+    ],
+    "alternate_dois": [
+      "https://doi.org/10.48550/arxiv.2108.01750"
+    ]
   },
   "W4292387351": {
     "paper_id": "W4292387351",
@@ -273486,10 +272696,12 @@
     "title": "Optimal Probabilistic Motion Planning With Potential Infeasible LTL Constraints",
     "year": 2021,
     "cited_by_count": 50,
-    "is_oa": false,
+    "is_oa": true,
     "urls": {
       "eprint_source": "https://export.arxiv.org/e-print/2007.14325",
-      "pdf_mirrors": []
+      "pdf_mirrors": [
+        "http://export.arxiv.org/pdf/2007.14325"
+      ]
     },
     "local_files": {
       "status": "downloaded_latex",
@@ -273518,6 +272730,7 @@
       ],
       "hop_distance": 2,
       "parent_ids": [
+        "W2804655496",
         "W2892537867",
         "W2911738095",
         "W2951796861",
@@ -273529,7 +272742,10 @@
       "symbolic": 0,
       "formulas_concrete": 0,
       "formulas_symbolic": 0
-    }
+    },
+    "alternate_ids": [
+      "W3045834210"
+    ]
   },
   "W3137786033": {
     "paper_id": "W3137786033",
@@ -282136,6 +281352,7 @@
     "urls": {
       "eprint_source": "https://export.arxiv.org/e-print/1811.05677",
       "pdf_mirrors": [
+        "https://arxiv.org/pdf/1811.05677",
         "https://link.springer.com/content/pdf/10.1007%2F978-3-030-17462-0_16.pdf"
       ]
     },
@@ -282180,7 +281397,13 @@
       "symbolic": 0,
       "formulas_concrete": 0,
       "formulas_symbolic": 0
-    }
+    },
+    "alternate_ids": [
+      "W2901943169"
+    ],
+    "alternate_dois": [
+      "https://doi.org/10.48550/arxiv.1811.05677"
+    ]
   },
   "W2170592382": {
     "paper_id": "W2170592382",
@@ -289333,10 +288556,12 @@
     "title": "Safety-Critical Learning of Robot Control With Temporal Logic Specifications",
     "year": 2025,
     "cited_by_count": 5,
-    "is_oa": false,
+    "is_oa": true,
     "urls": {
       "eprint_source": "https://export.arxiv.org/e-print/2109.02791",
-      "pdf_mirrors": []
+      "pdf_mirrors": [
+        "http://export.arxiv.org/pdf/2109.02791"
+      ]
     },
     "local_files": {
       "status": "downloaded_latex",
@@ -289365,6 +288590,7 @@
       ],
       "hop_distance": 2,
       "parent_ids": [
+        "W2524638160",
         "W2995074243"
       ]
     },
@@ -289373,7 +288599,10 @@
       "symbolic": 0,
       "formulas_concrete": 0,
       "formulas_symbolic": 0
-    }
+    },
+    "alternate_ids": [
+      "W3198607174"
+    ]
   },
   "W4414556916": {
     "paper_id": "W4414556916",
@@ -304351,8 +303580,8 @@
       ],
       "hop_distance": 2,
       "parent_ids": [
-        "W2467659428",
-        "W2796878315"
+        "W2796878315",
+        "W4283212640"
       ]
     },
     "formula_estimates": {
@@ -304453,58 +303682,6 @@
       "parent_ids": [
         "W4384521943"
       ]
-    }
-  },
-  "W2954088888": {
-    "paper_id": "W2954088888",
-    "openalex_id": "https://openalex.org/W2954088888",
-    "arxiv_id": "1907.01216",
-    "doi": "https://doi.org/10.48550/arxiv.1907.01216",
-    "title": "Efficient Cyber Attacks Detection in Industrial Control Systems Using Lightweight Neural Networks and PCA",
-    "year": 2019,
-    "cited_by_count": 11,
-    "is_oa": true,
-    "urls": {
-      "eprint_source": "https://export.arxiv.org/e-print/1907.01216",
-      "pdf_mirrors": [
-        "https://arxiv.org/pdf/1907.01216"
-      ]
-    },
-    "local_files": {
-      "status": "downloaded_latex",
-      "path": "data/raw/latex/W2954088888"
-    },
-    "license_info": {
-      "effective_license": "arxiv-nonexclusive",
-      "effective_licenses_all": [
-        "arxiv-nonexclusive"
-      ],
-      "effective_source": "arxiv_oai",
-      "tier": "custom_or_arxiv",
-      "has_conflict": false,
-      "sources": {
-        "openalex_locations": [],
-        "tex_source": [],
-        "arxiv_oai": [
-          "arxiv-nonexclusive"
-        ],
-        "pdf_metadata": []
-      }
-    },
-    "discovery": {
-      "methods": [
-        "citation_hop_2"
-      ],
-      "hop_distance": 2,
-      "parent_ids": [
-        "W2086359741"
-      ]
-    },
-    "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0,
-      "formulas_concrete": 0,
-      "formulas_symbolic": 0
     }
   },
   "W3026606204": {
@@ -304815,60 +303992,6 @@
       "parent_ids": [
         "W4403123342"
       ]
-    }
-  },
-  "W2901943169": {
-    "paper_id": "W2901943169",
-    "openalex_id": "https://openalex.org/W2901943169",
-    "arxiv_id": "1811.05677",
-    "doi": "https://doi.org/10.48550/arxiv.1811.05677",
-    "title": "VoxLogicA: a Spatial Model Checker for Declarative Image Analysis (Extended Version)",
-    "year": 2018,
-    "cited_by_count": 3,
-    "is_oa": true,
-    "urls": {
-      "eprint_source": "https://export.arxiv.org/e-print/1811.05677",
-      "pdf_mirrors": [
-        "https://arxiv.org/pdf/1811.05677"
-      ]
-    },
-    "local_files": {
-      "status": "downloaded_latex",
-      "path": "data/raw/latex/W2901943169"
-    },
-    "license_info": {
-      "effective_license": "arxiv-nonexclusive",
-      "effective_licenses_all": [
-        "arxiv-nonexclusive"
-      ],
-      "effective_source": "arxiv_oai",
-      "tier": "custom_or_arxiv",
-      "has_conflict": false,
-      "sources": {
-        "openalex_locations": [],
-        "tex_source": [],
-        "arxiv_oai": [
-          "arxiv-nonexclusive"
-        ],
-        "pdf_metadata": []
-      }
-    },
-    "discovery": {
-      "methods": [
-        "citation_hop_2"
-      ],
-      "hop_distance": 2,
-      "parent_ids": [
-        "W1705718777",
-        "W1974775743",
-        "W2473841607"
-      ]
-    },
-    "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0,
-      "formulas_concrete": 0,
-      "formulas_symbolic": 0
     }
   },
   "W2951582544": {
@@ -305186,58 +304309,6 @@
         "W2492473950",
         "W2568545994",
         "W2946780124"
-      ]
-    },
-    "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0,
-      "formulas_concrete": 0,
-      "formulas_symbolic": 0
-    }
-  },
-  "W3191843641": {
-    "paper_id": "W3191843641",
-    "openalex_id": "https://openalex.org/W3191843641",
-    "arxiv_id": "2108.01750",
-    "doi": "https://doi.org/10.48550/arxiv.2108.01750",
-    "title": "Ellipsotopes: Combining Ellipsoids and Zonotopes for Reachability Analysis and Fault Detection",
-    "year": 2021,
-    "cited_by_count": 2,
-    "is_oa": true,
-    "urls": {
-      "eprint_source": "https://export.arxiv.org/e-print/2108.01750",
-      "pdf_mirrors": [
-        "https://arxiv.org/pdf/2108.01750"
-      ]
-    },
-    "local_files": {
-      "status": "downloaded_latex",
-      "path": "data/raw/latex/W3191843641"
-    },
-    "license_info": {
-      "effective_license": "arxiv-nonexclusive",
-      "effective_licenses_all": [
-        "arxiv-nonexclusive"
-      ],
-      "effective_source": "arxiv_oai",
-      "tier": "custom_or_arxiv",
-      "has_conflict": false,
-      "sources": {
-        "openalex_locations": [],
-        "tex_source": [],
-        "arxiv_oai": [
-          "arxiv-nonexclusive"
-        ],
-        "pdf_metadata": []
-      }
-    },
-    "discovery": {
-      "methods": [
-        "citation_hop_2"
-      ],
-      "hop_distance": 2,
-      "parent_ids": [
-        "W2734705105"
       ]
     },
     "formula_estimates": {
@@ -335181,69 +334252,6 @@
       ]
     }
   },
-  "W3092386702": {
-    "paper_id": "W3092386702",
-    "openalex_id": "https://openalex.org/W3092386702",
-    "arxiv_id": "2011.13344",
-    "doi": "https://doi.org/10.1007/978-3-030-60508-7_25",
-    "title": "Automatic Optimizations for Stream-Based Monitoring Languages",
-    "year": 2020,
-    "cited_by_count": 5,
-    "is_oa": true,
-    "urls": {
-      "eprint_source": "https://export.arxiv.org/e-print/2011.13344",
-      "pdf_mirrors": [
-        "https://arxiv.org/pdf/2011.13344",
-        "https://figshare.com/articles/conference_contribution/Automatic_Optimizations_for_Stream-based_Monitoring_Languages/24613302"
-      ]
-    },
-    "local_files": {
-      "status": "downloaded_latex",
-      "path": "data/raw/latex/W3092386702"
-    },
-    "license_info": {
-      "effective_license": "arxiv-nonexclusive",
-      "effective_licenses_all": [
-        "arxiv-nonexclusive"
-      ],
-      "effective_source": "arxiv_oai",
-      "tier": "custom_or_arxiv",
-      "has_conflict": true,
-      "sources": {
-        "openalex_locations": [
-          "cc-by"
-        ],
-        "tex_source": [],
-        "arxiv_oai": [
-          "arxiv-nonexclusive"
-        ],
-        "pdf_metadata": []
-      }
-    },
-    "discovery": {
-      "methods": [
-        "citation_hop_2"
-      ],
-      "hop_distance": 2,
-      "parent_ids": [
-        "W2767407758",
-        "W2888811801",
-        "W2899781265",
-        "W2961558634",
-        "W2979502960",
-        "W3016768049",
-        "W3092507083",
-        "W3092534483",
-        "W3092649410"
-      ]
-    },
-    "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0,
-      "formulas_concrete": 0,
-      "formulas_symbolic": 0
-    }
-  },
   "W3174635176": {
     "paper_id": "W3174635176",
     "openalex_id": "https://openalex.org/W3174635176",
@@ -347330,10 +346338,12 @@
     "title": "Lattice-theoretic progress measures and coalgebraic model checking",
     "year": 2016,
     "cited_by_count": 22,
-    "is_oa": false,
+    "is_oa": true,
     "urls": {
       "eprint_source": "https://export.arxiv.org/e-print/1511.00346",
-      "pdf_mirrors": []
+      "pdf_mirrors": [
+        "https://arxiv.org/pdf/1511.00346"
+      ]
     },
     "local_files": {
       "status": "downloaded_latex",
@@ -347370,7 +346380,13 @@
       "symbolic": 0,
       "formulas_concrete": 0,
       "formulas_symbolic": 0
-    }
+    },
+    "alternate_ids": [
+      "W2231090241"
+    ],
+    "alternate_dois": [
+      "https://doi.org/10.48550/arxiv.1511.00346"
+    ]
   },
   "W4300362429": {
     "paper_id": "W4300362429",
@@ -356086,58 +355102,6 @@
       "formulas_symbolic": 0
     }
   },
-  "W2231090241": {
-    "paper_id": "W2231090241",
-    "openalex_id": "https://openalex.org/W2231090241",
-    "arxiv_id": "1511.00346",
-    "doi": "https://doi.org/10.48550/arxiv.1511.00346",
-    "title": "Lattice-Theoretic Progress Measures and Coalgebraic Model Checking (with Appendices)",
-    "year": 2015,
-    "cited_by_count": 2,
-    "is_oa": true,
-    "urls": {
-      "eprint_source": "https://export.arxiv.org/e-print/1511.00346",
-      "pdf_mirrors": [
-        "https://arxiv.org/pdf/1511.00346"
-      ]
-    },
-    "local_files": {
-      "status": "downloaded_latex",
-      "path": "data/raw/latex/W2231090241"
-    },
-    "license_info": {
-      "effective_license": "arxiv-nonexclusive",
-      "effective_licenses_all": [
-        "arxiv-nonexclusive"
-      ],
-      "effective_source": "arxiv_oai",
-      "tier": "custom_or_arxiv",
-      "has_conflict": false,
-      "sources": {
-        "openalex_locations": [],
-        "tex_source": [],
-        "arxiv_oai": [
-          "arxiv-nonexclusive"
-        ],
-        "pdf_metadata": []
-      }
-    },
-    "discovery": {
-      "methods": [
-        "citation_hop_2"
-      ],
-      "hop_distance": 2,
-      "parent_ids": [
-        "W1605697145"
-      ]
-    },
-    "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0,
-      "formulas_concrete": 0,
-      "formulas_symbolic": 0
-    }
-  },
   "W1211421570": {
     "paper_id": "W1211421570",
     "openalex_id": "https://openalex.org/W1211421570",
@@ -358582,7 +357546,7 @@
       ],
       "hop_distance": 2,
       "parent_ids": [
-        "W2903656432",
+        "W2751570560",
         "W3016768049"
       ]
     },
@@ -370165,7 +369129,13 @@
       "symbolic": 0,
       "formulas_concrete": 0,
       "formulas_symbolic": 0
-    }
+    },
+    "alternate_ids": [
+      "W3215711835"
+    ],
+    "alternate_dois": [
+      "https://doi.org/10.1109/icse-companion55297.2022.9793786"
+    ]
   },
   "W4317533142": {
     "paper_id": "W4317533142",
@@ -371055,10 +370025,12 @@
     "title": "State Estimation of Continuous-Time Dynamical Systems With Uncertain Inputs With Bounded Variation: Entropy, Bit Rates, and Relation With Switched Systems",
     "year": 2023,
     "cited_by_count": 8,
-    "is_oa": false,
+    "is_oa": true,
     "urls": {
       "eprint_source": "https://export.arxiv.org/e-print/2011.10496",
-      "pdf_mirrors": []
+      "pdf_mirrors": [
+        "https://arxiv.org/pdf/2011.10496.pdf"
+      ]
     },
     "local_files": {
       "status": "downloaded_latex",
@@ -371096,7 +370068,10 @@
       "symbolic": 0,
       "formulas_concrete": 0,
       "formulas_symbolic": 0
-    }
+    },
+    "alternate_ids": [
+      "W3109113436"
+    ]
   },
   "W3029050882": {
     "paper_id": "W3029050882",
@@ -372096,56 +371071,6 @@
         "W2934277896",
         "W3119924191"
       ]
-    }
-  },
-  "W3215711835": {
-    "paper_id": "W3215711835",
-    "openalex_id": "https://openalex.org/W3215711835",
-    "arxiv_id": "2111.13117",
-    "doi": "https://doi.org/10.1109/icse-companion55297.2022.9793786",
-    "title": "ESBMC-Solidity: An SMT-Based Model Checker for Solidity Smart Contracts",
-    "year": 2022,
-    "cited_by_count": 5,
-    "is_oa": false,
-    "urls": {
-      "eprint_source": "https://export.arxiv.org/e-print/2111.13117",
-      "pdf_mirrors": []
-    },
-    "local_files": {
-      "status": "downloaded_latex",
-      "path": "data/raw/latex/W3215711835"
-    },
-    "license_info": {
-      "effective_license": "arxiv-nonexclusive",
-      "effective_licenses_all": [
-        "arxiv-nonexclusive"
-      ],
-      "effective_source": "arxiv_oai",
-      "tier": "custom_or_arxiv",
-      "has_conflict": false,
-      "sources": {
-        "openalex_locations": [],
-        "tex_source": [],
-        "arxiv_oai": [
-          "arxiv-nonexclusive"
-        ],
-        "pdf_metadata": []
-      }
-    },
-    "discovery": {
-      "methods": [
-        "citation_hop_2"
-      ],
-      "hop_distance": 2,
-      "parent_ids": [
-        "W2966672852"
-      ]
-    },
-    "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0,
-      "formulas_concrete": 0,
-      "formulas_symbolic": 0
     }
   },
   "W4200117601": {
@@ -374501,59 +373426,6 @@
       "hop_distance": 2,
       "parent_ids": [
         "W87504467"
-      ]
-    },
-    "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0,
-      "formulas_concrete": 0,
-      "formulas_symbolic": 0
-    }
-  },
-  "W3109113436": {
-    "paper_id": "W3109113436",
-    "openalex_id": "https://openalex.org/W3109113436",
-    "arxiv_id": "2011.10496",
-    "doi": null,
-    "title": "State Estimation of Open Dynamical Systems with Slow Inputs: Entropy, Bit Rates, and relation with Switched Systems.",
-    "year": 2020,
-    "cited_by_count": 1,
-    "is_oa": true,
-    "urls": {
-      "eprint_source": "https://export.arxiv.org/e-print/2011.10496",
-      "pdf_mirrors": [
-        "https://arxiv.org/pdf/2011.10496.pdf"
-      ]
-    },
-    "local_files": {
-      "status": "downloaded_latex",
-      "path": "data/raw/latex/W3109113436"
-    },
-    "license_info": {
-      "effective_license": "arxiv-nonexclusive",
-      "effective_licenses_all": [
-        "arxiv-nonexclusive"
-      ],
-      "effective_source": "arxiv_oai",
-      "tier": "custom_or_arxiv",
-      "has_conflict": false,
-      "sources": {
-        "openalex_locations": [],
-        "tex_source": [],
-        "arxiv_oai": [
-          "arxiv-nonexclusive"
-        ],
-        "pdf_metadata": []
-      }
-    },
-    "discovery": {
-      "methods": [
-        "citation_hop_2"
-      ],
-      "hop_distance": 2,
-      "parent_ids": [
-        "W2474433838",
-        "W2774589618"
       ]
     },
     "formula_estimates": {
@@ -388112,9 +386984,9 @@
       ],
       "hop_distance": 2,
       "parent_ids": [
-        "W2467659428",
         "W2900065648",
-        "W2946458591"
+        "W2946458591",
+        "W4283212640"
       ]
     },
     "formula_estimates": {
@@ -392010,8 +390882,8 @@
       "hop_distance": 2,
       "parent_ids": [
         "W216834189",
-        "W2467659428",
-        "W2987585208"
+        "W2987585208",
+        "W4283212640"
       ]
     },
     "formula_estimates": {
@@ -394654,6 +393526,7 @@
     "urls": {
       "eprint_source": "https://export.arxiv.org/e-print/2111.05534",
       "pdf_mirrors": [
+        "https://arxiv.org/pdf/2111.05534.pdf",
         "https://ieeexplore.ieee.org/ielx7/43/9928799/09852797.pdf"
       ]
     },
@@ -394694,7 +393567,13 @@
       "symbolic": 0,
       "formulas_concrete": 0,
       "formulas_symbolic": 0
-    }
+    },
+    "alternate_ids": [
+      "W3214292605"
+    ],
+    "alternate_dois": [
+      "https://doi.org/10.48550/arxiv.2111.05534"
+    ]
   },
   "W3208645270": {
     "paper_id": "W3208645270",
@@ -399742,60 +398621,6 @@
       "hop_distance": 2,
       "parent_ids": [
         "W3014271926"
-      ]
-    },
-    "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0,
-      "formulas_concrete": 0,
-      "formulas_symbolic": 0
-    }
-  },
-  "W3214292605": {
-    "paper_id": "W3214292605",
-    "openalex_id": "https://openalex.org/W3214292605",
-    "arxiv_id": "2111.05534",
-    "doi": "https://doi.org/10.48550/arxiv.2111.05534",
-    "title": "Verifying Controllers with Convolutional Neural Network-based Perception: A Case for Intelligible, Safe, and Precise Abstractions",
-    "year": 2021,
-    "cited_by_count": 0,
-    "is_oa": true,
-    "urls": {
-      "eprint_source": "https://export.arxiv.org/e-print/2111.05534",
-      "pdf_mirrors": [
-        "https://arxiv.org/pdf/2111.05534.pdf"
-      ]
-    },
-    "local_files": {
-      "status": "downloaded_latex",
-      "path": "data/raw/latex/W3214292605"
-    },
-    "license_info": {
-      "effective_license": "http://creativecommons.org/licenses/by/4.0/",
-      "effective_licenses_all": [
-        "http://creativecommons.org/licenses/by/4.0/"
-      ],
-      "effective_source": "arxiv_oai",
-      "tier": "custom_or_arxiv",
-      "has_conflict": true,
-      "sources": {
-        "openalex_locations": [
-          "cc-by"
-        ],
-        "tex_source": [],
-        "arxiv_oai": [
-          "http://creativecommons.org/licenses/by/4.0/"
-        ],
-        "pdf_metadata": []
-      }
-    },
-    "discovery": {
-      "methods": [
-        "citation_hop_2"
-      ],
-      "hop_distance": 2,
-      "parent_ids": [
-        "W3114467743"
       ]
     },
     "formula_estimates": {
@@ -413232,7 +412057,7 @@
       ],
       "hop_distance": 2,
       "parent_ids": [
-        "W2903656432"
+        "W2751570560"
       ]
     }
   },
@@ -415509,7 +414334,7 @@
       ],
       "hop_distance": 2,
       "parent_ids": [
-        "W2903656432"
+        "W2751570560"
       ]
     }
   },
@@ -428440,7 +427265,7 @@
       ],
       "hop_distance": 2,
       "parent_ids": [
-        "W2467659428"
+        "W4283212640"
       ]
     },
     "formula_estimates": {
@@ -428592,7 +427417,7 @@
       ],
       "hop_distance": 2,
       "parent_ids": [
-        "W2467659428"
+        "W4283212640"
       ]
     },
     "formula_estimates": {
@@ -428796,7 +427621,7 @@
       ],
       "hop_distance": 2,
       "parent_ids": [
-        "W2467659428"
+        "W4283212640"
       ]
     },
     "formula_estimates": {
@@ -428934,7 +427759,7 @@
       ],
       "hop_distance": 2,
       "parent_ids": [
-        "W2467659428"
+        "W4283212640"
       ]
     }
   },
@@ -428975,7 +427800,7 @@
       ],
       "hop_distance": 2,
       "parent_ids": [
-        "W2467659428"
+        "W4283212640"
       ]
     }
   },
@@ -429063,7 +427888,7 @@
       ],
       "hop_distance": 2,
       "parent_ids": [
-        "W2467659428"
+        "W4283212640"
       ]
     }
   },
@@ -429104,7 +427929,7 @@
       ],
       "hop_distance": 2,
       "parent_ids": [
-        "W2467659428"
+        "W4283212640"
       ]
     }
   },
@@ -429283,7 +428108,7 @@
       ],
       "hop_distance": 2,
       "parent_ids": [
-        "W2467659428"
+        "W4283212640"
       ]
     }
   },
@@ -429324,7 +428149,7 @@
       ],
       "hop_distance": 2,
       "parent_ids": [
-        "W2467659428"
+        "W4283212640"
       ]
     }
   },
@@ -429412,7 +428237,7 @@
       ],
       "hop_distance": 2,
       "parent_ids": [
-        "W2467659428"
+        "W4283212640"
       ]
     },
     "formula_estimates": {
@@ -430305,7 +429130,7 @@
       ],
       "hop_distance": 2,
       "parent_ids": [
-        "W2467659428"
+        "W4283212640"
       ]
     }
   },
@@ -430557,7 +429382,7 @@
       ],
       "hop_distance": 2,
       "parent_ids": [
-        "W2467659428"
+        "W4283212640"
       ]
     }
   },
@@ -430680,7 +429505,7 @@
       ],
       "hop_distance": 2,
       "parent_ids": [
-        "W2467659428"
+        "W4283212640"
       ]
     }
   },
@@ -430815,7 +429640,7 @@
       ],
       "hop_distance": 2,
       "parent_ids": [
-        "W2467659428"
+        "W4283212640"
       ]
     }
   },
@@ -431459,7 +430284,7 @@
       ],
       "hop_distance": 2,
       "parent_ids": [
-        "W2467659428"
+        "W4283212640"
       ]
     }
   },
@@ -431523,6 +430348,7 @@
     "urls": {
       "eprint_source": "https://export.arxiv.org/e-print/2106.10365",
       "pdf_mirrors": [
+        "https://arxiv.org/pdf/2106.10365",
         "https://doi.org/10.1609/aaai.v36i6.20549",
         "https://ojs.aaai.org/index.php/AAAI/article/download/20549/20308"
       ]
@@ -431540,7 +430366,9 @@
       "tier": "custom_or_arxiv",
       "has_conflict": false,
       "sources": {
-        "openalex_locations": [],
+        "openalex_locations": [
+          "cc-by"
+        ],
         "tex_source": [],
         "arxiv_oai": [
           "http://creativecommons.org/licenses/by/4.0/"
@@ -431562,7 +430390,13 @@
       "symbolic": 0,
       "formulas_concrete": 0,
       "formulas_symbolic": 0
-    }
+    },
+    "alternate_ids": [
+      "W3177148584"
+    ],
+    "alternate_dois": [
+      "https://doi.org/10.48550/arxiv.2106.10365"
+    ]
   },
   "W4300758813": {
     "paper_id": "W4300758813",
@@ -431886,7 +430720,7 @@
       ],
       "hop_distance": 2,
       "parent_ids": [
-        "W2467659428"
+        "W4283212640"
       ]
     },
     "formula_estimates": {
@@ -431938,7 +430772,7 @@
       ],
       "hop_distance": 2,
       "parent_ids": [
-        "W2467659428"
+        "W4283212640"
       ]
     },
     "formula_estimates": {
@@ -432044,7 +430878,7 @@
       ],
       "hop_distance": 2,
       "parent_ids": [
-        "W2467659428"
+        "W4283212640"
       ]
     },
     "formula_estimates": {
@@ -432096,7 +430930,7 @@
       ],
       "hop_distance": 2,
       "parent_ids": [
-        "W2467659428"
+        "W4283212640"
       ]
     },
     "formula_estimates": {
@@ -432151,7 +430985,7 @@
       ],
       "hop_distance": 2,
       "parent_ids": [
-        "W2467659428"
+        "W4283212640"
       ]
     },
     "formula_estimates": {
@@ -432261,60 +431095,6 @@
       "hop_distance": 2,
       "parent_ids": [
         "W2765356358"
-      ]
-    },
-    "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0,
-      "formulas_concrete": 0,
-      "formulas_symbolic": 0
-    }
-  },
-  "W3177148584": {
-    "paper_id": "W3177148584",
-    "openalex_id": "https://openalex.org/W3177148584",
-    "arxiv_id": "2106.10365",
-    "doi": "https://doi.org/10.48550/arxiv.2106.10365",
-    "title": "Scenic4RL: Programmatic Modeling and Generation of Reinforcement Learning Environments",
-    "year": 2021,
-    "cited_by_count": 3,
-    "is_oa": true,
-    "urls": {
-      "eprint_source": "https://export.arxiv.org/e-print/2106.10365",
-      "pdf_mirrors": [
-        "https://arxiv.org/pdf/2106.10365"
-      ]
-    },
-    "local_files": {
-      "status": "downloaded_latex",
-      "path": "data/raw/latex/W3177148584"
-    },
-    "license_info": {
-      "effective_license": "http://creativecommons.org/licenses/by/4.0/",
-      "effective_licenses_all": [
-        "http://creativecommons.org/licenses/by/4.0/"
-      ],
-      "effective_source": "arxiv_oai",
-      "tier": "custom_or_arxiv",
-      "has_conflict": true,
-      "sources": {
-        "openalex_locations": [
-          "cc-by"
-        ],
-        "tex_source": [],
-        "arxiv_oai": [
-          "http://creativecommons.org/licenses/by/4.0/"
-        ],
-        "pdf_metadata": []
-      }
-    },
-    "discovery": {
-      "methods": [
-        "citation_hop_2"
-      ],
-      "hop_distance": 2,
-      "parent_ids": [
-        "W2913362569"
       ]
     },
     "formula_estimates": {
@@ -432471,7 +431251,7 @@
       ],
       "hop_distance": 2,
       "parent_ids": [
-        "W2467659428"
+        "W4283212640"
       ]
     }
   },
@@ -432517,59 +431297,7 @@
       ],
       "hop_distance": 2,
       "parent_ids": [
-        "W2467659428"
-      ]
-    },
-    "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0,
-      "formulas_concrete": 0,
-      "formulas_symbolic": 0
-    }
-  },
-  "W965675865": {
-    "paper_id": "W965675865",
-    "openalex_id": "https://openalex.org/W965675865",
-    "arxiv_id": "1507.06248",
-    "doi": "https://doi.org/10.48550/arxiv.1507.06248",
-    "title": "Computing finite abstractions with robustness margins via local reachable set over-approximation",
-    "year": 2015,
-    "cited_by_count": 2,
-    "is_oa": true,
-    "urls": {
-      "eprint_source": "https://export.arxiv.org/e-print/1507.06248",
-      "pdf_mirrors": [
-        "https://arxiv.org/pdf/1507.06248"
-      ]
-    },
-    "local_files": {
-      "status": "downloaded_latex",
-      "path": "data/raw/latex/W965675865"
-    },
-    "license_info": {
-      "effective_license": "arxiv-nonexclusive",
-      "effective_licenses_all": [
-        "arxiv-nonexclusive"
-      ],
-      "effective_source": "arxiv_oai",
-      "tier": "custom_or_arxiv",
-      "has_conflict": false,
-      "sources": {
-        "openalex_locations": [],
-        "tex_source": [],
-        "arxiv_oai": [
-          "arxiv-nonexclusive"
-        ],
-        "pdf_metadata": []
-      }
-    },
-    "discovery": {
-      "methods": [
-        "citation_hop_2"
-      ],
-      "hop_distance": 2,
-      "parent_ids": [
-        "W1985919024"
+        "W4283212640"
       ]
     },
     "formula_estimates": {
@@ -433043,7 +431771,7 @@
       ],
       "hop_distance": 2,
       "parent_ids": [
-        "W2467659428"
+        "W4283212640"
       ]
     }
   },
@@ -433235,7 +431963,7 @@
       ],
       "hop_distance": 2,
       "parent_ids": [
-        "W2467659428"
+        "W4283212640"
       ]
     }
   },
@@ -437021,59 +435749,6 @@
       "formulas_symbolic": 3
     }
   },
-  "arxiv_2509.02184": {
-    "paper_id": "arxiv_2509.02184",
-    "openalex_id": null,
-    "arxiv_id": "2509.02184",
-    "doi": null,
-    "title": "Task and Motion Planning of Dynamic Systems using Hyperproperties for Signal Temporal Logics",
-    "year": 2025,
-    "cited_by_count": 0,
-    "is_oa": true,
-    "urls": {
-      "eprint_source": "https://export.arxiv.org/e-print/2509.02184",
-      "pdf_mirrors": [
-        "https://arxiv.org/pdf/2509.02184"
-      ]
-    },
-    "local_files": {
-      "status": "downloaded_latex",
-      "path": "data/raw/latex/arxiv_2509.02184"
-    },
-    "license_info": {
-      "effective_license": "arxiv-nonexclusive",
-      "effective_licenses_all": [
-        "arxiv-nonexclusive"
-      ],
-      "effective_source": "arxiv_oai",
-      "tier": "custom_or_arxiv",
-      "has_conflict": false,
-      "sources": {
-        "openalex_locations": [],
-        "tex_source": [],
-        "arxiv_oai": [
-          "arxiv-nonexclusive"
-        ],
-        "pdf_metadata": []
-      }
-    },
-    "discovery": {
-      "methods": [
-        "arxiv_kw:Signal Temporal Logic",
-        "arxiv_kw:STL specification",
-        "openalex_kw:Signal Temporal Logic",
-        "openalex_kw:STL specification"
-      ],
-      "hop_distance": null,
-      "parent_ids": []
-    },
-    "formula_estimates": {
-      "concrete": 6,
-      "symbolic": 12,
-      "formulas_concrete": 3,
-      "formulas_symbolic": 10
-    }
-  },
   "arxiv_2607.18580": {
     "paper_id": "arxiv_2607.18580",
     "openalex_id": null,
@@ -438594,60 +437269,6 @@
       "formulas_symbolic": 1
     }
   },
-  "arxiv_1607.02200": {
-    "paper_id": "arxiv_1607.02200",
-    "openalex_id": null,
-    "arxiv_id": "1607.02200",
-    "doi": null,
-    "title": "Sapo: Reachability Computation and Parameter Synthesis of Polynomial Dynamical Systems",
-    "year": 2016,
-    "cited_by_count": 3,
-    "is_oa": true,
-    "urls": {
-      "eprint_source": "https://export.arxiv.org/e-print/1607.02200",
-      "pdf_mirrors": [
-        "https://arxiv.org/pdf/1607.02200"
-      ]
-    },
-    "local_files": {
-      "status": "downloaded_latex",
-      "path": "data/raw/latex/arxiv_1607.02200"
-    },
-    "license_info": {
-      "effective_license": "arxiv-nonexclusive",
-      "effective_licenses_all": [
-        "arxiv-nonexclusive"
-      ],
-      "effective_source": "arxiv_oai",
-      "tier": "custom_or_arxiv",
-      "has_conflict": false,
-      "sources": {
-        "openalex_locations": [],
-        "tex_source": [],
-        "arxiv_oai": [
-          "arxiv-nonexclusive"
-        ],
-        "pdf_metadata": []
-      }
-    },
-    "discovery": {
-      "methods": [
-        "arxiv_kw:Signal Temporal Logic",
-        "arxiv_kw:STL formulas",
-        "openalex_kw:Signal Temporal Logic",
-        "openalex_kw:STL specification",
-        "openalex_kw:STL formulas"
-      ],
-      "hop_distance": null,
-      "parent_ids": []
-    },
-    "formula_estimates": {
-      "concrete": 7,
-      "symbolic": 6,
-      "formulas_concrete": 7,
-      "formulas_symbolic": 6
-    }
-  },
   "arxiv_2509.01728": {
     "paper_id": "arxiv_2509.01728",
     "openalex_id": null,
@@ -439021,60 +437642,6 @@
       "symbolic": 9,
       "formulas_concrete": 0,
       "formulas_symbolic": 7
-    }
-  },
-  "arxiv_2410.02303": {
-    "paper_id": "arxiv_2410.02303",
-    "openalex_id": null,
-    "arxiv_id": "2410.02303",
-    "doi": null,
-    "title": "Semantic Communication and Control Co-Design for Multi-Objective Distinct Dynamics",
-    "year": 2024,
-    "cited_by_count": 0,
-    "is_oa": true,
-    "urls": {
-      "eprint_source": "https://export.arxiv.org/e-print/2410.02303",
-      "pdf_mirrors": [
-        "https://arxiv.org/pdf/2410.02303"
-      ]
-    },
-    "local_files": {
-      "status": "downloaded_latex",
-      "path": "data/raw/latex/arxiv_2410.02303"
-    },
-    "license_info": {
-      "effective_license": "http://creativecommons.org/licenses/by/4.0/",
-      "effective_licenses_all": [
-        "http://creativecommons.org/licenses/by/4.0/"
-      ],
-      "effective_source": "arxiv_oai",
-      "tier": "custom_or_arxiv",
-      "has_conflict": true,
-      "sources": {
-        "openalex_locations": [
-          "cc-by"
-        ],
-        "tex_source": [],
-        "arxiv_oai": [
-          "http://creativecommons.org/licenses/by/4.0/"
-        ],
-        "pdf_metadata": []
-      }
-    },
-    "discovery": {
-      "methods": [
-        "arxiv_kw:Signal Temporal Logic",
-        "openalex_kw:Signal Temporal Logic",
-        "openalex_kw:STL formulas"
-      ],
-      "hop_distance": null,
-      "parent_ids": []
-    },
-    "formula_estimates": {
-      "concrete": 1,
-      "symbolic": 2,
-      "formulas_concrete": 1,
-      "formulas_symbolic": 2
     }
   },
   "arxiv_2305.00576": {
@@ -443354,57 +441921,6 @@
       "formulas_symbolic": 10
     }
   },
-  "arxiv_1208.4993": {
-    "paper_id": "arxiv_1208.4993",
-    "openalex_id": null,
-    "arxiv_id": "1208.4993",
-    "doi": null,
-    "title": "Expressive Completeness of Metric Temporal Logic",
-    "year": 2012,
-    "cited_by_count": 3,
-    "is_oa": true,
-    "urls": {
-      "eprint_source": "https://export.arxiv.org/e-print/1208.4993",
-      "pdf_mirrors": [
-        "https://arxiv.org/pdf/1208.4993"
-      ]
-    },
-    "local_files": {
-      "status": "downloaded_pdf",
-      "path": "data/raw/pdfs/arxiv_1208.4993.pdf"
-    },
-    "license_info": {
-      "effective_license": "arxiv-nonexclusive",
-      "effective_licenses_all": [
-        "arxiv-nonexclusive"
-      ],
-      "effective_source": "arxiv_oai",
-      "tier": "custom_or_arxiv",
-      "has_conflict": false,
-      "sources": {
-        "openalex_locations": [],
-        "tex_source": [],
-        "arxiv_oai": [
-          "arxiv-nonexclusive"
-        ],
-        "pdf_metadata": []
-      }
-    },
-    "discovery": {
-      "methods": [
-        "arxiv_kw:Metric Temporal Logic",
-        "openalex_kw:Metric Temporal Logic"
-      ],
-      "hop_distance": null,
-      "parent_ids": []
-    },
-    "formula_estimates": {
-      "concrete": 0,
-      "symbolic": 0,
-      "formulas_concrete": 0,
-      "formulas_symbolic": 0
-    }
-  },
   "arxiv_1701.00976": {
     "paper_id": "arxiv_1701.00976",
     "openalex_id": null,
@@ -443454,60 +441970,6 @@
       "symbolic": 3,
       "formulas_concrete": 6,
       "formulas_symbolic": 3
-    }
-  },
-  "arxiv_1703.08982": {
-    "paper_id": "arxiv_1703.08982",
-    "openalex_id": null,
-    "arxiv_id": "1703.08982",
-    "doi": null,
-    "title": "Querying Log Data with Metric Temporal Logic (Technical Report)",
-    "year": 2017,
-    "cited_by_count": 0,
-    "is_oa": true,
-    "urls": {
-      "eprint_source": "https://export.arxiv.org/e-print/1703.08982",
-      "pdf_mirrors": [
-        "http://eprints.bbk.ac.uk/21992/1/1703.08982.pdf",
-        "https://arxiv.org/pdf/1703.08982",
-        "https://eprints.bbk.ac.uk/id/eprint/24605/7/11229-Article%20%28PDF%29-20821-1-10-20180831.pdf",
-        "https://www.arxiv.org/abs/1703.08982"
-      ]
-    },
-    "local_files": {
-      "status": "downloaded_latex",
-      "path": "data/raw/latex/arxiv_1703.08982"
-    },
-    "license_info": {
-      "effective_license": "arxiv-nonexclusive",
-      "effective_licenses_all": [
-        "arxiv-nonexclusive"
-      ],
-      "effective_source": "arxiv_oai",
-      "tier": "custom_or_arxiv",
-      "has_conflict": false,
-      "sources": {
-        "openalex_locations": [],
-        "tex_source": [],
-        "arxiv_oai": [
-          "arxiv-nonexclusive"
-        ],
-        "pdf_metadata": []
-      }
-    },
-    "discovery": {
-      "methods": [
-        "arxiv_kw:Metric Temporal Logic",
-        "openalex_kw:Metric Temporal Logic"
-      ],
-      "hop_distance": null,
-      "parent_ids": []
-    },
-    "formula_estimates": {
-      "concrete": 79,
-      "symbolic": 11,
-      "formulas_concrete": 54,
-      "formulas_symbolic": 10
     }
   },
   "arxiv_1209.0516": {
@@ -443667,57 +442129,6 @@
       "symbolic": 0,
       "formulas_concrete": 17,
       "formulas_symbolic": 0
-    }
-  },
-  "arxiv_1905.12990": {
-    "paper_id": "arxiv_1905.12990",
-    "openalex_id": null,
-    "arxiv_id": "1905.12990",
-    "doi": null,
-    "title": "Data Complexity and Rewritability of Ontology-Mediated Queries in Metric Temporal Logic under the Event-Based Semantics (Full Version)",
-    "year": 2019,
-    "cited_by_count": 0,
-    "is_oa": true,
-    "urls": {
-      "eprint_source": "https://export.arxiv.org/e-print/1905.12990",
-      "pdf_mirrors": [
-        "https://arxiv.org/pdf/1905.12990"
-      ]
-    },
-    "local_files": {
-      "status": "downloaded_latex",
-      "path": "data/raw/latex/arxiv_1905.12990"
-    },
-    "license_info": {
-      "effective_license": "arxiv-nonexclusive",
-      "effective_licenses_all": [
-        "arxiv-nonexclusive"
-      ],
-      "effective_source": "arxiv_oai",
-      "tier": "custom_or_arxiv",
-      "has_conflict": false,
-      "sources": {
-        "openalex_locations": [],
-        "tex_source": [],
-        "arxiv_oai": [
-          "arxiv-nonexclusive"
-        ],
-        "pdf_metadata": []
-      }
-    },
-    "discovery": {
-      "methods": [
-        "arxiv_kw:Metric Temporal Logic",
-        "openalex_kw:Metric Temporal Logic"
-      ],
-      "hop_distance": null,
-      "parent_ids": []
-    },
-    "formula_estimates": {
-      "concrete": 49,
-      "symbolic": 25,
-      "formulas_concrete": 22,
-      "formulas_symbolic": 13
     }
   },
   "arxiv_2607.13981": {
@@ -447305,10 +445716,12 @@
     "title": "Semantic Communication and Control Co-Design for Multi-Objective Distinct Systems",
     "year": 2025,
     "cited_by_count": 0,
-    "is_oa": false,
+    "is_oa": true,
     "urls": {
       "eprint_source": "https://export.arxiv.org/e-print/2410.02303",
-      "pdf_mirrors": []
+      "pdf_mirrors": [
+        "https://arxiv.org/pdf/2410.02303"
+      ]
     },
     "local_files": {
       "status": "downloaded_latex",
@@ -447323,7 +445736,9 @@
       "tier": "custom_or_arxiv",
       "has_conflict": false,
       "sources": {
-        "openalex_locations": [],
+        "openalex_locations": [
+          "cc-by"
+        ],
         "tex_source": [],
         "arxiv_oai": [
           "http://creativecommons.org/licenses/by/4.0/"
@@ -447333,7 +445748,9 @@
     },
     "discovery": {
       "methods": [
-        "openalex_kw:Signal Temporal Logic"
+        "openalex_kw:Signal Temporal Logic",
+        "arxiv_kw:Signal Temporal Logic",
+        "openalex_kw:STL formulas"
       ],
       "hop_distance": null,
       "parent_ids": []
@@ -447343,7 +445760,10 @@
       "symbolic": 2,
       "formulas_concrete": 1,
       "formulas_symbolic": 2
-    }
+    },
+    "alternate_ids": [
+      "arxiv_2410.02303"
+    ]
   },
   "W4288284987": {
     "paper_id": "W4288284987",
@@ -448299,7 +446719,11 @@
     "urls": {
       "eprint_source": "https://export.arxiv.org/e-print/1703.08982",
       "pdf_mirrors": [
-        "https://jair.org/index.php/jair/article/download/11229/26434"
+        "http://eprints.bbk.ac.uk/21992/1/1703.08982.pdf",
+        "https://arxiv.org/pdf/1703.08982",
+        "https://eprints.bbk.ac.uk/id/eprint/24605/7/11229-Article%20%28PDF%29-20821-1-10-20180831.pdf",
+        "https://jair.org/index.php/jair/article/download/11229/26434",
+        "https://www.arxiv.org/abs/1703.08982"
       ]
     },
     "local_files": {
@@ -448327,7 +446751,8 @@
     },
     "discovery": {
       "methods": [
-        "openalex_kw:Metric Temporal Logic"
+        "openalex_kw:Metric Temporal Logic",
+        "arxiv_kw:Metric Temporal Logic"
       ],
       "hop_distance": null,
       "parent_ids": []
@@ -448337,7 +446762,10 @@
       "symbolic": 11,
       "formulas_concrete": 54,
       "formulas_symbolic": 10
-    }
+    },
+    "alternate_ids": [
+      "arxiv_1703.08982"
+    ]
   },
   "W2110579257": {
     "paper_id": "W2110579257",
@@ -448386,35 +446814,50 @@
     "title": "Expressive Completeness for Metric Temporal Logic",
     "year": 2013,
     "cited_by_count": 36,
-    "is_oa": false,
+    "is_oa": true,
     "urls": {
       "eprint_source": "https://export.arxiv.org/e-print/1208.4993",
-      "pdf_mirrors": []
+      "pdf_mirrors": [
+        "https://arxiv.org/pdf/1208.4993"
+      ]
     },
     "local_files": {
-      "status": "unavailable",
-      "path": null,
-      "failure_reason": "Invalid archive format or PDF only"
+      "status": "downloaded_pdf",
+      "path": "data/raw/pdfs/W2048178754.pdf"
     },
     "license_info": {
-      "effective_license": null,
-      "effective_licenses_all": [],
-      "effective_source": "none",
-      "tier": "unspecified",
+      "effective_license": "arxiv-nonexclusive",
+      "effective_licenses_all": [
+        "arxiv-nonexclusive"
+      ],
+      "effective_source": "arxiv_oai",
+      "tier": "custom_or_arxiv",
       "has_conflict": false,
       "sources": {
         "openalex_locations": [],
         "tex_source": [],
-        "arxiv_oai": [],
+        "arxiv_oai": [
+          "arxiv-nonexclusive"
+        ],
         "pdf_metadata": []
       }
     },
     "discovery": {
       "methods": [
-        "openalex_kw:Metric Temporal Logic"
+        "openalex_kw:Metric Temporal Logic",
+        "arxiv_kw:Metric Temporal Logic"
       ],
       "hop_distance": null,
       "parent_ids": []
+    },
+    "alternate_ids": [
+      "arxiv_1208.4993"
+    ],
+    "formula_estimates": {
+      "concrete": 0,
+      "symbolic": 0,
+      "formulas_concrete": 0,
+      "formulas_symbolic": 0
     }
   },
   "W2097622845": {
@@ -449497,6 +447940,7 @@
     "urls": {
       "eprint_source": "https://export.arxiv.org/e-print/1905.12990",
       "pdf_mirrors": [
+        "https://arxiv.org/pdf/1905.12990",
         "https://www.ijcai.org/proceedings/2019/0256.pdf"
       ]
     },
@@ -449523,7 +447967,8 @@
     },
     "discovery": {
       "methods": [
-        "openalex_kw:Metric Temporal Logic"
+        "openalex_kw:Metric Temporal Logic",
+        "arxiv_kw:Metric Temporal Logic"
       ],
       "hop_distance": null,
       "parent_ids": []
@@ -449533,7 +447978,10 @@
       "symbolic": 25,
       "formulas_concrete": 22,
       "formulas_symbolic": 13
-    }
+    },
+    "alternate_ids": [
+      "arxiv_1905.12990"
+    ]
   },
   "W2070008537": {
     "paper_id": "W2070008537",
@@ -466916,12 +465364,13 @@
     "doi": "https://doi.org/10.70675/217e1af7z4fd0z481cz8f41z732545a6c075",
     "title": "Reachability Computation and Parameter Synthesis for Polynomial Dynamical Systems",
     "year": 2016,
-    "cited_by_count": 1,
+    "cited_by_count": 3,
     "is_oa": true,
     "urls": {
       "eprint_source": "https://export.arxiv.org/e-print/1607.02200",
       "pdf_mirrors": [
         "http://hdl.handle.net/11390/1132708",
+        "https://arxiv.org/pdf/1607.02200",
         "https://theses.hal.science/tel-03128436/document",
         "https://theses.hal.science/tel-03128436v1/document"
       ]
@@ -466952,7 +465401,10 @@
     "discovery": {
       "methods": [
         "openalex_kw:STL specification",
-        "openalex_kw:STL formulas"
+        "openalex_kw:STL formulas",
+        "arxiv_kw:Signal Temporal Logic",
+        "arxiv_kw:STL formulas",
+        "openalex_kw:Signal Temporal Logic"
       ],
       "hop_distance": null,
       "parent_ids": []
@@ -466962,7 +465414,10 @@
       "symbolic": 6,
       "formulas_concrete": 7,
       "formulas_symbolic": 6
-    }
+    },
+    "alternate_ids": [
+      "arxiv_1607.02200"
+    ]
   },
   "W2154223340": {
     "paper_id": "W2154223340",
