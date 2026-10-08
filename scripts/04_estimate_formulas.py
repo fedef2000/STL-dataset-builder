@@ -11,44 +11,45 @@ from src.analysis.estimator import estimate_paper_formulas
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 
-def print_report(top_papers: list, scanned: int) -> None:
-    """Prints the yield report from (concrete, symbolic, paper_id, title, status) rows."""
-    total_concrete = sum(c for c, *_ in top_papers)
-    total_symbolic = sum(s for _, s, *_ in top_papers)
-    papers_with_concrete = sum(1 for c, *_ in top_papers if c > 0)
+def print_report(rows: list, scanned: int) -> None:
+    """Prints the yield report from (estimates, paper_id, title, status) rows."""
+    def total(key: str, subset: list = rows) -> int:
+        return sum(r[0].get(key, 0) for r in subset)
 
-    # ---------------------------------------------------------
-    # PRINT ESTIMATION REPORT
-    # ---------------------------------------------------------
+    papers_with_concrete = sum(1 for r in rows if r[0]["concrete"] > 0)
+
     print("\n" + "=" * 80)
     print("                 STL FORMULA YIELD ESTIMATION REPORT")
     print("=" * 80)
-    print(f"Total Papers Scanned:         {scanned}")
-    print(f"Papers with >= 1 Formula:     {papers_with_concrete} ({(papers_with_concrete/max(1, scanned))*100:.1f}%)")
+    print(f"Total Papers Scanned:              {scanned}")
+    print(f"Papers with >= 1 Concrete Formula: {papers_with_concrete} ({(papers_with_concrete/max(1, scanned))*100:.1f}%)")
     print("-" * 80)
-    print(f"Total Concrete Formulas:      {total_concrete}")
-    print(f"Total Symbolic/Parametric:    {total_symbolic}")
+    print("A formula is concrete when at least one of its temporal operators has numeric time bounds.")
+    print(f"Concrete Formulas:                 {total('formulas_concrete')}")
+    print(f"Symbolic/Parametric Formulas:      {total('formulas_symbolic')}")
+    print(f"Operators with Numeric Bounds:     {total('concrete')}")
+    print(f"Operators with Symbolic Bounds:    {total('symbolic')}")
     print("-" * 80)
     for label, key in (("LaTeX", "downloaded_latex"), ("PDF", "downloaded_pdf")):
-        rows = [r for r in top_papers if r[4] == key]
-        print(f"{label + ' papers:':<14}{len(rows):>5} scanned | {sum(1 for r in rows if r[0] > 0):>5} with >= 1 formula | "
-              f"{sum(r[0] for r in rows):>6} concrete | {sum(r[1] for r in rows):>6} symbolic")
+        subset = [r for r in rows if r[3] == key]
+        print(f"{label + ' papers:':<14}{len(subset):>5} scanned | {sum(1 for r in subset if r[0]['concrete'] > 0):>5} with >= 1 concrete | "
+              f"{total('formulas_concrete', subset):>6} concrete formulas | {total('formulas_symbolic', subset):>6} symbolic formulas")
     print("=" * 80)
-    
+
     print("\nTOP 20 MOST PROMISING PAPERS:")
-    print(f"{'Concrete':<9} | {'Symbolic':<9} | {'Source':<12} | {'Paper ID':<15} | {'Title'}")
+    print(f"{'Formulas':<9} | {'Operators':<9} | {'Symbolic':<9} | {'Source':<7} | {'Paper ID':<16} | {'Title'}")
     print("-" * 120)
-    
-    # Sort by highest concrete formulas, then symbolic
-    top_papers.sort(key=lambda x: (-x[0], -x[1]))
-    
-    for c, s, pid, title, status in top_papers[:20]:
+
+    # Sort by highest number of concrete formulas, then concrete operators
+    rows.sort(key=lambda r: (-r[0].get("formulas_concrete", 0), -r[0]["concrete"]))
+
+    for estimates, pid, title, status in rows[:20]:
         src_label = "LaTeX" if "latex" in (status or "") else "PDF"
         short_title = title[:60] + "..." if len(title) > 60 else title
-        print(f"{c:<9} | {s:<9} | {src_label:<12} | {pid:<15} | {short_title}")
+        print(f"{estimates.get('formulas_concrete', 0):<9} | {estimates['concrete']:<9} | {estimates.get('formulas_symbolic', 0):<9} | {src_label:<7} | {pid:<16} | {short_title}")
     print("=" * 120)
     print("\nNote: These are regex-based estimates intended to help rank papers for rigorous extraction.")
-    print("Formula counts have been saved to 'formula_estimates' in data/corpus.json.")
+    print("They are stored under 'formula_estimates' in data/corpus.json.")
 
 
 def main():
@@ -61,7 +62,7 @@ def main():
 
     if args.stats:
         rows = [
-            (p["formula_estimates"]["concrete"], p["formula_estimates"]["symbolic"], pid, p.get("title") or "Unknown Title", p.get("local_files", {}).get("status"))
+            (p["formula_estimates"], pid, p.get("title") or "Unknown Title", p.get("local_files", {}).get("status"))
             for pid, p in store.papers.items()
             if p.get("formula_estimates") and p.get("local_files", {}).get("status") in ("downloaded_latex", "downloaded_pdf")
         ]
@@ -70,6 +71,8 @@ def main():
             if p.get("local_files", {}).get("status") in ("downloaded_latex", "downloaded_pdf") and not p.get("formula_estimates")
         )
         print_report(rows, len(rows))
+        if any("formulas_concrete" not in r[0] for r in rows):
+            print("\nSome stored estimates predate the formula counts: run this script without --stats to refresh them.")
         if not_scanned:
             print(f"\n{not_scanned} downloaded papers have no stored estimate yet: run this script without --stats to scan them.")
         return
@@ -84,12 +87,8 @@ def main():
 
     logging.info(f"=== STEP 4: FORMULA ESTIMATION | Scanning {len(queue)} downloaded papers ===")
     
-    total_concrete = 0
-    total_symbolic = 0
-    papers_with_concrete = 0
-    
-    # Track top papers for reporting
-    top_papers = []
+    # One row per paper for the report
+    rows = []
 
     processed = 0
     for pid in queue:
@@ -99,15 +98,7 @@ def main():
         estimates = estimate_paper_formulas(paper, BASE_DIR)
         paper["formula_estimates"] = estimates
         
-        c = estimates["concrete"]
-        s = estimates["symbolic"]
-        
-        total_concrete += c
-        total_symbolic += s
-        if c > 0:
-            papers_with_concrete += 1
-            
-        top_papers.append((c, s, pid, paper.get("title", "Unknown Title"), paper.get("local_files", {}).get("status")))
+        rows.append((estimates, pid, paper.get("title") or "Unknown Title", paper.get("local_files", {}).get("status")))
         
         processed += 1
         if processed % 100 == 0:
@@ -116,7 +107,7 @@ def main():
             
     store.save()
     
-    print_report(top_papers, len(queue))
+    print_report(rows, len(queue))
 
 if __name__ == "__main__":
     main()

@@ -22,9 +22,11 @@ A modular, resumable pipeline that discovers academic papers on Signal Temporal 
   * Resolves the exact license for every downloaded paper by inspecting `.tex` headers, PDF metadata, arXiv OAI-PMH records, and OpenAlex locations.
   * Tracks license provenance and flags conflicts between publisher metadata and preprint source files.
 * **Formula Yield Estimation:**
-  * Counts temporal operators that carry a time interval (e.g. `\Box_{[0,5]}`, `\mathcal{G}_{[0,200]}`, `\always{0}{200}`), split into **concrete** (both bounds numeric) and **symbolic** (parametric bounds).
+  * Counts temporal operators that carry a time bound (e.g. `\Box_{[0,5]}`, `\mathcal{G}_{[0,200]}`, `\always{0}{200}`, `\Diamond_{\le 3}`), split into **concrete** (numeric bounds, including infinity) and **symbolic** (parametric bounds), and groups them into **formulas**: one per inline math span or display row.
+  * Accepts closed, open, half-open and unbounded intervals (`[0,5]`, `(0,5)`, `[0,5)`, `[5,\infty)`), `\left[ \right]`, LaTeX spacing commands and time units (`[0.2s, 0.8s]`).
+  * Covers future and past-time operators: box and diamond symbols and their variants (`\boxminus`, `\diamondminus`, ...), `G`/`F`/`U` letters, and named operators (`\always`, `\eventually`, `\until`, `\once`, `\since`, `\historically`, `\LTL...`).
   * Recognises each paper's own operator macros (`\newcommand`, `\def`, `\DeclareMathOperator`, `\NewDocumentCommand`), including macros defined in terms of other macros.
-  * Ignores commented-out lines, `comment` environments and `\iffalse ... \fi` blocks.
+  * Ignores commented-out lines, `comment` environments, `\iffalse ... \fi` blocks, and `.tex` files that the main document does not `\input` (old drafts, unused files).
   * For PDF-only papers, falls back to a plain-text approximation that counts concrete formulas only.
 
 ---
@@ -222,7 +224,7 @@ python scripts/03_audit_and_print_licenses.py --stats
 
 ### Step 4: Estimate STL Formula Yield
 
-Scans all downloaded `.tex` folders and `.pdf` files, counts concrete and symbolic STL formulas per paper, saves the counts under `formula_estimates` in `data/corpus.json`, and prints the 20 most promising papers:
+Scans all downloaded `.tex` folders and `.pdf` files, counts the temporal operators with a time bound and the formulas they form (concrete and symbolic) per paper, saves the counts under `formula_estimates` in `data/corpus.json`, and prints the 20 papers with the most concrete formulas:
 
 ```bash
 python scripts/04_estimate_formulas.py
@@ -284,7 +286,9 @@ python scripts/04_estimate_formulas.py --stats
     },
     "formula_estimates": {
       "concrete": 12,
-      "symbolic": 3
+      "symbolic": 3,
+      "formulas_concrete": 7,
+      "formulas_symbolic": 2
     }
   }
 }
@@ -302,7 +306,7 @@ python scripts/04_estimate_formulas.py --stats
 | `local_files.failure_reason` | Only for `unavailable` papers; see the failure reasons under Step 2. |
 | `local_files.recovery_rate_limited` | `true` when a recovery lookup was abandoned, so the paper is worth retrying with `--retry-rate-limited`. |
 | `license_info` | Written by Step 3. `effective_source` is `tex_source`, `pdf_metadata`, `arxiv_oai`, `openalex_locations` or `none`. |
-| `formula_estimates` | Written by Step 4, for downloaded papers only. |
+| `formula_estimates` | Written by Step 4, for downloaded papers only. `concrete` and `symbolic` count temporal operators with numeric and with parametric time bounds. `formulas_concrete` counts the formulas holding at least one concrete operator, `formulas_symbolic` the formulas whose bounded operators are all parametric. |
 
 ### License Tiers
 
