@@ -3,6 +3,7 @@ import difflib
 import gzip
 import logging
 from pathlib import Path, PurePosixPath
+import re
 import shutil
 import tarfile
 import time
@@ -147,6 +148,33 @@ TRANSIENT_FAILURE_MARKERS = (
 
 def is_transient_failure(failure_reason: str | None) -> bool:
     return any(marker in (failure_reason or "") for marker in TRANSIENT_FAILURE_MARKERS)
+
+
+# Labels used before the reasons were made more descriptive
+LEGACY_NO_LINK_REASONS = ("Closed Access / Paywalled", "Open Access but URLs missing/dead")
+
+
+def no_link_reason(is_oa: bool | None, lookup_abandoned: bool) -> str:
+    """Reason for a paper that was never attempted because no source or PDF link is known for it."""
+    if lookup_abandoned:
+        return "No Link Found (lookup rate-limited, worth a retry)"
+    if is_oa is False:
+        return "No Link Found (not open access)"
+    return "No Link Found (open access, but no URL listed)"
+
+
+def relabel_failure_reason(paper: dict) -> str | None:
+    """Rewrites a stored failure reason in the current wording, using only what the corpus already records."""
+    local_files = paper.get("local_files") or {}
+    reason = local_files.get("failure_reason")
+    if not reason:
+        return reason
+    if reason in LEGACY_NO_LINK_REASONS or reason.startswith("No Link Found"):
+        return no_link_reason(paper.get("is_oa"), bool(local_files.get("recovery_rate_limited")))
+    m = re.fullmatch(r"(.*HTTP (\d{3}))", reason)
+    if m and int(m.group(2)) in PDF_STATUS_NOTES:
+        return f"{m.group(1)} ({PDF_STATUS_NOTES[int(m.group(2))]})"
+    return reason
 
 
 def download_pdf_from_mirrors(

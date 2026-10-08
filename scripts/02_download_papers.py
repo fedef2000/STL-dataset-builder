@@ -17,7 +17,9 @@ from src.harvesting.downloader import (
     find_via_hal,
     find_via_semantic_scholar,
     is_transient_failure,
+    no_link_reason,
     rate_limit_hits,
+    relabel_failure_reason,
     verify_disk_status,
 )
 from src.storage import CorpusStore
@@ -46,6 +48,26 @@ def sync_corpus_with_disk(store: CorpusStore) -> dict:
     store.save()
     return counts
 
+def print_corpus_stats(store: CorpusStore, counts: dict) -> None:
+    total = max(1, len(store.papers))
+    unavailable = [p["local_files"] for p in store.papers.values() if p.get("local_files", {}).get("status") == "unavailable"]
+    reasons = Counter(lf.get("failure_reason") or "No reason recorded" for lf in unavailable)
+
+    print("\n" + "=" * 60)
+    print("                 CORPUS DOWNLOAD STATS")
+    print("=" * 60)
+    print(f"{len(store.papers):>5} | Total papers")
+    for status, label in (("downloaded_latex", "LaTeX source"), ("downloaded_pdf", "PDF only"), ("unavailable", "Unavailable"), ("pending", "Not tried yet")):
+        print(f"{counts[status]:>5} | {label} ({counts[status] / total * 100:.1f}%)")
+    print("-" * 60)
+    print("Unavailable papers by failure reason:")
+    for reason, count in reasons.most_common():
+        print(f"{count:>5} | {reason}")
+    print("-" * 60)
+    print(f"{sum(1 for lf in unavailable if is_transient_failure(lf.get('failure_reason'))):>5} | would be retried by --retry-transient")
+    print(f"{sum(1 for lf in unavailable if lf.get('recovery_rate_limited')):>5} | would be retried by --retry-rate-limited")
+    print("=" * 60)
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--with-recovery", action="store_true")
@@ -53,12 +75,29 @@ def main():
     parser.add_argument("--retry-rate-limited", action="store_true", help="Retry only unavailable papers whose recovery lookups were rate-limited or got no answer.")
     parser.add_argument("--retry-transient", action="store_true", help="Retry only unavailable papers that failed on a connection error, timeout, rate limit or server error.")
     parser.add_argument("--limit", type=int, default=None)
+    parser.add_argument("--stats", action="store_true", help="Print the download status of the whole corpus and exit, without downloading anything.")
+    parser.add_argument("--relabel", action="store_true", help="Rewrite stored failure reasons in the current wording, print the stats and exit, without downloading anything.")
     args = parser.parse_args()
 
     store = CorpusStore()
     counts = sync_corpus_with_disk(store)
     total_corpus = len(store.papers)
     failure_stats = Counter()
+
+    if args.relabel:
+        changed = 0
+        for paper in store.papers.values():
+            if paper.get("local_files", {}).get("status") == "unavailable":
+                new_reason = relabel_failure_reason(paper)
+                if new_reason != paper["local_files"].get("failure_reason"):
+                    paper["local_files"]["failure_reason"] = new_reason
+                    changed += 1
+        store.save()
+        print(f"Relabelled {changed} failure reasons.")
+
+    if args.stats or args.relabel:
+        print_corpus_stats(store, counts)
+        return
 
     target_statuses = {"pending"}
     if args.retry_unavailable:
@@ -94,10 +133,7 @@ def main():
         downloaded = False
         status_label = ""
         rate_limit_hits_before = sum(rate_limit_hits.values())
-        if paper.get("is_oa") is False:
-            current_failure_reason = "Closed Access / Paywalled"
-        else:
-            current_failure_reason = "Open Access but URLs missing/dead"
+        current_failure_reason = None  # stays None when there was no link to try at all
 
         # TIER 1: arXiv .tex
         if eprint_url:
@@ -150,13 +186,16 @@ def main():
 
         # Handle Failure
         if not downloaded:
+            # A throttled recovery lookup is not a real "not found": mark it so the paper can be retried
+            lookup_abandoned = sum(rate_limit_hits.values()) > rate_limit_hits_before
+            if current_failure_reason is None:
+                current_failure_reason = no_link_reason(paper.get("is_oa"), lookup_abandoned)
             paper["local_files"] = {
                 "status": "unavailable",
                 "path": None,
                 "failure_reason": current_failure_reason
             }
-            # A throttled recovery lookup is not a real "not found": mark it so the paper can be retried
-            if sum(rate_limit_hits.values()) > rate_limit_hits_before:
+            if lookup_abandoned:
                 paper["local_files"]["recovery_rate_limited"] = True
             counts["unavailable"] += 1
             failure_stats[current_failure_reason] += 1
