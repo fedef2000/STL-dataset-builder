@@ -50,7 +50,6 @@ SEED_DOIS = [
 # Default keyword queries for --mode keywords
 DEFAULT_KEYWORDS = [
     "Signal Temporal Logic",
-    "Metric Temporal Logic",
     "STL specification",
     "STL formulas",
 ]

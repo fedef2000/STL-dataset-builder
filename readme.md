@@ -148,7 +148,7 @@ python scripts/01_build_corpus.py --merge-duplicates
 | `--hop2-require-stl-text` / `--no-hop2-require-stl-text` | on | With `--hops 2`: keep a Hop-2 paper only if its title or abstract matches the STL relevance terms. The `--no-` form keeps every Hop-2 paper (much larger, off-topic corpus). |
 | `--stats` | off | Prints the discovery statistics of the existing corpus (hops, discovery methods, metadata), then exits. No API is queried. |
 | `--merge-duplicates` | off | Merges entries of the existing corpus that share an arXiv ID or a DOI, then exits. The published OpenAlex record is kept, the other ID is recorded under `alternate_ids`, and the duplicate download is deleted. No API is queried. |
-| `--keywords K [K ...]` | `"Signal Temporal Logic" "Metric Temporal Logic" "STL specification" "STL formulas"` | Search phrases for the keyword search. Quote each phrase. Ignored with `--mode citations`. |
+| `--keywords K [K ...]` | `"Signal Temporal Logic" "STL specification" "STL formulas"` | Search phrases for the keyword search. Quote each phrase. Ignored with `--mode citations`. |
 
 ### Step 2: Download Papers Locally (`.tex` & `.pdf`)
 
