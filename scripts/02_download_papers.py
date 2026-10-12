@@ -80,6 +80,51 @@ TRANSIENT_RETRY_WAIT = 10
 def is_rate_limited(reason: str) -> bool:
     return "HTTP 429" in reason or "HTTP 503" in reason
 
+class ArxivPacer:
+    """
+    Downloads arXiv LaTeX sources at a pace arXiv accepts. When arXiv rate-limits, the same paper is tried again
+    after a growing wait and the pause between arXiv papers is raised; it comes back down once arXiv stops refusing.
+    """
+    def __init__(self, base_delay: float = 3.5):
+        self.base_delay = base_delay
+        self.delay = base_delay
+        self.rate_limit_answers = 0
+        self.answers_in_a_row = 0
+
+    def fetch(self, pid: str, eprint_url: str, indent: str = "") -> tuple[bool, str, bool]:
+        """Returns (success, reason, gave_up). gave_up: arXiv still refuses after the last wait, the caller should stop."""
+        rate_limit_tries, transient_retried = 0, False
+        while True:
+            success, reason = download_and_extract_arxiv_tex(eprint_url, RAW_LATEX_DIR / pid)
+            if success or reason in NO_LATEX_SOURCE_REASONS:
+                return success, reason, False
+            if is_rate_limited(reason):
+                self.rate_limit_answers += 1
+                self.answers_in_a_row = 0
+                self.delay = min(max(self.delay * 2, self.base_delay), max(MAX_UPGRADE_DELAY, self.base_delay))
+                if rate_limit_tries == len(RATE_LIMIT_WAITS):
+                    return False, reason, True
+                wait = RATE_LIMIT_WAITS[rate_limit_tries]
+                rate_limit_tries += 1
+                logging.info(f"{indent} waiting   | {pid:<12} | arXiv asked to slow down ({reason.removeprefix('arXiv Error: ')}): "
+                             f"trying again in {wait} s (try {rate_limit_tries + 1} of {len(RATE_LIMIT_WAITS) + 1}), pause between papers now {self.delay:g} s")
+                time.sleep(wait)
+            elif is_transient_failure(reason) and not transient_retried:
+                transient_retried = True
+                logging.info(f"{indent} waiting   | {pid:<12} | {reason}: trying once more in {TRANSIENT_RETRY_WAIT} s")
+                time.sleep(TRANSIENT_RETRY_WAIT)
+            else:
+                return False, reason, False
+
+    def pause(self, indent: str = "") -> None:
+        """The pause after an arXiv paper. After 10 answers in a row without a refusal, goes back towards the normal pace."""
+        self.answers_in_a_row += 1
+        if self.answers_in_a_row >= 10 and self.delay > self.base_delay:
+            self.delay = max(self.base_delay, self.delay / 2)
+            self.answers_in_a_row = 0
+            logging.info(f"{indent} pace      | no refusal for 10 papers: pause between papers back to {self.delay:g} s")
+        time.sleep(self.delay)
+
 def upgrade_pdfs_to_latex(store: CorpusStore, counts: dict, limit: int | None, base_delay: float = 3.5) -> None:
     """
     Fetches the arXiv LaTeX source of the papers held as PDF that have an arXiv ID (usually found by the enrichment
@@ -100,37 +145,13 @@ def upgrade_pdfs_to_latex(store: CorpusStore, counts: dict, limit: int | None, b
     upgraded, no_source, failed = 0, Counter(), Counter()
     interrupted = False
     stopped_by_rate_limit = False
-    rate_limit_answers = 0
-    delay = base_delay
-    successes_in_a_row = 0
+    pacer = ArxivPacer(base_delay)
     try:
         for n, pid in enumerate(queue, 1):
             paper = store.papers[pid]
             position = f"[{n:>{len(str(len(queue)))}}/{len(queue)}]"
             indent = " " * len(position)
-            rate_limit_tries, transient_retried = 0, False
-            while True:
-                success, reason = download_and_extract_arxiv_tex(paper["urls"]["eprint_source"], RAW_LATEX_DIR / pid)
-                if success or reason in NO_LATEX_SOURCE_REASONS:
-                    break
-                if is_rate_limited(reason):
-                    rate_limit_answers += 1
-                    successes_in_a_row = 0
-                    delay = min(max(delay * 2, base_delay), max(MAX_UPGRADE_DELAY, base_delay))
-                    if rate_limit_tries == len(RATE_LIMIT_WAITS):
-                        stopped_by_rate_limit = True
-                        break
-                    wait = RATE_LIMIT_WAITS[rate_limit_tries]
-                    rate_limit_tries += 1
-                    logging.info(f"{indent} waiting   | {pid:<12} | arXiv asked to slow down ({reason.removeprefix('arXiv Error: ')}): "
-                                 f"trying again in {wait} s (try {rate_limit_tries + 1} of {len(RATE_LIMIT_WAITS) + 1}), pause between papers now {delay:g} s")
-                    time.sleep(wait)
-                elif is_transient_failure(reason) and not transient_retried:
-                    transient_retried = True
-                    logging.info(f"{indent} waiting   | {pid:<12} | {reason}: trying once more in {TRANSIENT_RETRY_WAIT} s")
-                    time.sleep(TRANSIENT_RETRY_WAIT)
-                else:
-                    break
+            success, reason, stopped_by_rate_limit = pacer.fetch(pid, paper["urls"]["eprint_source"], indent)
             if stopped_by_rate_limit:
                 logging.info(f"{position} stopped   | {pid:<12} | arXiv still refuses after {sum(RATE_LIMIT_WAITS) // 60} minutes of waiting: stopping here, nothing is lost")
                 break
@@ -152,13 +173,7 @@ def upgrade_pdfs_to_latex(store: CorpusStore, counts: dict, limit: int | None, b
                 label, detail = "failed   ", reason
             store.save()
             logging.info(f"{position} {label} | {pid:<12} | arXiv {paper.get('arxiv_id') or '?':<12} | {detail}")
-            # After 10 answers in a row without a refusal, go back towards the normal pace
-            successes_in_a_row += 1
-            if successes_in_a_row >= 10 and delay > base_delay:
-                delay = max(base_delay, delay / 2)
-                successes_in_a_row = 0
-                logging.info(f"{indent} pace      | no refusal for 10 papers: pause between papers back to {delay:g} s")
-            time.sleep(delay)
+            pacer.pause(indent)
     except KeyboardInterrupt:
         interrupted = True
         store.save()
@@ -179,7 +194,7 @@ def upgrade_pdfs_to_latex(store: CorpusStore, counts: dict, limit: int | None, b
     for reason, count in failed.most_common():
         print(f"      {count:>5} | {reason}")
     print("-" * 72)
-    print(f"{rate_limit_answers:>5} | times arXiv asked to slow down (HTTP 429/503); pause between papers at the end: {delay:g} s")
+    print(f"{pacer.rate_limit_answers:>5} | times arXiv asked to slow down (HTTP 429/503); pause between papers at the end: {pacer.delay:g} s")
     if stopped_by_rate_limit:
         print(f"{len(queue) - tried:>5} | not tried: arXiv kept refusing, so the run stopped. Run the same command again later,")
         print("        possibly with a longer pause, e.g. --delay 15")
@@ -197,7 +212,7 @@ def main():
     parser.add_argument("--retry-unavailable", action="store_true")
     parser.add_argument("--retry-transient", action="store_true", help="Retry only unavailable papers that failed on a connection error, timeout, rate limit or server error.")
     parser.add_argument("--upgrade-pdfs", action="store_true", help="Fetch the arXiv LaTeX source of the papers held as PDF that have an arXiv ID and delete their PDF, print a report and exit. Nothing else is downloaded.")
-    parser.add_argument("--delay", type=float, default=3.5, help="With --upgrade-pdfs: seconds to pause between two papers (default 3.5). The pause grows by itself when arXiv rate-limits.")
+    parser.add_argument("--delay", type=float, default=3.5, help="Seconds to pause after each arXiv download (default 3.5). The pause grows by itself when arXiv rate-limits.")
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--stats", action="store_true", help="Print the download status of the whole corpus and exit, without downloading anything.")
     parser.add_argument("--relabel", action="store_true", help="Rewrite stored failure reasons in the current wording, print the stats and exit, without downloading anything.")
@@ -244,8 +259,11 @@ def main():
     logging.info(f"=== STEP 2 START | Queued: {len(queue)} ===")
 
     attempted = 0
+    stopped_by_rate_limit = False
+    pacer = ArxivPacer(args.delay)
     for pid in queue:
         attempted += 1
+        indent = " " * len(f"[{attempted}/{len(queue)}]")
         paper = store.papers[pid]
         urls = paper.get("urls") or {}
         eprint_url = urls.get("eprint_source")
@@ -259,7 +277,13 @@ def main():
 
         # TIER 1: arXiv .tex
         if eprint_url:
-            success, reason = download_and_extract_arxiv_tex(eprint_url, tex_folder)
+            success, reason, stopped_by_rate_limit = pacer.fetch(pid, eprint_url, indent)
+            if stopped_by_rate_limit:
+                # Falling back to the PDF here would hide that the LaTeX source was never really asked for
+                attempted -= 1
+                logging.info(f"[{attempted + 1}/{len(queue)}] STOPPED [arXiv still refuses after {sum(RATE_LIMIT_WAITS) // 60} minutes of waiting] {pid}: "
+                             f"this paper and the rest of the queue are left as they were")
+                break
             if success:
                 paper["local_files"] = {"status": "downloaded_latex", "path": f"data/raw/latex/{pid}"}
                 counts["downloaded_latex"] += 1
@@ -267,7 +291,7 @@ def main():
                 status_label = f"SUCCESS [LaTeX] {pid}"
             else:
                 current_failure_reason = reason
-            time.sleep(3.5)
+            pacer.pause(indent)
 
         # TIER 2: PDF Mirrors
         if not downloaded and pdf_mirrors:
@@ -297,7 +321,14 @@ def main():
         store.save()
         logging.info(f"[{attempted}/{len(queue)}] {status_label}")
 
-    logging.info("=== STEP 2 FINISHED ===")
+    if stopped_by_rate_limit:
+        logging.info(f"=== STEP 2 STOPPED: arXiv rate limit | {attempted} of {len(queue)} papers done ===")
+        print(f"\narXiv kept refusing, so the run stopped with {len(queue) - attempted} papers not tried. Run the same command again later,")
+        print("possibly with a longer pause, e.g. --delay 15")
+    else:
+        logging.info("=== STEP 2 FINISHED ===")
+    if pacer.rate_limit_answers:
+        print(f"arXiv asked to slow down {pacer.rate_limit_answers} times (HTTP 429/503); pause between arXiv papers at the end: {pacer.delay:g} s")
 
     # Print Statistical Report
     if failure_stats:
