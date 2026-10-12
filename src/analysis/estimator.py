@@ -39,6 +39,8 @@ SYMBOL_OPERATORS = "|".join([
     # Common short macro names, for papers whose style file is not on disk
     r"\\(?:alw|ev)(?![a-zA-Z])",
     rf"\\{FONT_COMMANDS}\s*\{{\s*[GFU]\s*\}}",
+    # An operator name set in a font, e.g. \mathtt{Always}_{[0,15]}
+    rf"\\{FONT_COMMANDS}\s*\{{\s*(?i:always|eventually|globally|finally|until|release|once|since|historically)\s*\}}",
     r"\\[GFU](?![a-zA-Z])",
     # A bare letter only counts with a subscript: U^{[0,T]} is usually a signal space, not "until"
     r"(?<![a-zA-Z\\])[GFU](?=\s*_)",
@@ -263,37 +265,51 @@ def find_formula_units(text: str) -> list[tuple[int, int]]:
         units.append((unit_start, unit_end))
     return units
 
-def count_formulas(text: str, patterns: list[tuple[re.Pattern, bool]]) -> dict:
-    """
-    Counts temporal operators that carry a time bound, split into concrete (numeric bounds) and symbolic,
-    and the formulas they belong to. A formula is concrete if at least one of its operators is.
-    """
+def find_operators(text: str, patterns: list[tuple[re.Pattern, bool]]) -> list[tuple[int, str]]:
+    """Returns (position, 'concrete' | 'symbolic') for every temporal operator that carries a time bound."""
     matches = []
     for pattern, needs_numeric in patterns:
         for m in pattern.finditer(text):
             kind = classify_match(m, needs_numeric)
             if kind:
                 matches.append((m.start(), kind))
+    return matches
 
-    counts = dict(EMPTY_COUNTS)
-    if not matches:
-        return counts
+def locate_formulas(text: str, patterns: list[tuple[re.Pattern, bool]], operators: list[tuple[int, str]] | None = None) -> list[tuple[int, int, str]]:
+    """
+    Returns the formulas of a file as sorted (start, end, kind) spans: the formula units that hold at least one
+    temporal operator with a time bound. A formula is concrete if at least one of its operators is.
+    """
+    if operators is None:
+        operators = find_operators(text, patterns)
+    if not operators:
+        return []
 
     units = find_formula_units(text)
     unit_starts = [start for start, _ in units]
-    kinds_per_formula = {}
-    for pos, kind in matches:
-        counts[kind] += 1
+    kinds_per_span = {}
+    for pos, kind in operators:
         i = bisect.bisect_right(unit_starts, pos) - 1
         if i >= 0 and pos < units[i][1]:
-            key = ("unit", i)
+            span = units[i]
         else:
-            # Outside any math span (e.g., in a macro definition): group by line
-            key = ("line", text.count("\n", 0, pos))
-        kinds_per_formula.setdefault(key, set()).add(kind)
+            # Outside any math span (e.g., in a macro definition): the formula is the line
+            line_end = text.find("\n", pos)
+            span = (text.rfind("\n", 0, pos) + 1, len(text) if line_end < 0 else line_end)
+        kinds_per_span.setdefault(span, set()).add(kind)
+    return sorted((start, end, "concrete" if "concrete" in kinds else "symbolic") for (start, end), kinds in kinds_per_span.items())
 
-    for kinds in kinds_per_formula.values():
-        counts["formulas_concrete" if "concrete" in kinds else "formulas_symbolic"] += 1
+def count_formulas(text: str, patterns: list[tuple[re.Pattern, bool]]) -> dict:
+    """
+    Counts temporal operators that carry a time bound, split into concrete (numeric bounds) and symbolic,
+    and the formulas they belong to.
+    """
+    counts = dict(EMPTY_COUNTS)
+    operators = find_operators(text, patterns)
+    for _, kind in operators:
+        counts[kind] += 1
+    for _, _, kind in locate_formulas(text, patterns, operators):
+        counts["formulas_" + kind] += 1
     return counts
 
 def find_document_files(tex_sources: dict[Path, str], folder: Path) -> set[Path]:
@@ -334,19 +350,18 @@ def find_document_files(tex_sources: dict[Path, str], folder: Path) -> set[Path]
         return set(tex_sources)
     return max((reachable_from(main) for main in mains), key=lambda files: sum(len(tex_sources[f]) for f in files))
 
-def estimate_tex_folder(tex_folder: Path) -> dict:
-    """Scans the .tex files of a paper and counts formula matches, including the paper's own operator macros."""
-    counts = dict(EMPTY_COUNTS)
-    if not tex_folder.is_dir():
-        return counts
-
+def read_tex_folder(tex_folder: Path, strip=strip_latex_comments) -> tuple[dict[Path, str], list[tuple[re.Pattern, bool]]]:
+    """
+    Reads the LaTeX source of a paper. Returns the active code of every .tex file (comments removed with `strip`,
+    cut at \\end{document}) and the formula patterns of the paper, which include its own operator macros.
+    """
     # Macros are often defined in one file (macros.tex, a .sty) and used in another, so collect them per paper
     sources = {}
     for src_file in tex_folder.rglob("*"):
         if src_file.suffix.lower() in MACRO_SOURCE_EXTENSIONS and src_file.is_file():
             try:
                 raw = src_file.read_text(encoding="utf-8", errors="ignore")
-                sources[src_file] = strip_latex_comments(raw)
+                sources[src_file] = strip(raw)
             except Exception:
                 continue
 
@@ -355,9 +370,18 @@ def estimate_tex_folder(tex_folder: Path) -> dict:
         temporal_macros |= find_temporal_macros(active_code)
     patterns = build_formula_patterns(temporal_macros)
 
-    tex_sources = {f: code for f, code in sources.items() if f.suffix.lower() == ".tex"}
     # Nothing after \end{document} is typeset
-    file_counts = {f: count_formulas(code.split("\\end{document}")[0], patterns) for f, code in tex_sources.items()}
+    tex_sources = {f: code.split("\\end{document}")[0] for f, code in sources.items() if f.suffix.lower() == ".tex"}
+    return tex_sources, patterns
+
+def estimate_tex_folder(tex_folder: Path) -> dict:
+    """Scans the .tex files of a paper and counts formula matches, including the paper's own operator macros."""
+    counts = dict(EMPTY_COUNTS)
+    if not tex_folder.is_dir():
+        return counts
+
+    tex_sources, patterns = read_tex_folder(tex_folder)
+    file_counts = {f: count_formulas(code, patterns) for f, code in tex_sources.items()}
 
     document_files = find_document_files(tex_sources, tex_folder)
     if not any(file_counts[f]["concrete"] + file_counts[f]["symbolic"] for f in document_files):
