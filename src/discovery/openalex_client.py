@@ -1,7 +1,7 @@
 import re
 import time
 import requests
-from config import HEADERS, OPENALEX_API_KEY, USER_EMAIL
+from config import OPENALEX_API_KEY, OPENALEX_HEADERS, USER_EMAIL
 from src.storage import classify_tier
 
 STL_RELEVANCE_TERMS = {
@@ -41,7 +41,7 @@ def request_with_retry(url: str, params: dict = None, max_retries: int = 5):
 
     for attempt in range(1, max_retries + 1):
         try:
-            resp = requests.get(url, params=params, headers=HEADERS, timeout=40)
+            resp = requests.get(url, params=params, headers=OPENALEX_HEADERS, timeout=40)
             if resp.status_code == 200:
                 return resp
 

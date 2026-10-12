@@ -170,6 +170,8 @@ class CorpusStore:
             "hop_distance": hop,
             "parent_ids": parent_ids or [],
         }
+        # Answers of the enrichment lookups, one entry per service asked
+        paper_dict.setdefault("lookups", {})
         self.papers[pid] = paper_dict
         if arxiv_id:
             self.arxiv_index[arxiv_id] = pid
@@ -184,6 +186,20 @@ class CorpusStore:
         """Returns the ID of another entry that already has this arXiv ID, if any."""
         owner = self.arxiv_index.get(arxiv_id)
         return owner if owner and owner != other_than and owner in self.papers else None
+
+    def set_arxiv_id(self, pid: str, arxiv_id: str) -> str:
+        """
+        Gives a paper the arXiv ID found for it. If another entry already has that ID the two are the same work
+        and are merged. Returns the ID of the entry that now holds the paper.
+        """
+        owner = self.find_arxiv_owner(arxiv_id, other_than=pid)
+        if owner:
+            return self.merge_papers(pid, owner)
+        paper = self.papers[pid]
+        paper["arxiv_id"] = arxiv_id
+        paper["urls"]["eprint_source"] = f"https://export.arxiv.org/e-print/{arxiv_id}"
+        self.arxiv_index[arxiv_id] = pid
+        return pid
 
     def merge_papers(self, id_a: str, id_b: str) -> str:
         """
@@ -226,6 +242,11 @@ class CorpusStore:
         disc["parent_ids"] = sorted((set(disc.get("parent_ids") or []) | set(drop_disc.get("parent_ids") or [])) - {keep_id, drop_id})
         if drop_disc.get("expanded_hop_2"):
             disc["expanded_hop_2"] = True
+        # Enrichment lookups: an answer on either entry settles the question for the merged one
+        lookups = keep.setdefault("lookups", {})
+        for service, entry in (drop.get("lookups") or {}).items():
+            if service not in lookups or lookups[service].get("status") == "no_answer":
+                lookups[service] = entry
         openalex_licenses = sorted(
             set(((keep.get("license_info") or {}).get("sources") or {}).get("openalex_locations") or [])
             | set(((drop.get("license_info") or {}).get("sources") or {}).get("openalex_locations") or [])

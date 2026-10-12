@@ -7,6 +7,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from config import DEFAULT_KEYWORDS, SEED_DOIS
+from src.discovery.enrichment import SERVICES, enrich_corpus, needs_lookup
 from src.discovery.keyword_search import search_arxiv_by_keywords
 from src.discovery.openalex_client import (
     fetch_citing_works,
@@ -51,18 +52,27 @@ def print_corpus_stats(store: CorpusStore) -> None:
     row(sum(1 for p in papers if p.get("is_oa")), "Open access according to OpenAlex")
     row(sum(1 for p in papers if p.get("arxiv_id")), "With an arXiv ID")
     row(sum(1 for p in papers if p.get("doi")), "With a DOI")
+    print("-" * 68)
+    print("Enrichment lookups (--mode enrich):")
+    print(f"{'found':>9} {'not found':>10} {'no answer':>10} {'still to ask':>13} | Service")
+    for service in SERVICES:
+        answers = Counter((p.get("lookups") or {}).get(service, {}).get("status") for p in papers)
+        to_ask = sum(1 for p in papers if needs_lookup(p, service))
+        print(f"{answers['found']:>9} {answers['not_found']:>10} {answers['no_answer']:>10} {to_ask:>13} | {service}")
+    print("'still to ask' counts the papers the next enrichment run will ask about, including those with no answer.")
     print("=" * 68)
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Step 1: Build and expand the STL paper corpus (1-hop, 2-hop citations, and keywords)."
+        description="Step 1: Build and expand the STL paper corpus (1-hop, 2-hop citations, keywords), and enrich it with the links other services know."
     )
     parser.add_argument(
         "--mode",
-        choices=["citations", "keywords", "all"],
+        choices=["citations", "keywords", "enrich", "all"],
         default="citations",
-        help="Discovery mode: 'citations' (1-hop or 2-hop), 'keywords' (OpenAlex + arXiv), or 'all'.",
+        help="'citations' (1-hop or 2-hop crawl), 'keywords' (OpenAlex + arXiv search), 'enrich' (ask Semantic Scholar, "
+        "the arXiv title search and HAL for missing arXiv IDs and PDF links), or 'all' (the three in that order).",
     )
     parser.add_argument(
         "--hops",
@@ -88,6 +98,12 @@ def main():
         nargs="+",
         default=DEFAULT_KEYWORDS,
         help="Custom list of keywords for --mode keywords.",
+    )
+    parser.add_argument(
+        "--limit",
+        type=int,
+        default=None,
+        help="With --mode enrich: ask each service about at most this many papers (for testing).",
     )
     parser.add_argument(
         "--stats",
@@ -179,6 +195,13 @@ def main():
         print(
             f"Keyword discovery complete: +{added_arxiv} from arXiv, +{added_oa} from OpenAlex."
         )
+
+    # -------------------------------------------------------------------------
+    # MODE C: ENRICHMENT (SEMANTIC SCHOLAR + ARXIV TITLE SEARCH + HAL)
+    # -------------------------------------------------------------------------
+    if args.mode in ("enrich", "all"):
+        print("\n=== STEP 1C: Enrichment (missing arXiv IDs and PDF links) ===")
+        enrich_corpus(store, limit=args.limit)
 
     store.save()
     final_count = len(store.papers)

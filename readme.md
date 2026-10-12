@@ -12,11 +12,10 @@ A modular, resumable pipeline that discovers academic papers on Signal Temporal 
   * **1-Hop & 2-Hop Citation Graph Crawling:** Discovers papers citing the foundational STL literature (Maler & Nickovic 2004, Donzé & Maler 2010, Fainekos & Pappas 2009, Breach 2010) via OpenAlex, with batching and local relevance filtering to save API credits. Each paper records which papers of the previous hop it cites (`parent_ids`).
   * **Direct Keyword Harvesting:** Queries both the arXiv API and OpenAlex by keyword (`"Signal Temporal Logic"`, `"Metric Temporal Logic"`, `"STL specification"`, `"STL formulas"`). OpenAlex results are kept only if their title or abstract matches the STL relevance terms.
   * **Automatic Deduplication:** Deduplicates works across OpenAlex IDs, arXiv IDs, DOIs, and normalized titles inside a single source of truth (`data/corpus.json`).
-* **Resumable Harvester with Recovery:**
+  * **Enrichment:** Asks Semantic Scholar, the arXiv title search and HAL for the arXiv IDs and open PDF links that OpenAlex does not list. Each answer is recorded per paper, so no service is asked twice about the same paper, and a lookup that got no answer (rate limit, network problem) is repeated on the next run.
+* **Resumable Harvester:**
   * **Tier 1 (LaTeX Sources):** Prioritizes source bundles from `export.arxiv.org` to preserve exact mathematical macros ($\square_{[a,b]}$, $\lozenge_{[a,b]}$, $\mathcal{U}_{[a,b]}$) without OCR corruption. Keeps the `.tex`, `.sty`, `.cls` and `.def` files with their folder structure, so author macros defined outside the main file are not lost.
-  * **Tier 2 (Recovery, optional):** For papers without a working arXiv source, asks Semantic Scholar, the arXiv title search and HAL for an arXiv version or an open PDF.
-  * **Tier 3 (Open-Access PDFs):** Falls back to Open Access PDF mirrors (HAL, Inria, Dagstuhl, institutional repositories) and verifies the `%PDF` magic bytes.
-  * **Rate-Limit Handling:** Recovery lookups are paced, retried with backoff, and paused for 15 minutes when a service keeps refusing. Papers whose lookup was cut short are marked so they can be retried on their own.
+  * **Tier 2 (Open-Access PDFs):** Falls back to Open Access PDF mirrors (HAL, Inria, Dagstuhl, institutional repositories) and verifies the `%PDF` magic bytes.
   * **Descriptive Failure Reasons & Stats:** Every paper that could not be downloaded stores why, and `--stats` prints the breakdown for the whole corpus.
 * **Strict Multi-Source License Auditing:**
   * Resolves the exact license for every downloaded paper by inspecting `.tex` headers, PDF metadata, arXiv OAI-PMH records, and OpenAlex locations.
@@ -52,9 +51,10 @@ STL_dataset_builder/
 │   ├── storage.py                     # CorpusStore class (deduplication & atomic JSON persistence)
 │   ├── discovery/
 │   │   ├── openalex_client.py         # 1-hop/2-hop citation crawler & OpenAlex keyword search
-│   │   └── keyword_search.py          # Direct arXiv API keyword harvester
+│   │   ├── keyword_search.py          # Direct arXiv API keyword harvester
+│   │   └── enrichment.py              # Semantic Scholar / arXiv title search / HAL lookups, rate-limit handling
 │   ├── harvesting/
-│   │   └── downloader.py              # LaTeX & PDF downloader, Semantic Scholar/arXiv/HAL recovery, rate-limit handling
+│   │   └── downloader.py              # LaTeX & PDF downloader, failure reasons
 │   ├── licensing/
 │   │   ├── resolver.py                # Deep license scanner (.tex, PDF, arXiv OAI, OpenAlex)
 │   │   └── stats.py                   # License tier classification & reporting tables
@@ -62,7 +62,7 @@ STL_dataset_builder/
 │       └── estimator.py               # Counts concrete and symbolic STL formulas (macro-aware)
 │
 └── scripts/                           # Executable CLI entrypoints
-    ├── 01_build_corpus.py             # Step 1: Discover papers (citations & keywords)
+    ├── 01_build_corpus.py             # Step 1: Discover papers (citations & keywords) and enrich them with missing links
     ├── 02_download_papers.py          # Step 2: Download LaTeX sources and fallback PDFs; download stats
     ├── 03_audit_and_print_licenses.py # Step 3: Verify licenses & print statistical tables
     └── 04_estimate_formulas.py        # Step 4: Estimate the STL formula yield per paper
@@ -103,7 +103,7 @@ SEMANTIC_SCHOLAR_API_KEY=your_s2_key       # Optional: Lifts the anonymous rate 
 
 ```
 
-Without a Semantic Scholar key, the recovery lookups of step 2 are likely to be refused; the download script reports the state of that service at start-up when `--with-recovery` is used.
+Without a Semantic Scholar key, the enrichment lookups of step 1 are likely to be refused; `--mode enrich` reports the state of that service when it starts. The OpenAlex key is sent to OpenAlex only.
 
 ---
 
@@ -117,7 +117,7 @@ Each step can print its statistics from `data/corpus.json` without redoing the w
 
 ### Step 1: Build & Expand the Paper Corpus
 
-Discover papers via 1-hop foundational citations, 2-hop citation cycles, or keyword searches:
+Step 1 gathers everything that is known about the papers, without downloading them. It discovers papers via 1-hop foundational citations, 2-hop citation cycles, or keyword searches, and then asks other services for the arXiv IDs and PDF links that OpenAlex does not list:
 
 ```bash
 # 1A. Fetch Hop-1 papers citing the 4 foundational STL papers
@@ -129,7 +129,10 @@ python scripts/01_build_corpus.py --mode citations --hops 2 --min-hop1-citations
 # 1C. Discover additional preprints and papers via keywords (arXiv + OpenAlex)
 python scripts/01_build_corpus.py --mode keywords --keywords "Signal Temporal Logic" "Metric Temporal Logic" "STL specification"
 
-# Run all discovery modes together
+# 1D. Enrich the corpus with missing arXiv IDs and PDF links (Semantic Scholar, arXiv title search, HAL)
+python scripts/01_build_corpus.py --mode enrich
+
+# Run all modes together
 python scripts/01_build_corpus.py --mode all --hops 2
 
 # Show the discovery statistics of the existing corpus
@@ -142,46 +145,56 @@ python scripts/01_build_corpus.py --merge-duplicates
 
 | Flag | Default | What it does |
 |---|---|---|
-| `--mode {citations,keywords,all}` | `citations` | Which discovery to run: the citation crawl, the keyword search (arXiv + OpenAlex), or both. |
+| `--mode {citations,keywords,enrich,all}` | `citations` | What to run: the citation crawl, the keyword search (arXiv + OpenAlex), the enrichment (see below), or the three in that order. |
 | `--hops {1,2}` | `1` | Citation depth. `1` fetches (or refreshes) the papers citing the 4 seed papers. `2` also fetches the papers citing those Hop-1 papers; Hop-1 itself is only fetched if it is not in the corpus yet. Ignored with `--mode keywords`. |
 | `--min-hop1-citations N` | `5` | With `--hops 2`: only Hop-1 papers with at least `N` citations are expanded. |
 | `--hop2-require-stl-text` / `--no-hop2-require-stl-text` | on | With `--hops 2`: keep a Hop-2 paper only if its title or abstract matches the STL relevance terms. The `--no-` form keeps every Hop-2 paper (much larger, off-topic corpus). |
-| `--stats` | off | Prints the discovery statistics of the existing corpus (hops, discovery methods, metadata), then exits. No API is queried. |
+| `--limit N` | none | With `--mode enrich`: asks each service about at most `N` papers (for testing). |
+| `--stats` | off | Prints the statistics of the existing corpus (hops, discovery methods, metadata, enrichment lookups), then exits. No API is queried. |
 | `--merge-duplicates` | off | Merges entries of the existing corpus that share an arXiv ID or a DOI, then exits. The published OpenAlex record is kept, the other ID is recorded under `alternate_ids`, and the duplicate download is deleted. No API is queried. |
 | `--keywords K [K ...]` | `"Signal Temporal Logic" "STL specification" "STL formulas"` | Search phrases for the keyword search. Quote each phrase. Ignored with `--mode citations`. |
 
+#### Enrichment
+
+`--mode enrich` asks three services about the papers of the corpus. It can be interrupted and re-run: it only asks what is still unanswered.
+
+| Service | Asked about | How | Gives |
+|---|---|---|---|
+| Semantic Scholar | Every paper with a DOI | 500 papers per request | arXiv ID, open PDF link |
+| arXiv title search | Papers with no arXiv ID | 15 papers per request, one request every 3 seconds | arXiv ID |
+| HAL | Papers with no arXiv ID that are not downloaded yet | One request per paper | Open PDF link |
+
+Each answer is stored under the paper's `lookups` field as `found`, `not_found` or `no_answer`. `no_answer` means the service was rate-limited or unreachable, and that paper is asked again on the next run. A service that keeps rate-limiting is left alone for 15 minutes.
+
+When a lookup gives a new arXiv ID or PDF link to a paper that step 2 had marked `unavailable`, the paper goes back to `pending`, so the next run of step 2 tries it. If the arXiv ID found already belongs to another entry, the two entries are the same work and are merged (as with `--merge-duplicates`).
+
 ### Step 2: Download Papers Locally (`.tex` & `.pdf`)
 
-Downloads raw LaTeX source files (`data/raw/latex/{paper_id}/`) whenever available on arXiv, or falls back to Open Access PDFs (`data/raw/pdfs/{paper_id}.pdf`):
+Downloads raw LaTeX source files (`data/raw/latex/{paper_id}/`) whenever available on arXiv, or falls back to Open Access PDFs (`data/raw/pdfs/{paper_id}.pdf`). It only uses the links that step 1 stored in the corpus and does not look for new ones:
 
 ```bash
 # Download every paper that has not been tried yet
-python scripts/02_download_papers.py --with-recovery
+python scripts/02_download_papers.py
 
 # Show the download status of the whole corpus
 python scripts/02_download_papers.py --stats
 
-# Go back over papers whose recovery lookups were cut short by rate limiting
-python scripts/02_download_papers.py --retry-rate-limited --with-recovery
-
 # Go back over papers that failed on a network problem or a server error
-python scripts/02_download_papers.py --retry-transient --with-recovery
+python scripts/02_download_papers.py --retry-transient
 
 ```
 
-Each run first compares `data/corpus.json` with the files on disk and corrects the recorded status. Without any flag, only papers that were never tried (`pending`) are downloaded.
+Each run first compares `data/corpus.json` with the files on disk and corrects the recorded status. Without any flag, only `pending` papers are downloaded: those never tried, and those for which the enrichment of step 1 found a new link.
 
 | Flag | What it does |
 |---|---|
-| `--with-recovery` | For a paper without a working arXiv source, also asks Semantic Scholar (by DOI), the arXiv title search and HAL (by title) for an arXiv version or an open PDF. Slower: the lookups are paced to respect each service's rate limit. If the arXiv version found is already in the corpus under another entry, the two entries are merged instead of downloading it twice. |
 | `--retry-unavailable` | Also retries **every** paper marked `unavailable`, whatever the reason. |
-| `--retry-rate-limited` | Also retries the `unavailable` papers whose recovery lookup was abandoned (rate limit, cooldown, or no answer). Only useful together with `--with-recovery`. |
 | `--retry-transient` | Also retries the `unavailable` papers whose failure reason is a connection error, a timeout, HTTP 429 or HTTP 500/502/503/504. |
 | `--limit N` | Processes only the first `N` papers of the queue (for testing). |
 | `--stats` | Prints the status counts and failure reasons of the whole corpus, then exits. Nothing is downloaded. |
 | `--relabel` | Rewrites the stored failure reasons in the current wording, prints the same report as `--stats`, then exits. Nothing is downloaded. |
 
-`--retry-rate-limited` and `--retry-transient` can be combined; both are redundant with `--retry-unavailable`, which already includes those papers. `--stats` and `--relabel` take precedence over all the download flags.
+`--retry-transient` is redundant with `--retry-unavailable`, which already includes those papers. `--stats` and `--relabel` take precedence over all the download flags.
 
 #### Failure reasons
 
@@ -191,7 +204,7 @@ A paper that could not be downloaded gets `status: "unavailable"` and one of the
 |---|---|
 | `No Link Found (not open access)` | No arXiv source and no PDF link is known, and the paper is not open access. Nothing was attempted. |
 | `No Link Found (open access, but no URL listed)` | Same, for a paper that OpenAlex marks as open access. |
-| `No Link Found (lookup rate-limited, worth a retry)` | No link is known, but a recovery lookup was abandoned, so one may still exist. |
+| `No Link Found (a lookup got no answer, run the enrichment again)` | No link is known, but an enrichment lookup of step 1 got no answer for this paper, so one may still exist. |
 | `arXiv Error: HTTP 404 (Not Found)` / `HTTP 403 (Forbidden/Blocked)` / `HTTP <code>` | arXiv refused or does not have the source bundle. |
 | `arXiv Error: Connection Timeout` / `Network/System Exception` | Network problem while fetching the arXiv bundle. |
 | `Archive contained no .tex files` | The arXiv bundle was unpacked but holds no LaTeX. |
@@ -207,7 +220,7 @@ A paper that could not be downloaded gets `status: "unavailable"` and one of the
 | `SSL Certificate Error` | The host's HTTPS certificate is invalid (for example expired). |
 | `Connection Error (Domain unreachable)` | The host could not be reached at all. |
 
-A paper can also carry `recovery_rate_limited: true` next to any of these reasons; that is what `--retry-rate-limited` looks for.
+The `--stats` report also counts the unavailable papers that still have an unanswered lookup, whatever their failure reason.
 
 ### Step 3: Audit Exact Licenses & Print Statistics
 
@@ -271,6 +284,9 @@ python scripts/04_estimate_formulas.py --stats
       "eprint_source": "https://export.arxiv.org/e-print/1409.1234",
       "pdf_mirrors": ["https://arxiv.org/pdf/1409.1234"]
     },
+    "lookups": {
+      "semantic_scholar": {"status": "found", "checked_at": "2026-10-12"}
+    },
     "local_files": {
       "status": "downloaded_latex",
       "path": "data/raw/latex/W1511164163"
@@ -307,9 +323,9 @@ python scripts/04_estimate_formulas.py --stats
 | `discovery.hop_distance` | `1` or `2` for papers from the citation crawl, `null` for papers found only by keyword. |
 | `discovery.parent_ids` | The papers of the previous hop that this paper cites (the seed papers for Hop-1). |
 | `discovery.expanded_hop_2` | Set on Hop-1 papers whose citing papers have already been fetched. |
-| `local_files.status` | `pending` (not tried yet), `downloaded_latex`, `downloaded_pdf` or `unavailable`. |
+| `lookups` | Written by the enrichment of Step 1: one entry per service asked (`semantic_scholar`, `arxiv_title`, `hal`), with `status` `found`, `not_found` or `no_answer` and the date of the answer. A service with no entry was not asked, either because it was not needed (for example the arXiv title search for a paper that has an arXiv ID) or because the enrichment has not reached the paper yet. |
+| `local_files.status` | `pending` (to be tried by Step 2), `downloaded_latex`, `downloaded_pdf` or `unavailable`. |
 | `local_files.failure_reason` | Only for `unavailable` papers; see the failure reasons under Step 2. |
-| `local_files.recovery_rate_limited` | `true` when a recovery lookup was abandoned, so the paper is worth retrying with `--retry-rate-limited`. |
 | `license_info` | Written by Step 3. `effective_source` is `tex_source`, `pdf_metadata`, `arxiv_oai`, `openalex_locations` or `none`. |
 | `formula_estimates` | Written by Step 4, for downloaded papers only. `concrete` and `symbolic` count temporal operators with numeric and with parametric time bounds. `formulas_concrete` counts the formulas holding at least one concrete operator, `formulas_symbolic` the formulas whose bounded operators are all parametric. |
 

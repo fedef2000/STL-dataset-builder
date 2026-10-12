@@ -36,8 +36,10 @@ OPENALEX_API_KEY = os.environ.get("OPENALEX_API_KEY", "")          # Optional: h
 SEMANTIC_SCHOLAR_API_KEY = os.environ.get("SEMANTIC_SCHOLAR_API_KEY", "")
 
 HEADERS = {"User-Agent": f"NL2STL-ModularBuilder/3.0 (mailto:{USER_EMAIL})"}
+# The OpenAlex key goes to OpenAlex only: every other service gets the plain HEADERS
+OPENALEX_HEADERS = dict(HEADERS)
 if OPENALEX_API_KEY:
-    HEADERS["Authorization"] = f"Bearer {OPENALEX_API_KEY}"
+    OPENALEX_HEADERS["Authorization"] = f"Bearer {OPENALEX_API_KEY}"
 
 # The 4 foundational STL papers (Hop 0 seeds)
 SEED_DOIS = [
