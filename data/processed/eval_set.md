@@ -4,6 +4,8 @@
 
 `Formula` and `Requirement` are verbatim substrings of the source file (whitespace collapsed). A "none" case means the context given to the model holds no statement of what the formula requires; the paper may still describe it somewhere outside that context.
 
+`Domain` and `Variables` are written by the labeller, not copied: the domain is the application area of the system the formula is about (`generic` for an abstract example over an unnamed signal), and each variable of the formula gets a short explanation taken from the paper, which may lie outside the context.
+
 The rendered formula is a reading aid: each paper's own macros are expanded so the Markdown preview can draw it. The source line under it is the verbatim text and is what counts.
 
 ## EVAL_01  W4410555947  (sec_casestudy.tex, line 41)
@@ -23,6 +25,13 @@ Source:
 ```latex
 (w \leq 30)\until_{[5,10]} (w = 0) \land (m \leq 30)\until_{[5,10]} (m = 0)
 ```
+
+**Domain:** automotive
+
+**Variables**
+
+- `w`: signal of the wheel subsystem of the vehicle (no unit given)
+- `m`: signal of the motor control subsystem of the vehicle (no unit given)
 
 **Requirement**
 
@@ -56,6 +65,13 @@ Source:
 \phi_{2} = \left(\globally \neg p_{\Unsafe} \right) ~ \wedge \eventually_{[5.5, 7.5]} ~ \left( \globally_{[0,1.5]} ~ p_{\Goal} \right)
 ```
 
+**Domain:** mobile robotics
+
+**Variables**
+
+- `p_{\Unsafe}`: predicate: the robot is inside the unsafe region
+- `p_{\Goal}`: predicate: the robot is inside the goal region
+
 **Requirement**
 
 ```
@@ -88,6 +104,13 @@ Source:
 \phi_{1} = \left( \globally \neg p_{\Unsafe} \right) \wedge \left( \globally_{[8.5, 10]} ~ p_{\Goal} \right)
 ```
 
+**Domain:** mobile robotics
+
+**Variables**
+
+- `p_{\Unsafe}`: predicate: the robot is inside the unsafe region
+- `p_{\Goal}`: predicate: the robot is inside the goal region
+
 **Requirement**
 
 ```
@@ -117,6 +140,13 @@ Source:
 ```latex
 \phi_{cps} = \Box_{[0,30]}((speed > 100) \Rightarrow \Box_{[0,40]}(rpm > 4000))
 ```
+
+**Domain:** automotive
+
+**Variables**
+
+- `speed`: vehicle speed (no unit given)
+- `rpm`: engine speed, in rpm
 
 **Requirement**
 
@@ -148,6 +178,13 @@ Source:
 \Box_{[0,5]}((speed > 100) \rightarrow \Box_{[0,5]}(rpm > 4000))
 ```
 
+**Domain:** automotive
+
+**Variables**
+
+- `speed`: vehicle speed (no unit given)
+- `rpm`: engine speed, in rpm
+
 **Requirement**
 
 ```
@@ -178,6 +215,13 @@ Source:
 \phi_{5}=(\Diamond_{[0,40]}(speed > 100)) \rightarrow (\Diamond_{[0,30]} (rpm >3000))
 ```
 
+**Domain:** automotive
+
+**Variables**
+
+- `speed`: vehicle speed (no unit given)
+- `rpm`: engine speed, in rpm
+
 **Requirement**
 
 ```
@@ -207,6 +251,12 @@ Source:
 ```latex
 \phi_{3}=\Diamond_{[0,30]}\Box_{[0,10]} (speed > 100)
 ```
+
+**Domain:** automotive
+
+**Variables**
+
+- `speed`: vehicle speed (no unit given)
 
 **Requirement**
 
@@ -240,6 +290,14 @@ Source:
 \formula_1 = \eventually_{[0,10]}(x_1 \in P) \land \always_{[0,10]} (x_1\notin Obs)
 ```
 
+**Domain:** aerial robotics
+
+**Variables**
+
+- `x_1`: state (position) of UAV 1
+- `P`: the Park region
+- `Obs`: the region occupied by obstacles
+
 **Requirement**
 
 ```
@@ -272,6 +330,14 @@ Source:
 \formula_2 = \eventually_{[0,5]}(x_2 \in B) \land \always_{[0,5]} (x_2 \notin Obs)
 ```
 
+**Domain:** aerial robotics
+
+**Variables**
+
+- `x_2`: state (position) of UAV 2
+- `B`: the bridge region
+- `Obs`: the region occupied by obstacles
+
 **Requirement**
 
 ```
@@ -301,6 +367,12 @@ Source:
 ```latex
 \lozenge_{[0,100]}(d_{\text{goal}} < 10)
 ```
+
+**Domain:** automotive
+
+**Variables**
+
+- `d_{\text{goal}}`: distance of the vehicle to the goal, in feet
 
 **Requirement**
 
@@ -332,6 +404,13 @@ Source:
 \square_{[0,\infty]}(\neg(d_{h} < 500 \wedge d_{v} < 100))
 ```
 
+**Domain:** aviation
+
+**Variables**
+
+- `d_{h}`: horizontal separation between the two aircraft, in feet
+- `d_{v}`: vertical separation between the two aircraft, in feet
+
 **Requirement**
 
 ```
@@ -362,6 +441,15 @@ Source:
 \psi = \lozenge_{[0,7]}\square_{[0,5]} (x \in T) \wedge \square_{[0,12]} \neg(x \in U) \wedge \square_{[0,12]} (x \in S)
 ```
 
+**Domain:** generic
+
+**Variables**
+
+- `x`: state (x_1, x_2) of the two-dimensional nonlinear system
+- `T`: target region [-0.05,0.05] x [-0.05,0.05]
+- `U`: unsafe set [-0.24,-0.14] x [-0.05,0.05]
+- `S`: bounded region [-0.4,0.6] x [-0.4,0.6] in which the state must remain
+
 **Requirement**
 
 ```
@@ -391,6 +479,13 @@ Source:
 ```latex
 \psi = \Box_{[0,10]}\big( \mathsf{dist}(V_1, V_2) \geq D_{\min} \big)
 ```
+
+**Domain:** automotive
+
+**Variables**
+
+- `\mathsf{dist}(V_1, V_2)`: distance between the fire truck V_1 and the autonomous vehicle V_2, in metres
+- `D_{\min}`: minimum safe distance, 3 m
 
 **Requirement**
 
@@ -424,6 +519,14 @@ Source:
 \varphi_j = \eventually_{[0,4]} (p_j \in \text{Goal}) \ \wedge\ \always_{[0,4]} \neg (p_j \in \text{Wall})
 ```
 
+**Domain:** aerial robotics
+
+**Variables**
+
+- `p_j`: position of UAS j (j = 1..4)
+- `\text{Goal}`: goal set of the UAS
+- `\text{Wall}`: the wall obstacle
+
 **Requirement**
 
 ```
@@ -455,6 +558,12 @@ Source:
 ```latex
 \varphi_1 = \Diamond_{[2,3]} \ (x_1[t] - 0.7 \geq 0) \wedge \Diamond_{[2,3]} \ (1.3 - x_1[t] \geq 0)
 ```
+
+**Domain:** generic
+
+**Variables**
+
+- `x_1`: first state of the closed-loop adaptive control system (t is the time)
 
 **Requirement**
 
@@ -488,6 +597,16 @@ Source:
 \varphi = &\left(\square_{[0, T]} \neg \text{B}\right) \wedge\left(\square_{[0, T]} \neg \text{Y}\right) \\ &\wedge\left(\Diamond_{[0, T]} \square_{[0,2]} \text{R}\right) \wedge \left(\Diamond_{[0, T]} \square_{[0,2]} \text{G}\right)
 ```
 
+**Domain:** mobile robotics
+
+**Variables**
+
+- `\text{B}`: predicate: the robot is inside the blue obstacle region
+- `\text{Y}`: predicate: the robot is inside the yellow obstacle region
+- `\text{R}`: predicate: the robot is inside the red region
+- `\text{G}`: predicate: the robot is inside the green region
+- `T`: overall time horizon of the mission (not explained next to the formula)
+
 **Requirement**
 
 ```
@@ -519,6 +638,15 @@ Source:
 ```latex
 \phi^1_{\textrm{p}}=\Box\Diamond_{[0, 6]}\big((y_0\in G_1)\vee (y_0\in G_2)\big)\wedge\Box (y_0\in D)
 ```
+
+**Domain:** aerial robotics
+
+**Variables**
+
+- `y_0`: 3-D position of the leader (a quadrotor)
+- `G_1`: first charging station (a cuboid region)
+- `G_2`: second charging station (a cuboid region)
+- `D`: cuboid region in which the leader must remain
 
 **Requirement**
 
@@ -552,6 +680,12 @@ Source:
 \glob{[3,50]}(\even{[5,20]}(a \geq 80))
 ```
 
+**Domain:** railway
+
+**Variables**
+
+- `a`: an angle of the railroad system (the paper does not say which one)
+
 **Requirement**
 
 ```
@@ -582,6 +716,13 @@ Source:
 \always_{[0,10]}(\mathsf{AQI}<\lambda)
 ```
 
+**Domain:** smart city
+
+**Variables**
+
+- `\mathsf{AQI}`: air quality index (AQI) level
+- `\lambda`: threshold parameter (for example 50 for good air quality)
+
 **Requirement**
 
 ```
@@ -611,6 +752,12 @@ Source:
 ```latex
 \phi = F_{[0,22]}G_{[0,22]}(\Vec{s}\ge 17.5)
 ```
+
+**Domain:** generic
+
+**Variables**
+
+- `\Vec{s}`: one-dimensional signal with three stable equilibria
 
 **Requirement**
 
@@ -644,6 +791,13 @@ Source:
 \square_{[0,200]} \Diamond_{[0,20]}\left(|\eta|<90^{\circ} \wedge|d|<2.0\right)
 ```
 
+**Domain:** automotive
+
+**Variables**
+
+- `\eta`: steering angle of the car, in degrees
+- `d`: distance between the car's front and the road's centerline, in metres
+
 **Requirement**
 
 ```
@@ -674,6 +828,12 @@ Source:
 \always{0}{200} (V_S < 45)
 ```
 
+**Domain:** social dynamics
+
+**Variables**
+
+- `V_S`: number of spreaders of the rumour (the population is fixed to 100, so it is also the percentage)
+
 **Requirement**
 
 ```
@@ -703,6 +863,15 @@ Source:
 ```latex
 \phi^{S}_{1}[\theta]=\Box_{[0,60]}((g2~\wedge~X g1) \rightarrow \Box_{[0,\theta]}((\tau \le \theta) \rightarrow g1)
 ```
+
+**Domain:** automotive
+
+**Variables**
+
+- `g1`: proposition: the transmission is in gear one
+- `g2`: proposition: the transmission is in gear two
+- `\tau`: time spent in the current gear
+- `\theta`: parameter to be mined: the time, in seconds, during which gear one must be kept
 
 **Requirement**
 
@@ -736,6 +905,12 @@ Source:
 \varphi = \G\Big(\abs{x} > 0.5 \Rightarrow \F_{[0,.6]}(\G_{[0,1.5]} \abs{x} < 0.5) \Big)
 ```
 
+**Domain:** generic
+
+**Variables**
+
+- `x`: real-valued signal (not described for this example)
+
 **Requirement**
 
 ```
@@ -765,6 +940,14 @@ Source:
 ```latex
 \mathtt{\square(({smoke} > {th}) \rightarrow \Diamond_{[0,2]} ({alarm} = {ON}))}
 ```
+
+**Domain:** smart home
+
+**Variables**
+
+- `smoke`: smoke level measured by the smoke sensor
+- `th`: threshold above which smoke is detected
+- `alarm`: state of the alarm (ON when it goes off)
 
 **Requirement**
 
@@ -796,6 +979,14 @@ Source:
 \varphi =& \mathbf{F}_{[3,4]}\varphi_A \; \land \; \mathbf{F}_{[8,10]}\varphi_B \; \land \; \mathbf{F}_{[13,15]}\varphi_C
 ```
 
+**Domain:** robotic manipulation
+
+**Variables**
+
+- `\varphi_A`: predicate: the end-effector is inside region A
+- `\varphi_B`: predicate: the end-effector is inside region B
+- `\varphi_C`: predicate: the end-effector is inside region C
+
 **Requirement**
 
 ```
@@ -825,6 +1016,16 @@ Source:
 ```latex
 \eventually_{[0,T-5]} ( \always_{[0,5]} T_1 \lor \always_{[0,5]} T_2) \land \always_{[0,T]} \lnot O \land \eventually_{[0,T]}G
 ```
+
+**Domain:** mobile robotics
+
+**Variables**
+
+- `T_1`: predicate: the robot is inside the first intermediate target
+- `T_2`: predicate: the robot is inside the second intermediate target
+- `O`: predicate: the robot is inside the obstacle
+- `G`: predicate: the robot is inside the goal
+- `T`: the specification time bound
 
 **Requirement**
 
@@ -857,6 +1058,12 @@ Source:
 ```latex
 \phi \equiv \text{G}_{[0,3]}(\texttt{distToR3}(t) \geq 3.0)
 ```
+
+**Domain:** mobile robotics
+
+**Variables**
+
+- `\texttt{distToR3}`: distance of the agent to region R_3 at time t, in metres
 
 **Requirement**
 
@@ -892,6 +1099,13 @@ Source:
 \varphi_{\text{pick-up}} \defeq \eventually_{[10, 20]}\always_{[0,\, 5]}(\pos\coordup{2} \in \textit{HUP})
 ```
 
+**Domain:** aerial robotics
+
+**Variables**
+
+- `\pos\coordup{2}`: position of the second UAV
+- `\textit{HUP}`: the HUP region, where the pick-up takes place
+
 **Requirement**
 
 ```
@@ -921,6 +1135,13 @@ Source:
 ```latex
 \Box_{[0,100]} (DeathsPerDay\le 0.001)\wedge\Diamond_{[40, 60]}(Recovered\ge6)
 ```
+
+**Domain:** epidemiology
+
+**Variables**
+
+- `DeathsPerDay`: deaths from infection per day, in millions
+- `Recovered`: immune (recovered) population, in millions
 
 **Requirement**
 
@@ -952,6 +1173,12 @@ Source:
 \evenspec = \lozenge_{[0, 10]} \square (\text{CTE} \le 1.5)
 ```
 
+**Domain:** aviation
+
+**Variables**
+
+- `\text{CTE}`: cross-track error: left-right offset of the plane from the runway centerline, in metres
+
 **Requirement**
 
 ```
@@ -981,6 +1208,13 @@ Source:
 ```latex
 \varphi= \Box_{[0,9]} (s_{(1)}+s_{(2)}-10 \ge 0) \vee \Diamond_{[0,15]} \Box_{[0,5]} (-s_{(1)} \ge 0)
 ```
+
+**Domain:** generic
+
+**Variables**
+
+- `s_{(1)}`: first component of the two-dimensional signal s
+- `s_{(2)}`: second component of the two-dimensional signal s
 
 **Requirement**
 
@@ -1012,6 +1246,14 @@ Source:
 \phi_{\textrm{V}}^1=\Box_{[0,100]} (I\le 0.3)\wedge\Box_{[0,100]} (D\le0.05)\wedge\Diamond_{[40, 60]}(R\ge8)
 ```
 
+**Domain:** epidemiology
+
+**Variables**
+
+- `I`: infected population, in millions
+- `D`: deceased population, in millions
+- `R`: immune (recovered) population, in millions
+
 **Requirement**
 
 ```
@@ -1041,6 +1283,13 @@ Source:
 ```latex
 \phi_1 := F_{[0, 14]}\left( \left\Vert r_0 - \left[ 2 \ 2 \ 2 \right]^T \right\Vert_2 \leq 0.1 \right)
 ```
+
+**Domain:** aerial robotics
+
+**Variables**
+
+- `r_0`: position of the payload carried by the UAVs
+- `\left[ 2 \ 2 \ 2 \right]^T`: the waypoint location (called Lambda in the text)
 
 **Requirement**
 
@@ -1072,6 +1321,13 @@ Source:
 G_{\left[14, 25\right]}\left( \left\Vert r_0 - \left[ 2 \ 2 \ 2 \right]^T \right\Vert_2 \leq 3 \right)
 ```
 
+**Domain:** aerial robotics
+
+**Variables**
+
+- `r_0`: position of the payload carried by the UAVs
+- `\left[ 2 \ 2 \ 2 \right]^T`: the waypoint location (called Lambda in the text)
+
 **Requirement**
 
 ```
@@ -1101,6 +1357,13 @@ Source:
 ```latex
 \Always_{[0,15]} (\neg(-x_1-15<0) \Rightarrow \\ \Eventually_{[0.5,5]} \Always_{[0,1]} ((x_1\!-\!10)^2 \!+\! (x_2\!-\!10)^2 \!-\! 150<0))
 ```
+
+**Domain:** generic
+
+**Variables**
+
+- `x_1`: first state variable of the Lorenz system
+- `x_2`: second state variable of the Lorenz system
 
 **Requirement**
 
@@ -1134,6 +1397,12 @@ Source:
 \mathbf{G}_{[3,6]}s_3 <1
 ```
 
+**Domain:** generic
+
+**Variables**
+
+- `s_3`: third component of the discrete-time signal s
+
 **Requirement**
 
 ```
@@ -1163,6 +1432,12 @@ Source:
 ```latex
 \mathbf{F}_{[3,10]}\mathbf{G}_{[0,2]}s_2 > 4
 ```
+
+**Domain:** generic
+
+**Variables**
+
+- `s_2`: second component of the discrete-time signal s
 
 **Requirement**
 
@@ -1196,6 +1471,17 @@ Source:
 \psi = &\G_{[0,13]} ( (\tilde{S} \implies \F_{[3,4]} \tilde{T}_1) \wedge (\tilde{T}_1 \implies \F_{[3,4]} \tilde{T}_2) \wedge (\tilde{T}_2 \implies \F_{[3,4]} \tilde{T}_1)) \wedge \F_{[17,18]} \G_{[0,3]} \tilde{G} \wedge \G_{[0,20]} \neg (\tilde{O}_1 \vee \tilde{O}_2)
 ```
 
+**Domain:** mobile robotics
+
+**Variables**
+
+- `\tilde{S}`: predicate: the robot is inside the start region S
+- `\tilde{T}_1`: predicate: the robot is inside target region T_1
+- `\tilde{T}_2`: predicate: the robot is inside target region T_2
+- `\tilde{G}`: predicate: the robot is inside the goal region G
+- `\tilde{O}_1`: predicate: the robot is inside obstacle O_1
+- `\tilde{O}_2`: predicate: the robot is inside obstacle O_2
+
 **Requirement**
 
 ```
@@ -1226,6 +1512,13 @@ Source:
 \phi_5:=G_{[0,\infty)} \big(&(c_e\ge 1.25) \implies F_{[0,2]}G_{[0,1]}(\theta_e\le 0)\wedge (c_e\le -1.25) \implies F_{[0,2]}G_{[0,1]}(\theta_e\ge 0)\big)
 ```
 
+**Domain:** automotive
+
+**Variables**
+
+- `c_e`: cross-track error of the car with respect to the reference path
+- `\theta_e`: orientation error of the car with respect to the reference path
+
 **Requirement**
 
 ```
@@ -1255,6 +1548,12 @@ Source:
 ```latex
 \F_{[0,0.3]} (z_t \leq -0.1)
 ```
+
+**Domain:** aerial robotics
+
+**Variables**
+
+- `z_t`: vertical coordinate z of the quadrotor at time t (the goal, described as the top of the space, is at z = -0.9)
 
 **Requirement**
 
@@ -1288,6 +1587,13 @@ Source:
 \varphi=\Box_{[0,2]} \mu_1 \wedge \Diamond_{[0,3]} \mu_2
 ```
 
+**Domain:** generic
+
+**Variables**
+
+- `\mu_1`: predicate y_1 >= 0 over the scalar signal y_1
+- `\mu_2`: predicate y_2 >= 0 over the scalar signal y_2
+
 **Requirement**
 
 ```
@@ -1317,6 +1623,12 @@ Source:
 ```latex
 \Box ( (y\leq -10) \rightarrow \Diamond_{[0,2]} (y\geq 10))
 ```
+
+**Domain:** generic
+
+**Variables**
+
+- `y`: a signal of the system (not tied to a physical quantity in this example)
 
 **Requirement**
 
@@ -1348,6 +1660,12 @@ Source:
 \psi_1 = \lozenge\, \square_{[0,0.4]} \, ( y < -0.02 )
 ```
 
+**Domain:** generic
+
+**Variables**
+
+- `y`: scalar input signal of a toy example
+
 **Requirement**
 
 ```
@@ -1377,6 +1695,12 @@ Source:
 ```latex
 \psi_2 = \lozenge_{[0, 0.8]}\, \square_{[0, 0.4]} \, ( y > 0.2 )
 ```
+
+**Domain:** generic
+
+**Variables**
+
+- `y`: scalar input signal of a toy example
 
 **Requirement**
 
@@ -1408,6 +1732,12 @@ Source:
 \mathtt{Always}_{[0,15]} (altitude > 0)
 ```
 
+**Domain:** aviation
+
+**Variables**
+
+- `altitude`: altitude of the F-16 aircraft (initial altitudes are given in feet)
+
 **Requirement**
 
 ```
@@ -1438,6 +1768,12 @@ Source:
 \phi=\square_{[5,10]}\text{Stay}(A)
 ```
 
+**Domain:** mobile robotics
+
+**Variables**
+
+- `\text{Stay}(A)`: predicate: the agent is inside region A
+
 **Requirement**
 
 ```
@@ -1467,6 +1803,13 @@ Source:
 ```latex
 \texttt{visibility} < 20 \Rightarrow \Diamond_{[0,5]}(\texttt{distance\_to\_pipe} < 10)
 ```
+
+**Domain:** marine robotics
+
+**Variables**
+
+- `\texttt{visibility}`: water visibility, in metres (below 20, visual contact is considered lost)
+- `\texttt{distance\_to\_pipe}`: distance of the underwater vehicle (UUV) to the pipeline (the bound 10 is not explained)
 
 **Requirement**
 
@@ -1500,6 +1843,14 @@ Source:
 \everywhere_{([0,+\infty), {\mathsf{School}})}\always_{[0,3]}(\agr_{([0,5],\top)}^{\avg} x_{\mathsf{air}} > \mathsf{Moderate})
 ```
 
+**Domain:** smart city
+
+**Variables**
+
+- `x_{\mathsf{air}}`: air quality at a location
+- `\mathsf{School}`: label selecting the locations that are schools
+- `\mathsf{Moderate}`: the air quality level 'Moderate', used as threshold
+
 **Requirement**
 
 ```
@@ -1531,6 +1882,13 @@ Source:
 ```latex
 \varphi = x_1 > 100 \ \mathbf{U}_{[0,7200]} \ \mathbf{C}_{[0,3600]}^{3000} \ x_2 < 1.1
 ```
+
+**Domain:** power systems
+
+**Variables**
+
+- `x_1`: charging rate of the battery energy storage system (BESS), in kW
+- `x_2`: voltage of the microgrid, in p.u.
 
 **Requirement**
 
@@ -1564,6 +1922,12 @@ Source:
 \varphi_{I} = \lozenge_{[0,5]}\square_{[58,66]}(x\geq 0.05)\wedge \square_{[14,31]}(x<0.3)\wedge \square_{[45,52]}(x<0.04)
 ```
 
+**Domain:** industrial machinery
+
+**Variables**
+
+- `x`: signal collected by an accelerometer on the rolling element bearing (not described next to the formula)
+
 **Requirement:** none
 
 **Why none:** Learned formula in a results table, next to robustness and error numbers only.
@@ -1591,6 +1955,12 @@ Source:
 ```latex
 \Always_{[0,10]} \Eventually_{[0,5]}\, 2-x_1 \!<\! 0
 ```
+
+**Domain:** generic
+
+**Variables**
+
+- `x_1`: height of a ball bouncing on a moving table (defined in an earlier example of the paper)
 
 **Requirement:** none
 
@@ -1620,6 +1990,13 @@ Source:
 \phi^{\textrm{S}}=&\Diamond_{[1,15]}\Box_{[0,4]}\bar{G}^{\textrm{S}}\wedge \Diamond_{[21,39]}\bar{Y}^{\textrm{S}}
 ```
 
+**Domain:** mobile robotics
+
+**Variables**
+
+- `\bar{G}^{\textrm{S}}`: predicate: the robot is inside the rectangle 3 <= x <= 4, 3 <= y <= 5 of the gridworld
+- `\bar{Y}^{\textrm{S}}`: predicate: the robot is inside the rectangle 7 <= x <= 8, 5 <= y <= 8 of the gridworld
+
 **Requirement:** none
 
 **Why none:** Formula reported as the output of a learning step, followed only by predicate definitions.
@@ -1647,6 +2024,12 @@ Source:
 ```latex
 \Phi&=\Phi_1\wedge\Phi_2=F_{[0,5]}x\geq10\wedge F_{[1,6]}x\leq5
 ```
+
+**Domain:** generic
+
+**Variables**
+
+- `x`: scalar state of a single-integrator system
 
 **Requirement:** none
 
@@ -1676,6 +2059,15 @@ Source:
 \square_{[0, 72]} \Diamond_{[0,8]} ((\square_{[0,5]} y_2 - y_1 \geq 9) \to (\square_{[5, 20]} y_5 - y_4 \geq 9))
 ```
 
+**Domain:** automotive
+
+**Variables**
+
+- `y_1`: signal of car 1 of the five-car Chasing Cars benchmark (not defined in the paper)
+- `y_2`: signal of car 2 of the five-car Chasing Cars benchmark (not defined in the paper)
+- `y_4`: signal of car 4 of the five-car Chasing Cars benchmark (not defined in the paper)
+- `y_5`: signal of car 5 of the five-car Chasing Cars benchmark (not defined in the paper)
+
 **Requirement:** none
 
 **Why none:** Benchmark table row: specification name, numbers and formula, no description.
@@ -1703,6 +2095,17 @@ Source:
 ```latex
 \hat{\varphi} = \mathsf{F}_{[0, 15]}\mathsf{G}_{[2, 10]}\mu_1 \vee \mathsf{F}_{[0, 15]}(\mathsf{G}_{[0, 10]}\mu_2 \wedge \mathsf{F}_{[5, 10]}\mu_3) \wedge \mathsf{G}_{[a_5, b_5]}\mu_4
 ```
+
+**Domain:** generic
+
+**Variables**
+
+- `\mu_1`: unnamed predicate
+- `\mu_2`: unnamed predicate
+- `\mu_3`: unnamed predicate
+- `\mu_4`: unnamed predicate
+- `a_5`: symbolic lower time bound
+- `b_5`: symbolic upper time bound
 
 **Requirement:** none
 
@@ -1732,6 +2135,12 @@ Source:
 \phi_1 = \mathbf{G}_{[470,491]}(z<1.69)
 ```
 
+**Domain:** generic
+
+**Variables**
+
+- `z`: not explained (the formula is quoted from another paper)
+
 **Requirement:** none
 
 **Why none:** Quoted as an example of formulas that come without a natural-language reading.
@@ -1759,6 +2168,13 @@ Source:
 ```latex
 \mathbf{G}_{[0,50]}(\neg(|h-Ref| > 0.005+0.04|Ref|)\Rightarrow \mathbf{F}_{[0,2]}\mathbf{G}_{[0,1]}(\left | h-Ref \right |\leq 0.005+0.04\left | Ref \right |))
 ```
+
+**Domain:** mechatronics
+
+**Variables**
+
+- `h`: height of the magnet levitating above the electromagnet
+- `Ref`: reference height
 
 **Requirement:** none
 
@@ -1788,6 +2204,12 @@ Source:
 \varphi_{12}= F_{[30,40]} \|\vec{p}_{12}\| \leq 5
 ```
 
+**Domain:** mobile robotics
+
+**Variables**
+
+- `\vec{p}_{12}`: relative position between agents 1 and 2
+
 **Requirement:** none
 
 **Why none:** Listed among task formulas in a simulation setup, with no wording of the task.
@@ -1815,6 +2237,13 @@ Source:
 ```latex
 \Always_{[0, 10]} \Eventually_{[1, 2]} ( (a \wedge (\Next b) ) \vee (\neg a \wedge !(\Next b) ))
 ```
+
+**Domain:** generic
+
+**Variables**
+
+- `a`: atomic proposition (no meaning given)
+- `b`: atomic proposition (no meaning given)
 
 **Requirement:** none
 
@@ -1844,6 +2273,12 @@ Source:
 \mathsf{G}_{[2,6]} (s < 3)\land\mathsf{G}_{[10,15]} (s < 3)
 ```
 
+**Domain:** generic
+
+**Variables**
+
+- `s`: a real-valued signal
+
 **Requirement:** none
 
 **Why none:** Given as an alternative formalisation; the nearby prose defines a different property (a spike).
@@ -1871,6 +2306,12 @@ Source:
 ```latex
 \mathcal{G}_{[0, 24]} \mathcal{F}_{[0,12]} \, \xi \le 37.26
 ```
+
+**Domain:** generic
+
+**Variables**
+
+- `\xi`: the time series being classified as regular or anomalous
 
 **Requirement:** none
 
@@ -1900,6 +2341,12 @@ Source:
 \f_3=\G_{[0,0.5]}\F_{[0,0.1]}(x_t^{(1)}>0.1)
 ```
 
+**Domain:** generic
+
+**Variables**
+
+- `x_t^{(1)}`: first component of the three-dimensional signal x at time t
+
 **Requirement:** none
 
 **Why none:** One of a bare list of benchmark formulas.
@@ -1928,6 +2375,12 @@ Source:
 (\Diamond_{[0, 30]} ( y > 6)) \Rightarrow (\Box_{[0, 30]} ( y>-6\;))
 ```
 
+**Domain:** generic
+
+**Variables**
+
+- `y`: output signal of the benchmark model named SI (not described next to the formula)
+
 **Requirement:** none
 
 **Why none:** Benchmark specification mentioned by name while discussing search performance.
@@ -1955,6 +2408,12 @@ Source:
 ```latex
 G_{[0,5]}F_{[0,4]}x\geq0
 ```
+
+**Domain:** generic
+
+**Variables**
+
+- `x`: a scalar signal (no meaning given)
 
 **Requirement:** none
 

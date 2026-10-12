@@ -3,7 +3,9 @@ Builds the evaluation set (data/processed/eval_set.json and eval_set.md) from th
 
 Every formula and requirement in labels.py must be a verbatim substring of the paper's LaTeX source in
 data/raw/latex/<paper_id>/: the script looks each one up, records the file and line, and cuts out the surrounding
-context. If a label is not found it prints the problem and writes nothing.
+context. If a label is not found it prints the problem and writes nothing. The domain and the meaning of the
+variables are written by the labeller: the script only checks that the domain is one of DOMAINS and that every
+variable is a verbatim piece of its formula.
 
     python scripts/eval/build_eval_set.py                    # check the labels and rewrite both files
     python scripts/eval/build_eval_set.py --show-negatives   # print the context of the "none" cases, write nothing
@@ -16,7 +18,7 @@ from pathlib import Path
 repo = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(repo)); sys.path.insert(0, str(Path(__file__).parent))
 from src.analysis import estimator as e
-from labels import LABELS, NEGATIVES, PARTIAL
+from labels import DOMAINS, LABELS, NEGATIVES, PARTIAL
 
 def norm_with_lines(text):
     """Collapses whitespace; returns the normalised text and, per character, its 1-based source line."""
@@ -38,9 +40,14 @@ corpus = json.load(open(repo / "data/corpus.json", encoding="utf-8"))
 # A labelled paper may since have been merged into another entry as a duplicate: follow it to the entry that was kept
 merged_into = {old: pid for pid, p in corpus.items() for old in p.get("alternate_ids") or []}
 entries, problems = [], []
-rows = [(pid, f, r, note) for pid, f, r, note in LABELS] + [(pid, f, None, note) for pid, f, note in NEGATIVES]
-for n, (pid, formula, req, note) in enumerate(rows, 1):
+rows = list(LABELS) + [(pid, f, None, note, domain, variables) for pid, f, note, domain, variables in NEGATIVES]
+for n, (pid, formula, req, note, domain, variables) in enumerate(rows, 1):
     pid = merged_into.get(pid, pid)
+    if domain not in DOMAINS:
+        problems.append((n, pid, f"unknown domain: {domain}"))
+    for symbol in variables:
+        if ws(symbol) not in ws(formula):
+            problems.append((n, pid, f"variable not in formula: {symbol}"))
     prefix = ""
     if note.startswith("REQ_PREFIX:"):
         prefix, note = note[len("REQ_PREFIX:"):], ""
@@ -86,7 +93,8 @@ for n, (pid, formula, req, note) in enumerate(rows, 1):
         "id": f"EVAL_{n:02d}", "paper_id": pid, "title": p.get("title"), "year": p.get("year"),
         "arxiv_id": p.get("arxiv_id"), "license_tier": (p.get("license_info") or {}).get("tier"),
         "source_file": str(tex.relative_to(folder)).replace(chr(92), "/"), "line": line,
-        "formula": f_n, "has_requirement": r_n is not None, "requirement": r_n, "context": context, "note": note,
+        "formula": f_n, "has_requirement": r_n is not None, "requirement": r_n,
+        "domain": domain, "variables": {ws(s): meaning for s, meaning in variables.items()}, "context": context, "note": note,
     })
 
 print("labels:", len(rows), "| verified entries:", len(entries), "| problems:", len(problems))
@@ -108,7 +116,10 @@ md = ["# Evaluation set: requirement-formula pairs", "",
       f"{len(entries)} entries picked by hand from the LaTeX sources: {pos} with a requirement and {len(entries) - pos} \"none\" cases.", "",
       "`Formula` and `Requirement` are verbatim substrings of the source file (whitespace collapsed). "
       "A \"none\" case means the context given to the model holds no statement of what the formula requires; "
-      "the paper may still describe it somewhere outside that context.", ""]
+      "the paper may still describe it somewhere outside that context.", "",
+      "`Domain` and `Variables` are written by the labeller, not copied: the domain is the application area of the system "
+      "the formula is about (`generic` for an abstract example over an unnamed signal), and each variable of the formula "
+      "gets a short explanation taken from the paper, which may lie outside the context.", ""]
 import render
 md += ["The rendered formula is a reading aid: each paper's own macros are expanded so the Markdown preview can draw it. "
        "The source line under it is the verbatim text and is what counts.", ""]
@@ -126,7 +137,8 @@ for x in entries:
         if by_name:
             parts.append("shown by name: " + ", ".join(f"`\\{g}`" for g in sorted(by_name)))
         md += ["*Rendering is approximate (the paper's definition of these macros is not on disk): " + "; ".join(parts) + ".*", ""]
-    md += ["Source:", "", "```latex", x["formula"], "```", ""]
+    md += ["Source:", "", "```latex", x["formula"], "```", "", f"**Domain:** {x['domain']}", "", "**Variables**", ""]
+    md += [f"- `{s}`: {meaning}" for s, meaning in x["variables"].items()] + [""]
     if x["has_requirement"]:
         md += ["**Requirement**", "", "```", x["requirement"], "```", ""]
         if x["note"]:
@@ -136,4 +148,5 @@ for x in entries:
     md += ["<details><summary>Context given to the model</summary>", "", "```", x["context"], "```", "", "</details>", ""]
 (out_dir / "eval_set.md").write_text("\n".join(md), encoding="utf-8")
 print("written:", len(entries), "entries |", pos, "with requirement,", len(entries) - pos, "none | papers:", len({x["paper_id"] for x in entries}))
+print("domains:", dict(collections.Counter(x["domain"] for x in entries).most_common()))
 print("none cases per licence tier:", dict(collections.Counter(x["license_tier"] for x in entries if not x["has_requirement"])))
