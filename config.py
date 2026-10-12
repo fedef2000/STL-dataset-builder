@@ -34,6 +34,8 @@ USER_EMAIL = os.environ.get("USER_EMAIL", "")                      # Enables the
 OPENALEX_API_KEY = os.environ.get("OPENALEX_API_KEY", "")          # Optional: higher daily OpenAlex quota
 # Optional: lifts Semantic Scholar's anonymous rate limit (request a key at semanticscholar.org/product/api)
 SEMANTIC_SCHOLAR_API_KEY = os.environ.get("SEMANTIC_SCHOLAR_API_KEY", "")
+# Needed by the extraction step only: the models are called through openrouter.ai
+OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY", "")
 
 HEADERS = {"User-Agent": f"NL2STL-ModularBuilder/3.0 (mailto:{USER_EMAIL})"}
 # The OpenAlex key goes to OpenAlex only: every other service gets the plain HEADERS

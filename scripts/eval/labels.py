@@ -1,7 +1,7 @@
 # (paper_id, formula, requirement, note, domain, variables) - formula and requirement are copied verbatim from the LaTeX source.
 # domain is one of DOMAINS: the application area of the system the formula is about, "generic" when the formula is an
 # abstract example over an unnamed signal. variables maps each symbol of the formula (verbatim) to what it stands for.
-DOMAINS = ("aerial robotics", "automotive", "aviation", "epidemiology", "industrial machinery", "marine robotics", "mechatronics", "mobile robotics", "power systems", "railway", "robotic manipulation", "smart city", "smart home", "social dynamics", "generic")
+from src.extraction.extractor import DOMAINS  # the extraction model picks from the same list
 EXT = "Not plain STL: uses an extension of the logic."
 LABELS = [
 ("W4410555947", r"""(w \leq 30)\until_{[5,10]} (w = 0) \land (m \leq 30)\until_{[5,10]} (m = 0)""",

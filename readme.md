@@ -63,13 +63,15 @@ STL_dataset_builder/
 │   ├── analysis/
 │   │   └── estimator.py               # Counts and locates concrete and symbolic STL formulas (macro-aware)
 │   └── extraction/
-│       └── context.py                 # Builds what the extraction model reads: paper header and regions with marked formulas
+│       ├── context.py                 # Builds what the extraction model reads: paper header and regions with marked formulas
+│       └── extractor.py               # The extraction call (OpenRouter), its prompt and the checks on the answer
 │
 └── scripts/                           # Executable CLI entrypoints
     ├── 01_build_corpus.py             # Step 1: Discover papers (citations & keywords) and enrich them with missing links
     ├── 02_download_papers.py          # Step 2: Download LaTeX sources and fallback PDFs; download stats
     ├── 03_audit_and_print_licenses.py # Step 3: Verify licenses & print statistical tables
     ├── 04_estimate_formulas.py        # Step 4: Estimate the STL formula yield per paper
+    ├── 05_extract_requirements.py     # Step 5 (in progress): Try the extraction of one paper with a model
     └── eval/
         ├── build_eval_set.py          # Checks the labels against the LaTeX sources and writes the evaluation set
         ├── check_contexts.py          # Checks the context builder against the evaluation set; previews a paper's regions
@@ -109,6 +111,7 @@ Copy `.env.example` to `.env` and fill in your email address and (optionally) yo
 USER_EMAIL=your.name@university.edu        # Enables OpenAlex Polite Pool
 OPENALEX_API_KEY=your_free_openalex_key    # Optional: Increases daily quota 10x (get at openalex.org)
 SEMANTIC_SCHOLAR_API_KEY=your_s2_key       # Optional: Lifts the anonymous rate limit (semanticscholar.org/product/api)
+OPENROUTER_API_KEY=your_openrouter_key     # Step 5 only: the models are called and billed through openrouter.ai
 
 ```
 
@@ -297,6 +300,31 @@ python scripts/eval/check_contexts.py --corpus
 | `--before N`, `--after N` | Characters of context before and after a formula (default 2000 and 3000). |
 | `--max-formulas N` | Most formulas marked in one region (default 15). |
 | `--symbolic` | Also marks the formulas whose time bounds are all symbolic. |
+
+### Step 5: Extract the Requirements (in progress)
+
+One request per region goes to a model through [OpenRouter](https://openrouter.ai) (`src/extraction/extractor.py`). For every marked formula the model returns the formula, the passage of the paper that states what it requires (or none), the application domain from a fixed list, and the meaning of the variables. Each answer is then checked against the region: the formula and the requirement must be copies of the source, every marked formula must be answered once, the domain must be on the list and every variable must appear in the formula. Answers that fail a check are kept and flagged.
+
+The script currently tries a model on one paper and prints the answers with their time, tokens and cost; nothing is stored yet. It needs `OPENROUTER_API_KEY` in `.env`.
+
+```bash
+# Print the prompts that would be sent, without calling a model (no key needed)
+python scripts/05_extract_requirements.py --paper W3080701220 --dry-run
+
+# Ask a model
+python scripts/05_extract_requirements.py --paper W3080701220 --model google/gemini-3.8-flash
+
+# The same with reasoning switched on
+python scripts/05_extract_requirements.py --paper W3080701220 --model anthropic/claude-sonnet-5.5 --reasoning medium
+```
+
+| Flag | What it does |
+|---|---|
+| `--paper ID` | The paper to extract from. It must be held as LaTeX. |
+| `--model ID` | OpenRouter model ID. |
+| `--reasoning LEVEL` | `off` (default), `minimal`, `low`, `medium` or `high`. Reasoning tokens are billed as output. |
+| `--region N` | Only the N-th region of the paper. |
+| `--dry-run` | Prints the prompts and exits. |
 
 ---
 
