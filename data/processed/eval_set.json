@@ -10,13 +10,22 @@
     "line": 41,
     "formula": "(w \\leq 30)\\until_{[5,10]} (w = 0) \\land (m \\leq 30)\\until_{[5,10]} (m = 0)",
     "has_requirement": true,
-    "requirement": "The wheel subsystem must ensure that its value does not exceed 30 within the timeframe and ultimately reaches zero between 5 and 10 seconds. Simultaneously, the motor control subsystem has the same requirement.",
+    "requirements": [
+      {
+        "text": "The wheel subsystem must ensure that its value does not exceed 30 within the timeframe and ultimately reaches zero between 5 and 10 seconds. Simultaneously, the motor control subsystem has the same requirement.",
+        "kind": "specific"
+      },
+      {
+        "text": "both the wheels and motor control must ultimately reach $0$ within a time frame of $5$ to $10$ seconds while maintaining the values no larger than $30$ until then",
+        "kind": "specific"
+      }
+    ],
     "domain": "automotive",
     "variables": {
       "w": "signal of the wheel subsystem of the vehicle (no unit given)",
       "m": "signal of the motor control subsystem of the vehicle (no unit given)"
     },
-    "context": "minimally adjusted to remain below $10$, provided that the voltage $V$ does not reach $4.2$ volts. \\paragraph{Safe deceleration of AVs} Consider a scenario of coordinated deceleration for stability and safety in AVs, where both wheels and motor controls slow down together, helping avoid sudden stops or imbalances. It is a dual-redundant safety feature: The wheel subsystem must ensure that its value does not exceed 30 within the timeframe and ultimately reaches zero between 5 and 10 seconds. Simultaneously, the motor control subsystem has the same requirement. This condition is formally represented by the property $(w \\leq 30)\\until_{[5,10]} (w = 0) \\land (m \\leq 30)\\until_{[5,10]} (m = 0)$, which indicates that \\textit{both the wheels and motor control must ultimately reach $0$ within a time frame of $5$ to $10$ seconds while maintaining the values no larger than $30$ until then}. \\begin{figure}[t] \\centering \\includegraphics[width=0.83\\linewidth,",
+    "context": "minimally adjusted to remain below $10$, provided that the voltage $V$ does not reach $4.2$ volts. \\paragraph{Safe deceleration of AVs} Consider a scenario of coordinated deceleration for stability and safety in AVs, where both wheels and motor controls slow down together, helping avoid sudden stops or imbalances. It is a dual-redundant safety feature: The wheel subsystem must ensure that its value does not exceed 30 within the timeframe and ultimately reaches zero between 5 and 10 seconds. Simultaneously, the motor control subsystem has the same requirement. This condition is formally represented by the property $(w \\leq 30)\\until_{[5,10]} (w = 0) \\land (m \\leq 30)\\until_{[5,10]} (m = 0)$, which indicates that \\textit{both the wheels and motor control must ultimately reach $0$ within a time frame of $5$ to $10$ seconds while maintaining the values no larger than $30$ until then}. \\begin{figure}[t] \\centering \\includegraphics[width=0.83\\linewidth, trim={0cm 0.5cm 0cm 0.9cm}, clip]{figures/wheel.png} \\includegraphics[width=0.83\\linewidth, trim={0cm 0.5cm 0cm 0.6cm}, clip]{figures/motor.png} \\caption{Enforcement of Wheel and Motor",
     "note": ""
   },
   {
@@ -30,7 +39,12 @@
     "line": 928,
     "formula": "\\phi_{2} = \\left(\\globally \\neg p_{\\Unsafe} \\right) ~ \\wedge \\eventually_{[5.5, 7.5]} ~ \\left( \\globally_{[0,1.5]} ~ p_{\\Goal} \\right)",
     "has_requirement": true,
-    "requirement": "In this scenario the requirement is still to avoid the unsafe region always and to eventually reach the goal region sometime within \\(5.5\\) to \\(7.5\\) seconds and stay there for \\(1.5\\) seconds.",
+    "requirements": [
+      {
+        "text": "In this scenario the requirement is still to avoid the unsafe region always and to eventually reach the goal region sometime within \\(5.5\\) to \\(7.5\\) seconds and stay there for \\(1.5\\) seconds.",
+        "kind": "specific"
+      }
+    ],
     "domain": "mobile robotics",
     "variables": {
       "p_{\\Unsafe}": "predicate: the robot is inside the unsafe region",
@@ -50,7 +64,12 @@
     "line": 916,
     "formula": "\\phi_{1} = \\left( \\globally \\neg p_{\\Unsafe} \\right) \\wedge \\left( \\globally_{[8.5, 10]} ~ p_{\\Goal} \\right)",
     "has_requirement": true,
-    "requirement": "the system has to avoid an unsafe area in its workspace at all times and reach the goal area and stay there from \\(8.5\\) to \\(10\\) seconds",
+    "requirements": [
+      {
+        "text": "the system has to avoid an unsafe area in its workspace at all times and reach the goal area and stay there from \\(8.5\\) to \\(10\\) seconds",
+        "kind": "specific"
+      }
+    ],
     "domain": "mobile robotics",
     "variables": {
       "p_{\\Unsafe}": "predicate: the robot is inside the unsafe region",
@@ -70,7 +89,12 @@
     "line": 59,
     "formula": "\\phi_{cps} = \\Box_{[0,30]}((speed > 100) \\Rightarrow \\Box_{[0,40]}(rpm > 4000))",
     "has_requirement": true,
-    "requirement": "whenever within the first 30 seconds, \\textit{vehicle speed} goes over 100, then from that moment on, the \\textit{engine speed (rpm)}, for the next 40 seconds, should always be above 4000",
+    "requirements": [
+      {
+        "text": "whenever within the first 30 seconds, \\textit{vehicle speed} goes over 100, then from that moment on, the \\textit{engine speed (rpm)}, for the next 40 seconds, should always be above 4000",
+        "kind": "specific"
+      }
+    ],
     "domain": "automotive",
     "variables": {
       "speed": "vehicle speed (no unit given)",
@@ -90,7 +114,12 @@
     "line": 15,
     "formula": "\\Box_{[0,5]}((speed > 100) \\rightarrow \\Box_{[0,5]}(rpm > 4000))",
     "has_requirement": true,
-    "requirement": "whenever within the first 5 seconds, the \\textit{vehicle speed} goes over 100, then from that moment on, the \\textit{engine speed (rpm)}, for the next 5 seconds, should always be over 4000",
+    "requirements": [
+      {
+        "text": "whenever within the first 5 seconds, the \\textit{vehicle speed} goes over 100, then from that moment on, the \\textit{engine speed (rpm)}, for the next 5 seconds, should always be over 4000",
+        "kind": "specific"
+      }
+    ],
     "domain": "automotive",
     "variables": {
       "speed": "vehicle speed (no unit given)",
@@ -110,7 +139,12 @@
     "line": 167,
     "formula": "\\phi_{5}=(\\Diamond_{[0,40]}(speed > 100)) \\rightarrow (\\Diamond_{[0,30]} (rpm >3000))",
     "has_requirement": true,
-    "requirement": "if, within 40 seconds, the vehicle speed is above 100 then within 30 seconds from time 0, the engine speed should be over 3000",
+    "requirements": [
+      {
+        "text": "if, within 40 seconds, the vehicle speed is above 100 then within 30 seconds from time 0, the engine speed should be over 3000",
+        "kind": "specific"
+      }
+    ],
     "domain": "automotive",
     "variables": {
       "speed": "vehicle speed (no unit given)",
@@ -127,15 +161,20 @@
     "arxiv_id": "1508.00618",
     "license_tier": "custom_or_arxiv",
     "source_file": "VisSpecTool.tex",
-    "line": 129,
+    "line": 139,
     "formula": "\\phi_{3}=\\Diamond_{[0,30]}\\Box_{[0,10]} (speed > 100)",
     "has_requirement": true,
-    "requirement": "at some point in the first 30 seconds, the vehicle speed will go over 100 and stay above for 10 seconds",
+    "requirements": [
+      {
+        "text": "at some point in the first 30 seconds, the vehicle speed will go over 100 and stay above for 10 seconds",
+        "kind": "specific"
+      }
+    ],
     "domain": "automotive",
     "variables": {
       "speed": "vehicle speed (no unit given)"
     },
-    "context": "$\\phi_{2}=\\Diamond_{[0,39]} (speed > 100)$.} \\label{fig:speedG100} \\vspacemod{-10pt} \\end{figure} \\ifthenelse{\\boolean{TECHREP}}{ \\begin{figure}[h] \\vspacemod{-5pt} \\begin{center} \\includegraphics[width=6.5cm]{tempguiEvenAlwaysG100.png} \\end{center} \\vspacemod{-5pt} \\caption{Example \\ref{exmp:evenAlways}: The graphical formalism for the MTL specification $\\phi_{3}=\\Diamond_{[0,30]}\\Box_{[0,10]} (speed > 100)$.} \\label{fig:evenAlways} \\vspacemod{-5pt} \\end{figure} For the \\textit{Eventually Always} ($\\Diamond\\Box$) operator, at least once in the timing interval of the eventually operator, the signal should go above the threshold and stay there for the entire timing interval of the always operator. Two types of shading will indicate the timing bounds of the MTL operators. \\begin{exmp} Consider the specification $\\phi_{3}=\\Diamond_{[0,30]}\\Box_{[0,10]} (speed > 100)$. The formula states that at some point in the first 30 seconds, the vehicle speed will go over 100 and stay above for 10 seconds. The corresponding graphical formalism for this formula is presented in Fig. \\ref{fig:evenAlways}. \\label{exmp:evenAlways} \\end{exmp} For the \\textit{Repeatedly Often and Finally} ($\\Box\\Diamond$) operator, an oscillating signal is presented where two",
+    "context": "the \\textit{Eventually Always} ($\\Diamond\\Box$) operator, at least once in the timing interval of the eventually operator, the signal should go above the threshold and stay there for the entire timing interval of the always operator. Two types of shading will indicate the timing bounds of the MTL operators. \\begin{exmp} Consider the specification $\\phi_{3}=\\Diamond_{[0,30]}\\Box_{[0,10]} (speed > 100)$. The formula states that at some point in the first 30 seconds, the vehicle speed will go over 100 and stay above for 10 seconds. The corresponding graphical formalism for this formula is presented in Fig. \\ref{fig:evenAlways}. \\label{exmp:evenAlways} \\end{exmp} For the \\textit{Repeatedly Often and Finally} ($\\Box\\Diamond$) operator, an oscillating signal is presented where two",
     "note": ""
   },
   {
@@ -149,7 +188,12 @@
     "line": 38,
     "formula": "\\formula_1 = \\eventually_{[0,10]}(x_1 \\in P) \\land \\always_{[0,10]} (x_1\\notin Obs)",
     "has_requirement": true,
-    "requirement": "UAV1 reaches the Park within 10 time steps and avoids obstacles on the way there",
+    "requirements": [
+      {
+        "text": "UAV1 reaches the Park within 10 time steps and avoids obstacles on the way there",
+        "kind": "specific"
+      }
+    ],
     "domain": "aerial robotics",
     "variables": {
       "x_1": "state (position) of UAV 1",
@@ -170,7 +214,12 @@
     "line": 41,
     "formula": "\\formula_2 = \\eventually_{[0,5]}(x_2 \\in B) \\land \\always_{[0,5]} (x_2 \\notin Obs)",
     "has_requirement": true,
-    "requirement": "UAV2 reaches the bridge within 5 steps and avoids obstacles",
+    "requirements": [
+      {
+        "text": "UAV2 reaches the bridge within 5 steps and avoids obstacles",
+        "kind": "specific"
+      }
+    ],
     "domain": "aerial robotics",
     "variables": {
       "x_2": "state (position) of UAV 2",
@@ -191,7 +240,12 @@
     "line": 18,
     "formula": "\\lozenge_{[0,100]}(d_{\\text{goal}} < 10)",
     "has_requirement": true,
-    "requirement": "at some point in the next 100 seconds, the distance to the goal $d_{\\text{goal}}$ becomes less than 10 feet",
+    "requirements": [
+      {
+        "text": "at some point in the next 100 seconds, the distance to the goal $d_{\\text{goal}}$ becomes less than 10 feet",
+        "kind": "specific"
+      }
+    ],
     "domain": "automotive",
     "variables": {
       "d_{\\text{goal}}": "distance of the vehicle to the goal, in feet"
@@ -210,7 +264,12 @@
     "line": 19,
     "formula": "\\square_{[0,\\infty]}(\\neg(d_{h} < 500 \\wedge d_{v} < 100))",
     "has_requirement": true,
-    "requirement": "for all time, the horizontal separation $d_h$ and the vertical separation $d_v$ between two aircraft shall not be simultaneously less than 500 feet and 100 feet, respectively",
+    "requirements": [
+      {
+        "text": "for all time, the horizontal separation $d_h$ and the vertical separation $d_v$ between two aircraft shall not be simultaneously less than 500 feet and 100 feet, respectively",
+        "kind": "specific"
+      }
+    ],
     "domain": "aviation",
     "variables": {
       "d_{h}": "horizontal separation between the two aircraft, in feet",
@@ -230,7 +289,12 @@
     "line": 800,
     "formula": "\\psi = \\lozenge_{[0,7]}\\square_{[0,5]} (x \\in T) \\wedge \\square_{[0,12]} \\neg(x \\in U) \\wedge \\square_{[0,12]} (x \\in S)",
     "has_requirement": true,
-    "requirement": "This condition requires the system to eventually reach a target region $T =[-0.05,0.05] \\times [-0.05,0.05]$ and remain inside it for at least $5$ sec within the time window $[0,7]$, while always avoiding the unsafe set $U = [-0.24,-0.14] \\times [-0.05,0.05]$ and always remaining inside the bounded region $S = [-0.4,0.6] \\times [-0.4,0.6]$ for the interval $[0,12]$ sec.",
+    "requirements": [
+      {
+        "text": "This condition requires the system to eventually reach a target region $T =[-0.05,0.05] \\times [-0.05,0.05]$ and remain inside it for at least $5$ sec within the time window $[0,7]$, while always avoiding the unsafe set $U = [-0.24,-0.14] \\times [-0.05,0.05]$ and always remaining inside the bounded region $S = [-0.4,0.6] \\times [-0.4,0.6]$ for the interval $[0,12]$ sec.",
+        "kind": "specific"
+      }
+    ],
     "domain": "generic",
     "variables": {
       "x": "state (x_1, x_2) of the two-dimensional nonlinear system",
@@ -252,7 +316,12 @@
     "line": 842,
     "formula": "\\psi = \\Box_{[0,10]}\\big( \\mathsf{dist}(V_1, V_2) \\geq D_{\\min} \\big)",
     "has_requirement": true,
-    "requirement": "requires the distance between the two vehicles, $\\mathsf{dist}(V_1, V_2)$ to always remain at least a minimum safe distance $D_{\\min} = 3m$ over the time horizon $t \\in [0,10]s$",
+    "requirements": [
+      {
+        "text": "requires the distance between the two vehicles, $\\mathsf{dist}(V_1, V_2)$ to always remain at least a minimum safe distance $D_{\\min} = 3m$ over the time horizon $t \\in [0,10]s$",
+        "kind": "specific"
+      }
+    ],
     "domain": "automotive",
     "variables": {
       "\\mathsf{dist}(V_1, V_2)": "distance between the fire truck V_1 and the autonomous vehicle V_2, in metres",
@@ -272,7 +341,12 @@
     "line": 10,
     "formula": "\\varphi_j = \\eventually_{[0,4]} (p_j \\in \\text{Goal}) \\ \\wedge\\ \\always_{[0,4]} \\neg (p_j \\in \\text{Wall})",
     "has_requirement": true,
-    "requirement": "Scenario consists of four UAS which must reach desired goal states within 4 seconds while avoiding the wall obstacle and each other.",
+    "requirements": [
+      {
+        "text": "Scenario consists of four UAS which must reach desired goal states within 4 seconds while avoiding the wall obstacle and each other.",
+        "kind": "specific"
+      }
+    ],
     "domain": "aerial robotics",
     "variables": {
       "p_j": "position of UAS j (j = 1..4)",
@@ -293,7 +367,12 @@
     "line": 181,
     "formula": "\\varphi_1 = \\Diamond_{[2,3]} \\ (x_1[t] - 0.7 \\geq 0) \\wedge \\Diamond_{[2,3]} \\ (1.3 - x_1[t] \\geq 0)",
     "has_requirement": true,
-    "requirement": "the trajectory must fall within the interval $x_1(t) \\in [0.7, 1.3]$ at some point between $t = 2$ and $t=3$ seconds",
+    "requirements": [
+      {
+        "text": "the trajectory must fall within the interval $x_1(t) \\in [0.7, 1.3]$ at some point between $t = 2$ and $t=3$ seconds",
+        "kind": "specific"
+      }
+    ],
     "domain": "generic",
     "variables": {
       "x_1": "first state of the closed-loop adaptive control system (t is the time)"
@@ -312,7 +391,12 @@
     "line": 421,
     "formula": "\\varphi = &\\left(\\square_{[0, T]} \\neg \\text{B}\\right) \\wedge\\left(\\square_{[0, T]} \\neg \\text{Y}\\right) \\\\ &\\wedge\\left(\\Diamond_{[0, T]} \\square_{[0,2]} \\text{R}\\right) \\wedge \\left(\\Diamond_{[0, T]} \\square_{[0,2]} \\text{G}\\right)",
     "has_requirement": true,
-    "requirement": "A robot must avoid two obstacles, the yellow (Y) and blue (B) regions, and visit the red (R) and green (G) regions for 2 seconds each.",
+    "requirements": [
+      {
+        "text": "A robot must avoid two obstacles, the yellow (Y) and blue (B) regions, and visit the red (R) and green (G) regions for 2 seconds each.",
+        "kind": "specific"
+      }
+    ],
     "domain": "mobile robotics",
     "variables": {
       "\\text{B}": "predicate: the robot is inside the blue obstacle region",
@@ -335,7 +419,12 @@
     "line": 709,
     "formula": "\\phi^1_{\\textrm{p}}=\\Box\\Diamond_{[0, 6]}\\big((y_0\\in G_1)\\vee (y_0\\in G_2)\\big)\\wedge\\Box (y_0\\in D)",
     "has_requirement": true,
-    "requirement": "The leader needs to reach the charging station $G_1$ or $G_2$ at least once in any $6T_{\\textrm{s}}$ time, and it should always remain in region $D$",
+    "requirements": [
+      {
+        "text": "The leader needs to reach the charging station $G_1$ or $G_2$ at least once in any $6T_{\\textrm{s}}$ time, and it should always remain in region $D$",
+        "kind": "specific"
+      }
+    ],
     "domain": "aerial robotics",
     "variables": {
       "y_0": "3-D position of the leader (a quadrotor)",
@@ -357,7 +446,12 @@
     "line": 156,
     "formula": "\\glob{[3,50]}(\\even{[5,20]}(a \\geq 80))",
     "has_requirement": true,
-    "requirement": "For all time steps in \\([3,50]\\), there must be a future moment within \\([5,20]\\) where the angle $a$ reaches at least the value 80.",
+    "requirements": [
+      {
+        "text": "For all time steps in \\([3,50]\\), there must be a future moment within \\([5,20]\\) where the angle $a$ reaches at least the value 80.",
+        "kind": "specific"
+      }
+    ],
     "domain": "railway",
     "variables": {
       "a": "an angle of the railroad system (the paper does not say which one)"
@@ -376,7 +470,12 @@
     "line": 80,
     "formula": "\\always_{[0,10]}(\\mathsf{AQI}<\\lambda)",
     "has_requirement": true,
-    "requirement": "the AQI level within 10 hours should always be below certain threshold $\\lambda$",
+    "requirements": [
+      {
+        "text": "the AQI level within 10 hours should always be below certain threshold $\\lambda$",
+        "kind": "specific"
+      }
+    ],
     "domain": "smart city",
     "variables": {
       "\\mathsf{AQI}": "air quality index (AQI) level",
@@ -396,7 +495,12 @@
     "line": 11,
     "formula": "\\phi = F_{[0,22]}G_{[0,22]}(\\Vec{s}\\ge 17.5)",
     "has_requirement": true,
-    "requirement": "the signal will eventually reach and stay in the equilibrium with a value higher than $17.5$",
+    "requirements": [
+      {
+        "text": "the signal will eventually reach and stay in the equilibrium with a value higher than $17.5$",
+        "kind": "specific"
+      }
+    ],
     "domain": "generic",
     "variables": {
       "\\Vec{s}": "one-dimensional signal with three stable equilibria"
@@ -412,16 +516,21 @@
     "arxiv_id": "2410.04986",
     "license_tier": "custom_or_arxiv",
     "source_file": "discussion.tex",
-    "line": 191,
+    "line": 202,
     "formula": "\\square_{[0,200]} \\Diamond_{[0,20]}\\left(|\\eta|<90^{\\circ} \\wedge|d|<2.0\\right)",
     "has_requirement": true,
-    "requirement": "requires the car to reach a state where the steering angle $\\eta$ is within 90 degrees and the distance $d$ between the car's front and the road's centerline is within 2.0 meters, within 20 time steps at every point during the 200 time steps",
+    "requirements": [
+      {
+        "text": "requires the car to reach a state where the steering angle $\\eta$ is within 90 degrees and the distance $d$ between the car's front and the road's centerline is within 2.0 meters, within 20 time steps at every point during the 200 time steps",
+        "kind": "specific"
+      }
+    ],
     "domain": "automotive",
     "variables": {
       "\\eta": "steering angle of the car, in degrees",
       "d": "distance between the car's front and the road's centerline, in metres"
     },
-    "context": "\\renewcommand{\\familydefault}{\\sfdefault}\\normalfont \\scalebox{0.86}{ \\begin{tabular}{@{}c|c|c|c|c|c|c@{}} \\hline \\hline \\multirow{2}{*}{Safety Specification} & \\multicolumn{2}{c|}{Setting 1 (50 trials)} & \\multicolumn{2}{c|}{Setting 2 (10 minutes)} & \\multicolumn{2}{c}{Coverage} \\\\ \\cline{2-7} & \\baseline & \\tool & \\baseline & \\tool & \\baseline & \\tool \\\\ \\hline\\hline $\\square_{[0,200]} \\Diamond_{[0,20]}\\left(|\\eta|<90^{\\circ} \\wedge|d|<2.0\\right)$ & 100.0\\% & 100.0\\% & 98.8 & {\\bf 378.8 (3.8$\\times$)} & 50.0\\% & {\\bf 100.0\\% (+100.0\\%)} \\\\ \\hline $\\square_{[0,200]}\\left(|d|>2.0 \\rightarrow \\Diamond_{[0,20]}(|d|<2.0)\\right)$ & 66.7\\% & {\\bf 100.0\\% (+49.9\\%)} & 38.4 & {\\bf 154.5 (4.0$\\times$)} & 50.0\\% & {\\bf 100.0\\% (+100.0\\%)} \\\\ \\hline \\hline Average & 83.4\\% & {\\bf 100.0\\% (+19.9\\%)} & 68.6 & {\\bf 266.7 (3.9$\\times$)} & 50.0\\% & {\\bf 100.0\\% (+100.0\\%)} \\\\ \\hline\\hline \\end{tabular} } \\end{table} In our experiments, the conjunctive safety specifications typically take the form of $\\square_{\\mathcal{I}} \\varphi_1 \\wedge \\varphi_2$, requiring the system to satisfy both $\\varphi_1$ and $\\varphi_2$ at every time step within the interval $\\mathcal{I}$. However, real-world safety specifications are often more intricate, involving nested temporal operators or complex logical expressions. We believe \\tool is capable of falsifying such complex safety specifications, benefiting from our implementation on top of the infrastructure components from \\baseline and utilizing the off-the-shelf tool RTAMT to compute the qualitative robustness semantics (as we mentioned in Section~\\ref{sec:implementation}). Both can handle complex safety specifications, equipping \\tool with the same capability. To further quantitatively assess \\tool's effectiveness in falsifying more intricate safety specifications, we construct additional specifications that involve nested temporal operators, such as $\\square_{\\mathcal{I}} \\left(\\Diamond_{\\mathcal{I}} \\varphi\\right)$ or $\\square_{\\mathcal{I}} \\left(\\varphi_1 \\rightarrow \\Diamond_{\\mathcal{I}} \\varphi_2\\right)$, for more experiments. Since the benchmarks used in our experiments only include specifications of the form $\\square_{\\mathcal{I}} \\varphi$, these additional specifications can be only manually designed, requiring domain expertise and making them difficult to scale. We only evaluate \\tool on two intricate safety specifications using the Self Driving control system introduced in Section~\\ref{sec:motivation}, which is representative of real-world autonomous driving systems, as a proof of concept. The safety specifications and corresponding results are presented in Table~\\ref{tab:case_studies}. The first specification ($\\square_{[0,200]} \\Diamond_{[0,20]}\\left(|\\eta|<90^{\\circ} \\wedge|d|<2.0\\right)$) requires the car to reach a state where the steering angle $\\eta$ is within 90 degrees and the distance $d$ between the car's front and the road's centerline is within 2.0 meters, within 20 time steps at every point during the 200 time steps, enforcing a proactive condition where the system must regularly check and ensure safety. The second specification ($\\square_{[0,200]}\\left(|d|>2.0 \\rightarrow \\Diamond_{[0,20]}(|d|<2.0)\\right)$) requires the car to steer back to a safe distance within",
+    "context": "evaluate \\tool on two intricate safety specifications using the Self Driving control system introduced in Section~\\ref{sec:motivation}, which is representative of real-world autonomous driving systems, as a proof of concept. The safety specifications and corresponding results are presented in Table~\\ref{tab:case_studies}. The first specification ($\\square_{[0,200]} \\Diamond_{[0,20]}\\left(|\\eta|<90^{\\circ} \\wedge|d|<2.0\\right)$) requires the car to reach a state where the steering angle $\\eta$ is within 90 degrees and the distance $d$ between the car's front and the road's centerline is within 2.0 meters, within 20 time steps at every point during the 200 time steps, enforcing a proactive condition where the system must regularly check and ensure safety. The second specification ($\\square_{[0,200]}\\left(|d|>2.0 \\rightarrow \\Diamond_{[0,20]}(|d|<2.0)\\right)$) requires the car to steer back to a safe distance within",
     "note": ""
   },
   {
@@ -435,7 +544,12 @@
     "line": 581,
     "formula": "\\always{0}{200} (V_S < 45)",
     "has_requirement": true,
-    "requirement": "the fraction of spreaders never exceeds 45\\% in the first 200 time units",
+    "requirements": [
+      {
+        "text": "the fraction of spreaders never exceeds 45\\% in the first 200 time units",
+        "kind": "specific"
+      }
+    ],
     "domain": "social dynamics",
     "variables": {
       "V_S": "number of spreaders of the rumour (the population is fixed to 100, so it is also the percentage)"
@@ -454,7 +568,12 @@
     "line": 72,
     "formula": "\\phi^{S}_{1}[\\theta]=\\Box_{[0,60]}((g2~\\wedge~X g1) \\rightarrow \\Box_{[0,\\theta]}((\\tau \\le \\theta) \\rightarrow g1)",
     "has_requirement": true,
-    "requirement": "after shifting into gear one from gear two, there should be no shift from gear one to any other gear within $\\theta$ seconds",
+    "requirements": [
+      {
+        "text": "after shifting into gear one from gear two, there should be no shift from gear one to any other gear within $\\theta$ seconds",
+        "kind": "specific"
+      }
+    ],
     "domain": "automotive",
     "variables": {
       "g1": "proposition: the transmission is in gear one",
@@ -476,7 +595,12 @@
     "line": 172,
     "formula": "\\varphi = \\G\\Big(\\abs{x} > 0.5 \\Rightarrow \\F_{[0,.6]}(\\G_{[0,1.5]} \\abs{x} < 0.5) \\Big)",
     "has_requirement": true,
-    "requirement": "if $\\abs{x} > 0.5$, then within $0.6$ time units $\\abs{x}$ settles under the value $0.5$ for the $1.5$-long time~interval",
+    "requirements": [
+      {
+        "text": "if $\\abs{x} > 0.5$, then within $0.6$ time units $\\abs{x}$ settles under the value $0.5$ for the $1.5$-long time~interval",
+        "kind": "specific"
+      }
+    ],
     "domain": "generic",
     "variables": {
       "x": "real-valued signal (not described for this example)"
@@ -495,7 +619,12 @@
     "line": 536,
     "formula": "\\mathtt{\\square(({smoke} > {th}) \\rightarrow \\Diamond_{[0,2]} ({alarm} = {ON}))}",
     "has_requirement": true,
-    "requirement": "physical interactions must not prevent an alarm from going off in \\emph{two secs} after smoke is detected",
+    "requirements": [
+      {
+        "text": "physical interactions must not prevent an alarm from going off in \\emph{two secs} after smoke is detected",
+        "kind": "specific"
+      }
+    ],
     "domain": "smart home",
     "variables": {
       "smoke": "smoke level measured by the smoke sensor",
@@ -516,7 +645,12 @@
     "line": 175,
     "formula": "\\varphi =& \\mathbf{F}_{[3,4]}\\varphi_A \\; \\land \\; \\mathbf{F}_{[8,10]}\\varphi_B \\; \\land \\; \\mathbf{F}_{[13,15]}\\varphi_C",
     "has_requirement": true,
-    "requirement": "The end-effector has to \\emph{eventually} visit three regions $j \\in \\{A, B, C\\}$ within the time intervals $3$ to $4$, $8$ to $10$, and $13$ to $15$ seconds, respectively",
+    "requirements": [
+      {
+        "text": "The end-effector has to \\emph{eventually} visit three regions $j \\in \\{A, B, C\\}$ within the time intervals $3$ to $4$, $8$ to $10$, and $13$ to $15$ seconds, respectively",
+        "kind": "specific"
+      }
+    ],
     "domain": "robotic manipulation",
     "variables": {
       "\\varphi_A": "predicate: the end-effector is inside region A",
@@ -537,7 +671,12 @@
     "line": 438,
     "formula": "\\eventually_{[0,T-5]} ( \\always_{[0,5]} T_1 \\lor \\always_{[0,5]} T_2) \\land \\always_{[0,T]} \\lnot O \\land \\eventually_{[0,T]}G",
     "has_requirement": true,
-    "requirement": "our mobile robot must avoid an obstacle ($O$, grey), \\hl{visit one of two intermediate targets ($T_1$, $T_2$, blue) for at least 5 timesteps}, and reach a goal ($G$, green)",
+    "requirements": [
+      {
+        "text": "our mobile robot must avoid an obstacle ($O$, grey), \\hl{visit one of two intermediate targets ($T_1$, $T_2$, blue) for at least 5 timesteps}, and reach a goal ($G$, green)",
+        "kind": "specific"
+      }
+    ],
     "domain": "mobile robotics",
     "variables": {
       "T_1": "predicate: the robot is inside the first intermediate target",
@@ -560,7 +699,12 @@
     "line": 29,
     "formula": "\\phi \\equiv \\text{G}_{[0,3]}(\\texttt{distToR3}(t) \\geq 3.0)",
     "has_requirement": true,
-    "requirement": "the agent should maintain at least 3.0 meters away from region $R_3$ for the next 4 time steps",
+    "requirements": [
+      {
+        "text": "the agent should maintain at least 3.0 meters away from region $R_3$ for the next 4 time steps",
+        "kind": "specific"
+      }
+    ],
     "domain": "mobile robotics",
     "variables": {
       "\\texttt{distToR3}": "distance of the agent to region R_3 at time t, in metres"
@@ -579,7 +723,12 @@
     "line": 56,
     "formula": "\\varphi_{\\text{pick-up}} \\defeq \\eventually_{[10, 20]}\\always_{[0,\\, 5]}(\\pos\\coordup{2} \\in \\textit{HUP})",
     "has_requirement": true,
-    "requirement": "the second UAV must reach \\textit{HUP} for a pick-up between 10 to 20 time steps. It is required to stay there for 5 time steps which are needed for the loading",
+    "requirements": [
+      {
+        "text": "the second UAV must reach \\textit{HUP} for a pick-up between 10 to 20 time steps. It is required to stay there for 5 time steps which are needed for the loading",
+        "kind": "specific"
+      }
+    ],
     "domain": "aerial robotics",
     "variables": {
       "\\pos\\coordup{2}": "position of the second UAV",
@@ -599,7 +748,12 @@
     "line": 146,
     "formula": "\\Box_{[0,100]} (DeathsPerDay\\le 0.001)\\wedge\\Diamond_{[40, 60]}(Recovered\\ge6)",
     "has_requirement": true,
-    "requirement": "the deaths from infection should never exceed 0.001 million (one thousand) per day within the next 100 days, and the immune population should eventually exceed 6 million after 40 to 60 days",
+    "requirements": [
+      {
+        "text": "the deaths from infection should never exceed 0.001 million (one thousand) per day within the next 100 days, and the immune population should eventually exceed 6 million after 40 to 60 days",
+        "kind": "specific"
+      }
+    ],
     "domain": "epidemiology",
     "variables": {
       "DeathsPerDay": "deaths from infection per day, in millions",
@@ -619,7 +773,12 @@
     "line": 35,
     "formula": "\\evenspec = \\lozenge_{[0, 10]} \\square (\\text{CTE} \\le 1.5)",
     "has_requirement": true,
-    "requirement": "within 10 seconds the plane must reach within 1.5 m of the centerline and then stay there for the remainder of the simulation",
+    "requirements": [
+      {
+        "text": "within 10 seconds the plane must reach within 1.5 m of the centerline and then stay there for the remainder of the simulation",
+        "kind": "specific"
+      }
+    ],
     "domain": "aviation",
     "variables": {
       "\\text{CTE}": "cross-track error: left-right offset of the plane from the runway centerline, in metres"
@@ -638,7 +797,12 @@
     "line": 57,
     "formula": "\\varphi= \\Box_{[0,9]} (s_{(1)}+s_{(2)}-10 \\ge 0) \\vee \\Diamond_{[0,15]} \\Box_{[0,5]} (-s_{(1)} \\ge 0)",
     "has_requirement": true,
-    "requirement": "for all times in the interval [0,9], the value of $s_{(1)}+s_{(2)}$ stays above $10$, \\emph{or}, for some time in the interval $[0,15]$, the value of $s_{(1)}$ stays below $0$ for $5$ consecutive time steps",
+    "requirements": [
+      {
+        "text": "for all times in the interval [0,9], the value of $s_{(1)}+s_{(2)}$ stays above $10$, \\emph{or}, for some time in the interval $[0,15]$, the value of $s_{(1)}$ stays below $0$ for $5$ consecutive time steps",
+        "kind": "specific"
+      }
+    ],
     "domain": "generic",
     "variables": {
       "s_{(1)}": "first component of the two-dimensional signal s",
@@ -658,7 +822,12 @@
     "line": 505,
     "formula": "\\phi_{\\textrm{V}}^1=\\Box_{[0,100]} (I\\le 0.3)\\wedge\\Box_{[0,100]} (D\\le0.05)\\wedge\\Diamond_{[40, 60]}(R\\ge8)",
     "has_requirement": true,
-    "requirement": "the infected population should never exceed 0.3 million and the deceased population should never exceed 0.05 million within the next 100 days, and the immune population should eventually exceed 8 million after 40 to 60 days",
+    "requirements": [
+      {
+        "text": "the infected population should never exceed 0.3 million and the deceased population should never exceed 0.05 million within the next 100 days, and the immune population should eventually exceed 8 million after 40 to 60 days",
+        "kind": "specific"
+      }
+    ],
     "domain": "epidemiology",
     "variables": {
       "I": "infected population, in millions",
@@ -679,7 +848,12 @@
     "line": 377,
     "formula": "\\phi_1 := F_{[0, 14]}\\left( \\left\\Vert r_0 - \\left[ 2 \\ 2 \\ 2 \\right]^T \\right\\Vert_2 \\leq 0.1 \\right)",
     "has_requirement": true,
-    "requirement": "the payload must reach the waypoint location $\\Lambda = [2 \\ 2 \\ 2]^T$ within a radius of $R_0 = 0.1m$ in the time interval $t\\in[0, 14]$",
+    "requirements": [
+      {
+        "text": "the payload must reach the waypoint location $\\Lambda = [2 \\ 2 \\ 2]^T$ within a radius of $R_0 = 0.1m$ in the time interval $t\\in[0, 14]$",
+        "kind": "specific"
+      }
+    ],
     "domain": "aerial robotics",
     "variables": {
       "r_0": "position of the payload carried by the UAVs",
@@ -699,7 +873,12 @@
     "line": 377,
     "formula": "G_{\\left[14, 25\\right]}\\left( \\left\\Vert r_0 - \\left[ 2 \\ 2 \\ 2 \\right]^T \\right\\Vert_2 \\leq 3 \\right)",
     "has_requirement": true,
-    "requirement": "Once it reaches the specified waypoint, it must remain at the waypoint location $\\Lambda = [2 \\ 2 \\ 2]^T$ within a radius of $R_0 = 3m$ in the time interval $t\\in[14, 25]$.",
+    "requirements": [
+      {
+        "text": "Once it reaches the specified waypoint, it must remain at the waypoint location $\\Lambda = [2 \\ 2 \\ 2]^T$ within a radius of $R_0 = 3m$ in the time interval $t\\in[14, 25]$.",
+        "kind": "specific"
+      }
+    ],
     "domain": "aerial robotics",
     "variables": {
       "r_0": "position of the payload carried by the UAVs",
@@ -719,7 +898,12 @@
     "line": 1045,
     "formula": "\\Always_{[0,15]} (\\neg(-x_1-15<0) \\Rightarrow \\\\ \\Eventually_{[0.5,5]} \\Always_{[0,1]} ((x_1\\!-\\!10)^2 \\!+\\! (x_2\\!-\\!10)^2 \\!-\\! 150<0))",
     "has_requirement": true,
-    "requirement": "when $x_1$ descends below $-15$, $(x_1,x_2)$ moves into the disk $(x_1-10)^2+(x_2-10)^2 <150$ after some duration in the interval $[0.5,5]$ and remains in the disk for at least 1 time unit",
+    "requirements": [
+      {
+        "text": "when $x_1$ descends below $-15$, $(x_1,x_2)$ moves into the disk $(x_1-10)^2+(x_2-10)^2 <150$ after some duration in the interval $[0.5,5]$ and remains in the disk for at least 1 time unit",
+        "kind": "specific"
+      }
+    ],
     "domain": "generic",
     "variables": {
       "x_1": "first state variable of the Lorenz system",
@@ -739,7 +923,12 @@
     "line": 247,
     "formula": "\\mathbf{G}_{[3,6]}s_3 <1",
     "has_requirement": true,
-    "requirement": "for all times 3,4,5,6, component $s_3$ of a signal $s$ is less than 1",
+    "requirements": [
+      {
+        "text": "for all times 3,4,5,6, component $s_3$ of a signal $s$ is less than 1",
+        "kind": "specific"
+      }
+    ],
     "domain": "generic",
     "variables": {
       "s_3": "third component of the discrete-time signal s"
@@ -758,7 +947,12 @@
     "line": 249,
     "formula": "\\mathbf{F}_{[3,10]}\\mathbf{G}_{[0,2]}s_2 > 4",
     "has_requirement": true,
-    "requirement": "at some time between 3 and 10, $s_2(t)$ becomes larger than 4 and remains larger than 4 for at least 3 consecutive time points",
+    "requirements": [
+      {
+        "text": "at some time between 3 and 10, $s_2(t)$ becomes larger than 4 and remains larger than 4 for at least 3 consecutive time points",
+        "kind": "specific"
+      }
+    ],
     "domain": "generic",
     "variables": {
       "s_2": "second component of the discrete-time signal s"
@@ -777,7 +971,12 @@
     "line": 445,
     "formula": "\\psi = &\\G_{[0,13]} ( (\\tilde{S} \\implies \\F_{[3,4]} \\tilde{T}_1) \\wedge (\\tilde{T}_1 \\implies \\F_{[3,4]} \\tilde{T}_2) \\wedge (\\tilde{T}_2 \\implies \\F_{[3,4]} \\tilde{T}_1)) \\wedge \\F_{[17,18]} \\G_{[0,3]} \\tilde{G} \\wedge \\G_{[0,20]} \\neg (\\tilde{O}_1 \\vee \\tilde{O}_2)",
     "has_requirement": true,
-    "requirement": "This STL task requires the robot to switch between $T_1$ and $T_2$ every 3–4 time units until time 13, reach and stay in region $G$ from time 17 to 20, and avoid $O_1$ and $O_2$ for the first 20 time units, starting from $S$.",
+    "requirements": [
+      {
+        "text": "This STL task requires the robot to switch between $T_1$ and $T_2$ every 3–4 time units until time 13, reach and stay in region $G$ from time 17 to 20, and avoid $O_1$ and $O_2$ for the first 20 time units, starting from $S$.",
+        "kind": "specific"
+      }
+    ],
     "domain": "mobile robotics",
     "variables": {
       "\\tilde{S}": "predicate: the robot is inside the start region S",
@@ -801,7 +1000,12 @@
     "line": 197,
     "formula": "\\phi_5:=G_{[0,\\infty)} \\big(&(c_e\\ge 1.25) \\implies F_{[0,2]}G_{[0,1]}(\\theta_e\\le 0)\\wedge (c_e\\le -1.25) \\implies F_{[0,2]}G_{[0,1]}(\\theta_e\\ge 0)\\big)",
     "has_requirement": true,
-    "requirement": "whenever the cross-track error $c_e$ leaves the interval $[-1.25,1.25]$, the orientation error $\\theta_e$ should, within $2$ s, be such that the cross-track error decreases for at least $1$ s",
+    "requirements": [
+      {
+        "text": "whenever the cross-track error $c_e$ leaves the interval $[-1.25,1.25]$, the orientation error $\\theta_e$ should, within $2$ s, be such that the cross-track error decreases for at least $1$ s",
+        "kind": "specific"
+      }
+    ],
     "domain": "automotive",
     "variables": {
       "c_e": "cross-track error of the car with respect to the reference path",
@@ -821,7 +1025,12 @@
     "line": 139,
     "formula": "\\F_{[0,0.3]} (z_t \\leq -0.1)",
     "has_requirement": true,
-    "requirement": "eventually in the next $0.3$ s, the quadrotor will fly above a threshold level of $-0.1$",
+    "requirements": [
+      {
+        "text": "eventually in the next $0.3$ s, the quadrotor will fly above a threshold level of $-0.1$",
+        "kind": "specific"
+      }
+    ],
     "domain": "aerial robotics",
     "variables": {
       "z_t": "vertical coordinate z of the quadrotor at time t (the goal, described as the top of the space, is at z = -0.9)"
@@ -840,7 +1049,12 @@
     "line": 180,
     "formula": "\\varphi=\\Box_{[0,2]} \\mu_1 \\wedge \\Diamond_{[0,3]} \\mu_2",
     "has_requirement": true,
-    "requirement": "$\\mu_1$ is always true between time zero and two, \\emph{and}, $\\mu_2$ is eventually true between time zero and three",
+    "requirements": [
+      {
+        "text": "$\\mu_1$ is always true between time zero and two, \\emph{and}, $\\mu_2$ is eventually true between time zero and three",
+        "kind": "specific"
+      }
+    ],
     "domain": "generic",
     "variables": {
       "\\mu_1": "predicate y_1 >= 0 over the scalar signal y_1",
@@ -860,7 +1074,12 @@
     "line": 16,
     "formula": "\\Box ( (y\\leq -10) \\rightarrow \\Diamond_{[0,2]} (y\\geq 10))",
     "has_requirement": true,
-    "requirement": "whenever $y$ drops below -10, then within 2 time units $y$ should rise above $10$",
+    "requirements": [
+      {
+        "text": "whenever $y$ drops below -10, then within 2 time units $y$ should rise above $10$",
+        "kind": "specific"
+      }
+    ],
     "domain": "generic",
     "variables": {
       "y": "a signal of the system (not tied to a physical quantity in this example)"
@@ -876,15 +1095,20 @@
     "arxiv_id": "2008.00097",
     "license_tier": "custom_or_arxiv",
     "source_file": "Leung.Arechiga.Pavone.IJRR21.tex",
-    "line": 276,
+    "line": 301,
     "formula": "\\psi_1 = \\lozenge\\, \\square_{[0,0.4]} \\, ( y < -0.02 )",
     "has_requirement": true,
-    "requirement": "a signal $y$ should, at some time in the future, stay below -0.02 for 0.4 seconds",
+    "requirements": [
+      {
+        "text": "a signal $y$ should, at some time in the future, stay below -0.02 for 0.4 seconds",
+        "kind": "specific"
+      }
+    ],
     "domain": "generic",
     "variables": {
       "y": "scalar input signal of a toy example"
     },
-    "context": "= \\max_{t^\\prime \\in [t+a, t+b]} \\min\\lbrace\\rho(s_{t^\\prime}, \\psi), \\min_{\\tau\\in [t, t^\\prime]} \\rho(s_{\\tau}, \\phi)\\rbrace. \\end{aligned} \\label{eq:STL robustness} \\end{equation} } \\end{boxedminipage} \\vspace{3mm} \\begin{figure*}[t] \\centering \\includegraphics[width=\\textwidth]{figs/Until_toy_example.pdf} \\caption{\\revised{Robustness traces of $\\psi_1 = \\lozenge\\, \\square_{[0,0.4]} \\, ( y < -0.02 )$ (left), $\\psi_2 = \\lozenge_{[0, 0.8]}\\, \\square_{[0, 0.4]} \\, ( y > 0.2 )$ (center), and $\\psi_1\\, \\mathcal{U}\\, \\psi_2$ (right). The input signal $y$ is shown in blue, and the corresponding robustness trace is shown in orange.}} \\label{fig:until toy example} \\end{figure*} \\revised{We refer to the quantitative semantics as \\emph{robustness formulas}. The formulas represent a natural way to measure the degree of satisfaction or violation, and we highlight a few formulas to illustrate the intuition behind the robustness formulas. The robustness formula for the predicate $\\mu(x) > 0$ measures how much greater $\\mu(x)$ is than $c$. For the And operation, $\\phi \\wedge \\psi$, since we want $\\phi$ and $\\psi$ to both hold, the robustness formula computes the lower of the two robustness values. Similarly, for the Or operation, we want either $\\phi$ or $\\psi$ to hold, therefore we consider the higher of the two robustness values. For the Until operator, the $\\min_{\\tau \\in [t, t^\\prime]} \\rho(s_\\tau, \\phi)$ term corresponds to the condition that $\\phi$ needs to hold for all times in $[t,t^\\prime]$ where $t^\\prime \\in [t+a, t+b]$. Then the outer $\\min$ operation corresponds to the condition that $\\psi$ also needs to hold at time $t^\\prime$. Finally, the outer $\\max$ operation requires that the previous two conditions holds at least once within the time interval $[t+a, t+b]$. } Further, we define the \\emph{robustness trace} as a sequence of robustness values of every subsignal $s_{t_i}$ of signal $s_{t_0}$, $t_i \\geq t_0$. \\revised{The definition of robustness trace is presented formally below, and Example~\\ref{eg:robustness trace} visualizes the robustness traces of various temporal operators.} \\revised{\\begin{definition}[Robustness trace] Given a signal $s_{t_0}$ and an STL formula $\\phi$, the robustness trace $\\tau(s_{t_0},\\phi)$ is a sequence of robustness values of $\\phi$ for each subsignal of $s_{t_0}$. Specifically, \\[\\tau(s_{t_0}, \\phi) = \\rho(s_{t_0}, \\phi),\\,\\rho(s_{t_1}, \\phi),\\ldots, \\rho(s_{t_T}, \\phi)\\] where $t_{i-1} < t_i$. \\end{definition}} \\revised{ \\begin{example}\\label{eg:robustness trace} Let $\\psi_1 = \\lozenge\\, \\square_{[0,0.4]} \\, ( y < -0.02 )$ which specifies that a signal $y$ should, at some time in the future, stay below -0.02 for 0.4 seconds. Let $\\psi_2 = \\lozenge_{[0, 0.8]}\\, \\square_{[0, 0.4]} \\, ( y > 0.2 )$ which specifies that a signal $y$ should, within 0.8 seconds in the future, be greater than 0.2 for 0.4 seconds. Then a formula $\\psi_1 \\, \\mathcal{U} \\, \\psi_2$ specifies that $\\psi_1$",
+    "context": "an STL formula $\\phi$, the robustness trace $\\tau(s_{t_0},\\phi)$ is a sequence of robustness values of $\\phi$ for each subsignal of $s_{t_0}$. Specifically, \\[\\tau(s_{t_0}, \\phi) = \\rho(s_{t_0}, \\phi),\\,\\rho(s_{t_1}, \\phi),\\ldots, \\rho(s_{t_T}, \\phi)\\] where $t_{i-1} < t_i$. \\end{definition}} \\revised{ \\begin{example}\\label{eg:robustness trace} Let $\\psi_1 = \\lozenge\\, \\square_{[0,0.4]} \\, ( y < -0.02 )$ which specifies that a signal $y$ should, at some time in the future, stay below -0.02 for 0.4 seconds. Let $\\psi_2 = \\lozenge_{[0, 0.8]}\\, \\square_{[0, 0.4]} \\, ( y > 0.2 )$ which specifies that a signal $y$ should, within 0.8 seconds in the future, be greater than 0.2 for 0.4 seconds. Then a formula $\\psi_1 \\, \\mathcal{U} \\, \\psi_2$ specifies that $\\psi_1$",
     "note": ""
   },
   {
@@ -895,15 +1119,20 @@
     "arxiv_id": "2008.00097",
     "license_tier": "custom_or_arxiv",
     "source_file": "Leung.Arechiga.Pavone.IJRR21.tex",
-    "line": 276,
+    "line": 301,
     "formula": "\\psi_2 = \\lozenge_{[0, 0.8]}\\, \\square_{[0, 0.4]} \\, ( y > 0.2 )",
     "has_requirement": true,
-    "requirement": "a signal $y$ should, within 0.8 seconds in the future, be greater than 0.2 for 0.4 seconds",
+    "requirements": [
+      {
+        "text": "a signal $y$ should, within 0.8 seconds in the future, be greater than 0.2 for 0.4 seconds",
+        "kind": "specific"
+      }
+    ],
     "domain": "generic",
     "variables": {
       "y": "scalar input signal of a toy example"
     },
-    "context": "\\psi), \\min_{\\tau\\in [t, t^\\prime]} \\rho(s_{\\tau}, \\phi)\\rbrace. \\end{aligned} \\label{eq:STL robustness} \\end{equation} } \\end{boxedminipage} \\vspace{3mm} \\begin{figure*}[t] \\centering \\includegraphics[width=\\textwidth]{figs/Until_toy_example.pdf} \\caption{\\revised{Robustness traces of $\\psi_1 = \\lozenge\\, \\square_{[0,0.4]} \\, ( y < -0.02 )$ (left), $\\psi_2 = \\lozenge_{[0, 0.8]}\\, \\square_{[0, 0.4]} \\, ( y > 0.2 )$ (center), and $\\psi_1\\, \\mathcal{U}\\, \\psi_2$ (right). The input signal $y$ is shown in blue, and the corresponding robustness trace is shown in orange.}} \\label{fig:until toy example} \\end{figure*} \\revised{We refer to the quantitative semantics as \\emph{robustness formulas}. The formulas represent a natural way to measure the degree of satisfaction or violation, and we highlight a few formulas to illustrate the intuition behind the robustness formulas. The robustness formula for the predicate $\\mu(x) > 0$ measures how much greater $\\mu(x)$ is than $c$. For the And operation, $\\phi \\wedge \\psi$, since we want $\\phi$ and $\\psi$ to both hold, the robustness formula computes the lower of the two robustness values. Similarly, for the Or operation, we want either $\\phi$ or $\\psi$ to hold, therefore we consider the higher of the two robustness values. For the Until operator, the $\\min_{\\tau \\in [t, t^\\prime]} \\rho(s_\\tau, \\phi)$ term corresponds to the condition that $\\phi$ needs to hold for all times in $[t,t^\\prime]$ where $t^\\prime \\in [t+a, t+b]$. Then the outer $\\min$ operation corresponds to the condition that $\\psi$ also needs to hold at time $t^\\prime$. Finally, the outer $\\max$ operation requires that the previous two conditions holds at least once within the time interval $[t+a, t+b]$. } Further, we define the \\emph{robustness trace} as a sequence of robustness values of every subsignal $s_{t_i}$ of signal $s_{t_0}$, $t_i \\geq t_0$. \\revised{The definition of robustness trace is presented formally below, and Example~\\ref{eg:robustness trace} visualizes the robustness traces of various temporal operators.} \\revised{\\begin{definition}[Robustness trace] Given a signal $s_{t_0}$ and an STL formula $\\phi$, the robustness trace $\\tau(s_{t_0},\\phi)$ is a sequence of robustness values of $\\phi$ for each subsignal of $s_{t_0}$. Specifically, \\[\\tau(s_{t_0}, \\phi) = \\rho(s_{t_0}, \\phi),\\,\\rho(s_{t_1}, \\phi),\\ldots, \\rho(s_{t_T}, \\phi)\\] where $t_{i-1} < t_i$. \\end{definition}} \\revised{ \\begin{example}\\label{eg:robustness trace} Let $\\psi_1 = \\lozenge\\, \\square_{[0,0.4]} \\, ( y < -0.02 )$ which specifies that a signal $y$ should, at some time in the future, stay below -0.02 for 0.4 seconds. Let $\\psi_2 = \\lozenge_{[0, 0.8]}\\, \\square_{[0, 0.4]} \\, ( y > 0.2 )$ which specifies that a signal $y$ should, within 0.8 seconds in the future, be greater than 0.2 for 0.4 seconds. Then a formula $\\psi_1 \\, \\mathcal{U} \\, \\psi_2$ specifies that $\\psi_1$ must always hold before $\\psi_2$ holds. Figure~\\ref{fig:until toy example} shows the signal $y$ (blue) and the corresponding robustness trace (orange) for each of the formulas.",
+    "context": "\\[\\tau(s_{t_0}, \\phi) = \\rho(s_{t_0}, \\phi),\\,\\rho(s_{t_1}, \\phi),\\ldots, \\rho(s_{t_T}, \\phi)\\] where $t_{i-1} < t_i$. \\end{definition}} \\revised{ \\begin{example}\\label{eg:robustness trace} Let $\\psi_1 = \\lozenge\\, \\square_{[0,0.4]} \\, ( y < -0.02 )$ which specifies that a signal $y$ should, at some time in the future, stay below -0.02 for 0.4 seconds. Let $\\psi_2 = \\lozenge_{[0, 0.8]}\\, \\square_{[0, 0.4]} \\, ( y > 0.2 )$ which specifies that a signal $y$ should, within 0.8 seconds in the future, be greater than 0.2 for 0.4 seconds. Then a formula $\\psi_1 \\, \\mathcal{U} \\, \\psi_2$ specifies that $\\psi_1$ must always hold before $\\psi_2$ holds. Figure~\\ref{fig:until toy example} shows the signal $y$ (blue) and the corresponding robustness trace (orange) for each of the formulas.",
     "note": ""
   },
   {
@@ -917,7 +1146,12 @@
     "line": 1056,
     "formula": "\\mathtt{Always}_{[0,15]} (altitude > 0)",
     "has_requirement": true,
-    "requirement": "the altitude should always be above 0 during the first 15 sec",
+    "requirements": [
+      {
+        "text": "the altitude should always be above 0 during the first 15 sec",
+        "kind": "specific"
+      }
+    ],
     "domain": "aviation",
     "variables": {
       "altitude": "altitude of the F-16 aircraft (initial altitudes are given in feet)"
@@ -936,7 +1170,12 @@
     "line": 103,
     "formula": "\\phi=\\square_{[5,10]}\\text{Stay}(A)",
     "has_requirement": true,
-    "requirement": "Always stay at A in the time interval [5,10]",
+    "requirements": [
+      {
+        "text": "Always stay at A in the time interval [5,10]",
+        "kind": "specific"
+      }
+    ],
     "domain": "mobile robotics",
     "variables": {
       "\\text{Stay}(A)": "predicate: the agent is inside region A"
@@ -955,7 +1194,12 @@
     "line": 34,
     "formula": "\\texttt{visibility} < 20 \\Rightarrow \\Diamond_{[0,5]}(\\texttt{distance\\_to\\_pipe} < 10)",
     "has_requirement": true,
-    "requirement": "Every time the visual contact with the submarine is lost, regain the visual contact within the next 5 seconds",
+    "requirements": [
+      {
+        "text": "Every time the visual contact with the submarine is lost, regain the visual contact within the next 5 seconds",
+        "kind": "specific"
+      }
+    ],
     "domain": "marine robotics",
     "variables": {
       "\\texttt{visibility}": "water visibility, in metres (below 20, visual contact is considered lost)",
@@ -975,7 +1219,12 @@
     "line": 150,
     "formula": "\\everywhere_{([0,+\\infty), {\\mathsf{School}})}\\always_{[0,3]}(\\agr_{([0,5],\\top)}^{\\avg} x_{\\mathsf{air}} > \\mathsf{Moderate})",
     "has_requirement": true,
-    "requirement": "The average air quality within 5km of all schools should always be above \\textit{Moderate} in the next 3 hours.",
+    "requirements": [
+      {
+        "text": "The average air quality within 5km of all schools should always be above \\textit{Moderate} in the next 3 hours.",
+        "kind": "specific"
+      }
+    ],
     "domain": "smart city",
     "variables": {
       "x_{\\mathsf{air}}": "air quality at a location",
@@ -996,7 +1245,16 @@
     "line": 101,
     "formula": "\\varphi = x_1 > 100 \\ \\mathbf{U}_{[0,7200]} \\ \\mathbf{C}_{[0,3600]}^{3000} \\ x_2 < 1.1",
     "has_requirement": true,
-    "requirement": "the BESS charging rate should remain above {100 kW}, \\emph{until} some time $t$ within the near future (e.g., 2 hours, which is $7200$ seconds), where the cumulative amount of time over the following hour (i.e., $[0, 3600]$) during which the voltage $x_2$ remains below {1.1 p.u.} exceeds {3000 seconds} (i.e., 50 minutes)",
+    "requirements": [
+      {
+        "text": "the BESS charging rate should remain above {100 kW}, \\emph{until} some time $t$ within the near future (e.g., 2 hours, which is $7200$ seconds), where the cumulative amount of time over the following hour (i.e., $[0, 3600]$) during which the voltage $x_2$ remains below {1.1 p.u.} exceeds {3000 seconds} (i.e., 50 minutes)",
+        "kind": "specific"
+      },
+      {
+        "text": "the BESS charges to absorb excess power until the voltage is stable for at least 50 minutes in a 1-hour window",
+        "kind": "specific"
+      }
+    ],
     "domain": "power systems",
     "variables": {
       "x_1": "charging rate of the battery energy storage system (BESS), in kW",
@@ -1015,14 +1273,19 @@
     "source_file": "manuscript.tex",
     "line": 448,
     "formula": "\\varphi_{I} = \\lozenge_{[0,5]}\\square_{[58,66]}(x\\geq 0.05)\\wedge \\square_{[14,31]}(x<0.3)\\wedge \\square_{[45,52]}(x<0.04)",
-    "has_requirement": false,
-    "requirement": null,
+    "has_requirement": true,
+    "requirements": [
+      {
+        "text": "eventually within $[0,5]$, always within $[58,66]$, the signals should be larger than or equal to 0.05, and always within $[14,31]$, the signals should be smaller than 0.3, and always within $[45,52]$, the signals should be smaller than 0.04.",
+        "kind": "specific"
+      }
+    ],
     "domain": "industrial machinery",
     "variables": {
-      "x": "signal collected by an accelerometer on the rolling element bearing (not described next to the formula)"
+      "x": "signal obtained from the vibration measurement of the rolling element bearing (second temporal moment of the wavelet-decomposed signal)"
     },
-    "context": "race, outer race and rolling element faults with real experiment data.} \\resizebox{\\textwidth}{!}{ \\begin{tabular}{llllll} \\hline \\hline\\\\[-2.5mm] \\textbf{Fault Type} &{Interpretation}&\\multicolumn{2}{c}{\\textbf{Robustness Degree}} &\\multicolumn{2}{c}{\\textbf{Error Rate}} \\\\[0.5ex] \\hline -& -& Training & Testing& Training & Testing\\\\ Inner Race & $\\varphi_{I} = \\lozenge_{[0,5]}\\square_{[58,66]}(x\\geq 0.05)\\wedge \\square_{[14,31]}(x<0.3)\\wedge \\square_{[45,52]}(x<0.04)$ &0.0012 &0.0082& 0.000&0.000 \\\\ \\hline Outer Race &$\\varphi_{O}=\\lozenge_{[60,68]}(x<0.1)\\wedge \\lozenge_{[44,50]}(x\\geq 0.08)\\wedge \\lozenge_{[0,5]}\\square_{[18,30]}(x< 0.3) $& 0.0022 & -0.030& 0.000 &0.045 \\\\ \\hline Rolling Element& $\\varphi_{R}=\\lozenge_{[0,5]}\\square_{[20,25]}(x<0.1)\\wedge",
-    "note": "Learned formula in a results table, next to robustness and error numbers only."
+    "context": "race, outer race and rolling element faults with real experiment data.} \\resizebox{\\textwidth}{!}{ \\begin{tabular}{llllll} \\hline \\hline\\\\[-2.5mm] \\textbf{Fault Type} &{Interpretation}&\\multicolumn{2}{c}{\\textbf{Robustness Degree}} &\\multicolumn{2}{c}{\\textbf{Error Rate}} \\\\[0.5ex] \\hline -& -& Training & Testing& Training & Testing\\\\ Inner Race & $\\varphi_{I} = \\lozenge_{[0,5]}\\square_{[58,66]}(x\\geq 0.05)\\wedge \\square_{[14,31]}(x<0.3)\\wedge \\square_{[45,52]}(x<0.04)$ &0.0012 &0.0082& 0.000&0.000 \\\\ \\hline Outer Race &$\\varphi_{O}=\\lozenge_{[60,68]}(x<0.1)\\wedge \\lozenge_{[44,50]}(x\\geq 0.08)\\wedge \\lozenge_{[0,5]}\\square_{[18,30]}(x< 0.3) $& 0.0022 & -0.030& 0.000 &0.045 \\\\ \\hline Rolling Element& $\\varphi_{R}=\\lozenge_{[0,5]}\\square_{[20,25]}(x<0.1)\\wedge \\square_{[65,72]}(x\\geq 0.3)$ & 0.0022 & -0.030& 0.000 &0.045 \\\\ \\hline Normal& $\\varphi_{N}= \\lozenge_{[0, 5]}\\square_{[15,25]}(x\\geq 0.4)\\vee \\square_{[0, 5]}(x\\geq 0.12)$ &0.043 &0.011& 0.000 &0.000 \\\\ \\hline \\hline \\end{tabular} } \\label{tab:table4} \\end{table*} Table \\ref{tab:table4} shows the learning results of the TLNN for the four conditions, where the weights are omitted since they do not help interpret the faults. The formulas can be seen as the interpretation of the faults. For example, for the inner race fault, the formula $\\varphi_{I}$ can be read ``eventually within $[0,5]$, always within $[58,66]$, the signals should be larger than or equal to 0.05, and always within $[14,31]$, the signals should be smaller than 0.3, and always within $[45,52]$, the signals should be smaller than 0.04.'' The other faults can be interpreted in the same way. The visualization of these formulas can be found in Fig. \\ref{fig:visuall_inner}-\\ref{fig:visuall_normal}, where the blue signals are positively labelled, and red signals are negatively labelled,",
+    "note": ""
   },
   {
     "id": "EVAL_52",
@@ -1035,7 +1298,7 @@
     "line": 518,
     "formula": "\\Always_{[0,10]} \\Eventually_{[0,5]}\\, 2-x_1 \\!<\\! 0",
     "has_requirement": false,
-    "requirement": null,
+    "requirements": [],
     "domain": "generic",
     "variables": {
       "x_1": "height of a ball bouncing on a moving table (defined in an earlier example of the paper)"
@@ -1053,15 +1316,20 @@
     "source_file": "arXiv_version_IJCAI.tex",
     "line": 491,
     "formula": "\\phi^{\\textrm{S}}=&\\Diamond_{[1,15]}\\Box_{[0,4]}\\bar{G}^{\\textrm{S}}\\wedge \\Diamond_{[21,39]}\\bar{Y}^{\\textrm{S}}",
-    "has_requirement": false,
-    "requirement": null,
+    "has_requirement": true,
+    "requirements": [
+      {
+        "text": "first reach $\\bar{G}^{\\textrm{S}}$ during the time interval [1, 15] and stay there for 4 time units, then reach $\\bar{Y}^{\\textrm{S}}$ during the time interval [21, 39]",
+        "kind": "specific"
+      }
+    ],
     "domain": "mobile robotics",
     "variables": {
       "\\bar{G}^{\\textrm{S}}": "predicate: the robot is inside the rectangle 3 <= x <= 4, 3 <= y <= 5 of the gridworld",
       "\\bar{Y}^{\\textrm{S}}": "predicate: the robot is inside the rectangle 7 <= x <= 8, 5 <= y <= 8 of the gridworld"
     },
-    "context": "correspond to the rectangular regions in the 9$\\times$9 gridworld. For computing the information gain of MITL$_{f}$ formulas, we use the uniform distribution for the prior probability distribution $\\mathcal{G}_L$. Following the first two steps illustrated in Section \\ref{Sec_transferLogic}, we obtain the following satisfying formulas: \\[ \\begin{split} \\phi^{\\textrm{S}}=&\\Diamond_{[1,15]}\\Box_{[0,4]}\\bar{G}^{\\textrm{S}}\\wedge \\Diamond_{[21,39]}\\bar{Y}^{\\textrm{S}}~\\textrm{and}\\\\ \\phi^{\\textrm{T}}=&\\Diamond_{[5,18]}\\Box_{[0,5]}\\bar{G}^{\\textrm{T}}\\wedge \\Diamond_{[24,39]}\\bar{Y}^{\\textrm{T}}, \\end{split} \\] where \\color{black} \\[ \\begin{split} &\\bar{G}^{\\textrm{S}}=(x>=3)\\wedge(x<=4)\\wedge(y>=3)\\wedge(y<=5),\\\\",
-    "note": "Formula reported as the output of a learning step, followed only by predicate definitions."
+    "context": "correspond to the rectangular regions in the 9$\\times$9 gridworld. For computing the information gain of MITL$_{f}$ formulas, we use the uniform distribution for the prior probability distribution $\\mathcal{G}_L$. Following the first two steps illustrated in Section \\ref{Sec_transferLogic}, we obtain the following satisfying formulas: \\[ \\begin{split} \\phi^{\\textrm{S}}=&\\Diamond_{[1,15]}\\Box_{[0,4]}\\bar{G}^{\\textrm{S}}\\wedge \\Diamond_{[21,39]}\\bar{Y}^{\\textrm{S}}~\\textrm{and}\\\\ \\phi^{\\textrm{T}}=&\\Diamond_{[5,18]}\\Box_{[0,5]}\\bar{G}^{\\textrm{T}}\\wedge \\Diamond_{[24,39]}\\bar{Y}^{\\textrm{T}}, \\end{split} \\] where \\color{black} \\[ \\begin{split} &\\bar{G}^{\\textrm{S}}=(x>=3)\\wedge(x<=4)\\wedge(y>=3)\\wedge(y<=5),\\\\ &\\bar{Y}^{\\textrm{S}}=(x>=7)\\wedge(x<=8)\\wedge(y>=5)\\wedge(y<=8),\\\\ &\\bar{G}^{\\textrm{T}}=(x>=5)\\wedge(x<=6)\\wedge(y>=6)\\wedge(y<=7),\\\\ &\\bar{Y}^{\\textrm{T}}=(x>=4)\\wedge(x<=7)\\wedge(y>=1)\\wedge(y<=2). \\end{split} \\] $\\phi^{\\textrm{S}}$ reads as ``first reach $\\bar{G}^{\\textrm{S}}$ during the time interval [1, 15] and stay there for 4 time units, then reach $\\bar{Y}^{\\textrm{S}}$ during the time interval [21, 39]''. $\\phi^{\\textrm{T}}$ reads as ``first reach $\\bar{G}^{\\textrm{T}}$ during the time interval [5, 18] and stay there for 5 time units, then reach $\\bar{Y}^{\\textrm{T}}$ during the time interval [24, 39]''. \\color{black}The regions $\\bar{G}^{\\textrm{S}}$,",
+    "note": ""
   },
   {
     "id": "EVAL_54",
@@ -1074,7 +1342,7 @@
     "line": 560,
     "formula": "\\Phi&=\\Phi_1\\wedge\\Phi_2=F_{[0,5]}x\\geq10\\wedge F_{[1,6]}x\\leq5",
     "has_requirement": false,
-    "requirement": null,
+    "requirements": [],
     "domain": "generic",
     "variables": {
       "x": "scalar state of a single-integrator system"
@@ -1093,7 +1361,7 @@
     "line": 49,
     "formula": "\\square_{[0, 72]} \\Diamond_{[0,8]} ((\\square_{[0,5]} y_2 - y_1 \\geq 9) \\to (\\square_{[5, 20]} y_5 - y_4 \\geq 9))",
     "has_requirement": false,
-    "requirement": null,
+    "requirements": [],
     "domain": "automotive",
     "variables": {
       "y_1": "signal of car 1 of the five-car Chasing Cars benchmark (not defined in the paper)",
@@ -1115,7 +1383,7 @@
     "line": 789,
     "formula": "\\hat{\\varphi} = \\mathsf{F}_{[0, 15]}\\mathsf{G}_{[2, 10]}\\mu_1 \\vee \\mathsf{F}_{[0, 15]}(\\mathsf{G}_{[0, 10]}\\mu_2 \\wedge \\mathsf{F}_{[5, 10]}\\mu_3) \\wedge \\mathsf{G}_{[a_5, b_5]}\\mu_4",
     "has_requirement": false,
-    "requirement": null,
+    "requirements": [],
     "domain": "generic",
     "variables": {
       "\\mu_1": "unnamed predicate",
@@ -1139,7 +1407,7 @@
     "line": 102,
     "formula": "\\phi_1 = \\mathbf{G}_{[470,491]}(z<1.69)",
     "has_requirement": false,
-    "requirement": null,
+    "requirements": [],
     "domain": "generic",
     "variables": {
       "z": "not explained (the formula is quoted from another paper)"
@@ -1157,15 +1425,24 @@
     "source_file": "main.tex",
     "line": 856,
     "formula": "\\mathbf{G}_{[0,50]}(\\neg(|h-Ref| > 0.005+0.04|Ref|)\\Rightarrow \\mathbf{F}_{[0,2]}\\mathbf{G}_{[0,1]}(\\left | h-Ref \\right |\\leq 0.005+0.04\\left | Ref \\right |))",
-    "has_requirement": false,
-    "requirement": null,
+    "has_requirement": true,
+    "requirements": [
+      {
+        "text": "the magnet should \\emph{always} settle to a new reference position within two seconds",
+        "kind": "specific"
+      },
+      {
+        "text": "the magnet should \\emph{eventually} remain within the specified range of the reference position for one second",
+        "kind": "specific"
+      }
+    ],
     "domain": "mechatronics",
     "variables": {
       "h": "height of the magnet levitating above the electromagnet",
       "Ref": "reference height"
     },
-    "context": "\\bottomrule \\end{tabularx} \\label{AT_Spec} \\end{minipage} \\end{tabular} \\end{table*} \\begin{table*}[b] \\centering \\caption{Neural network specifications and environmental parameters} \\begin{tabularx}{\\linewidth}{p{3cm} X} \\toprule \\textbf{Specification} & \\textbf{STL specification}\\\\ \\midrule $\\varphi_{1}$ & $\\mathbf{G}(h < 3.9)$\\\\ $\\varphi_{2}$ & $\\mathbf{G}_{[0,50]}(\\neg(|h-Ref| > 0.005+0.04|Ref|)\\Rightarrow \\mathbf{F}_{[0,2]}\\mathbf{G}_{[0,1]}(\\left | h-Ref \\right |\\leq 0.005+0.04\\left | Ref \\right |))$\\\\ \\end{tabularx} \\begin{tabularx}{\\linewidth}{p{3cm} p{1.5cm} X} \\toprule \\textbf{Parameter} & \\textbf{Symbol} & \\textbf{Range}\\\\ \\midrule Reference & $Ref$ & $[0,3]^{8}$\\\\ \\bottomrule \\end{tabularx} \\label{NN_Table} \\end{table*} \\subsection{Case Study",
-    "note": "Table of specifications with formulas only."
+    "context": "\\bottomrule \\end{tabularx} \\label{AT_Spec} \\end{minipage} \\end{tabular} \\end{table*} \\begin{table*}[b] \\centering \\caption{Neural network specifications and environmental parameters} \\begin{tabularx}{\\linewidth}{p{3cm} X} \\toprule \\textbf{Specification} & \\textbf{STL specification}\\\\ \\midrule $\\varphi_{1}$ & $\\mathbf{G}(h < 3.9)$\\\\ $\\varphi_{2}$ & $\\mathbf{G}_{[0,50]}(\\neg(|h-Ref| > 0.005+0.04|Ref|)\\Rightarrow \\mathbf{F}_{[0,2]}\\mathbf{G}_{[0,1]}(\\left | h-Ref \\right |\\leq 0.005+0.04\\left | Ref \\right |))$\\\\ \\end{tabularx} \\begin{tabularx}{\\linewidth}{p{3cm} p{1.5cm} X} \\toprule \\textbf{Parameter} & \\textbf{Symbol} & \\textbf{Range}\\\\ \\midrule Reference & $Ref$ & $[0,3]^{8}$\\\\ \\bottomrule \\end{tabularx} \\label{NN_Table} \\end{table*} \\subsection{Case Study 2: Automatic Transmission} The automatic transmission environment is a scenario that simulates the speed of a $4$-gear vehicle with an automatic transmission. The simulation has two observable properties: the vehicle's speed $\\dot{x}$ and engine speed $\\omega$. We consider four sources of uncertainty whose ranges are provided in Table \\ref{AT_Spec}. We consider two input signals, the throttle angle $\\theta_{thr}$ and brake angle $\\theta_{brk}$. We explore the uncertainty space for a combination of environmental parameters that cause the vehicle to violate one of the following two specifications presented in Table \\ref{AT_Spec}. First, the vehicle's speed should \\emph{always} remain below $80$mph. Second, the engine speed should \\emph{always} remain below $1400$rpm. \\subsection{Case Study 3: Neural Network Controller} This environment models a magnet levitating above an electromagnet, maintaining a specific reference height. The simulation tracks the height $h$ of the magnet, with the only input being the reference position. Thus, the model incorporates eight sources of uncertainty, detailed in Table \\ref{NN_Table}. We evaluate the nonlinear autoregressive moving average (NARMA) neural controller's capability to move the magnet to a reference position by controlling the current \\cite{NN_cite}. The neural controller consists of a neural network with nine hidden layers. The controller is subjected to two safety specifications given in STL format in Table \\ref{NN_Table}. First, the controller should \\emph{always} keep the magnet below $3.9$mm. Second, the magnet should \\emph{always} settle to a new reference position within two seconds. This can be reworded as the magnet should \\emph{eventually} remain within the specified range of the reference position for one second. \\subsection{Case Study 4: F16-Ground Collision Avoidance} This environment simulates the F-$16$ control system, with a specific focus on the aircraft’s ground collision avoidance inner-loop controller, modeled by $16$ continuous piece-wise nonlinear",
+    "note": ""
   },
   {
     "id": "EVAL_59",
@@ -1178,7 +1455,7 @@
     "line": 3,
     "formula": "\\varphi_{12}= F_{[30,40]} \\|\\vec{p}_{12}\\| \\leq 5",
     "has_requirement": false,
-    "requirement": null,
+    "requirements": [],
     "domain": "mobile robotics",
     "variables": {
       "\\vec{p}_{12}": "relative position between agents 1 and 2"
@@ -1197,7 +1474,7 @@
     "line": 3556,
     "formula": "\\Always_{[0, 10]} \\Eventually_{[1, 2]} ( (a \\wedge (\\Next b) ) \\vee (\\neg a \\wedge !(\\Next b) ))",
     "has_requirement": false,
-    "requirement": null,
+    "requirements": [],
     "domain": "generic",
     "variables": {
       "a": "atomic proposition (no meaning given)",
@@ -1217,7 +1494,7 @@
     "line": 855,
     "formula": "\\mathsf{G}_{[2,6]} (s < 3)\\land\\mathsf{G}_{[10,15]} (s < 3)",
     "has_requirement": false,
-    "requirement": null,
+    "requirements": [],
     "domain": "generic",
     "variables": {
       "s": "a real-valued signal"
@@ -1236,7 +1513,7 @@
     "line": 334,
     "formula": "\\mathcal{G}_{[0, 24]} \\mathcal{F}_{[0,12]} \\, \\xi \\le 37.26",
     "has_requirement": false,
-    "requirement": null,
+    "requirements": [],
     "domain": "generic",
     "variables": {
       "\\xi": "the time series being classified as regular or anomalous"
@@ -1255,7 +1532,7 @@
     "line": 7,
     "formula": "\\f_3=\\G_{[0,0.5]}\\F_{[0,0.1]}(x_t^{(1)}>0.1)",
     "has_requirement": false,
-    "requirement": null,
+    "requirements": [],
     "domain": "generic",
     "variables": {
       "x_t^{(1)}": "first component of the three-dimensional signal x at time t"
@@ -1274,7 +1551,7 @@
     "line": 456,
     "formula": "(\\Diamond_{[0, 30]} ( y > 6)) \\Rightarrow (\\Box_{[0, 30]} ( y>-6\\;))",
     "has_requirement": false,
-    "requirement": null,
+    "requirements": [],
     "domain": "generic",
     "variables": {
       "y": "output signal of the benchmark model named SI (not described next to the formula)"
@@ -1293,7 +1570,7 @@
     "line": 249,
     "formula": "G_{[0,5]}F_{[0,4]}x\\geq0",
     "has_requirement": false,
-    "requirement": null,
+    "requirements": [],
     "domain": "generic",
     "variables": {
       "x": "a scalar signal (no meaning given)"

@@ -1,8 +1,8 @@
 # Evaluation set: requirement-formula pairs
 
-65 entries picked by hand from the LaTeX sources: 50 with a requirement and 15 "none" cases.
+65 entries picked by hand from the LaTeX sources: 53 with a requirement and 12 "none" cases.
 
-`Formula` and `Requirement` are verbatim substrings of the source file (whitespace collapsed). A "none" case means the context given to the model holds no statement of what the formula requires; the paper may still describe it somewhere outside that context.
+`Formula` and `Requirement` are verbatim substrings of the source file (whitespace collapsed). When the paper states the requirement of a formula more than once, in different words, every passage is listed. A passage is specific when it carries the particulars of the formula (numbers, thresholds, named regions) and generic when it only says what the formula is for; a generic passage is labelled only when the paper has no specific one. A "none" case means the context given to the model holds no statement of what the formula requires; the paper may still describe it somewhere outside that context.
 
 `Domain` and `Variables` are written by the labeller, not copied: the domain is the application area of the system the formula is about (`generic` for an abstract example over an unnamed signal), and each variable of the formula gets a short explanation taken from the paper, which may lie outside the context.
 
@@ -33,16 +33,20 @@ Source:
 - `w`: signal of the wheel subsystem of the vehicle (no unit given)
 - `m`: signal of the motor control subsystem of the vehicle (no unit given)
 
-**Requirement**
+**Requirement** (stated 2 times in the paper: the model has to report every passage)
 
 ```
 The wheel subsystem must ensure that its value does not exceed 30 within the timeframe and ultimately reaches zero between 5 and 10 seconds. Simultaneously, the motor control subsystem has the same requirement.
 ```
 
+```
+both the wheels and motor control must ultimately reach $0$ within a time frame of $5$ to $10$ seconds while maintaining the values no larger than $30$ until then
+```
+
 <details><summary>Context given to the model</summary>
 
 ```
-minimally adjusted to remain below $10$, provided that the voltage $V$ does not reach $4.2$ volts. \paragraph{Safe deceleration of AVs} Consider a scenario of coordinated deceleration for stability and safety in AVs, where both wheels and motor controls slow down together, helping avoid sudden stops or imbalances. It is a dual-redundant safety feature: The wheel subsystem must ensure that its value does not exceed 30 within the timeframe and ultimately reaches zero between 5 and 10 seconds. Simultaneously, the motor control subsystem has the same requirement. This condition is formally represented by the property $(w \leq 30)\until_{[5,10]} (w = 0) \land (m \leq 30)\until_{[5,10]} (m = 0)$, which indicates that \textit{both the wheels and motor control must ultimately reach $0$ within a time frame of $5$ to $10$ seconds while maintaining the values no larger than $30$ until then}. \begin{figure}[t] \centering \includegraphics[width=0.83\linewidth,
+minimally adjusted to remain below $10$, provided that the voltage $V$ does not reach $4.2$ volts. \paragraph{Safe deceleration of AVs} Consider a scenario of coordinated deceleration for stability and safety in AVs, where both wheels and motor controls slow down together, helping avoid sudden stops or imbalances. It is a dual-redundant safety feature: The wheel subsystem must ensure that its value does not exceed 30 within the timeframe and ultimately reaches zero between 5 and 10 seconds. Simultaneously, the motor control subsystem has the same requirement. This condition is formally represented by the property $(w \leq 30)\until_{[5,10]} (w = 0) \land (m \leq 30)\until_{[5,10]} (m = 0)$, which indicates that \textit{both the wheels and motor control must ultimately reach $0$ within a time frame of $5$ to $10$ seconds while maintaining the values no larger than $30$ until then}. \begin{figure}[t] \centering \includegraphics[width=0.83\linewidth, trim={0cm 0.5cm 0cm 0.9cm}, clip]{figures/wheel.png} \includegraphics[width=0.83\linewidth, trim={0cm 0.5cm 0cm 0.6cm}, clip]{figures/motor.png} \caption{Enforcement of Wheel and Motor
 ```
 
 </details>
@@ -236,7 +240,7 @@ template is already created. If another template is added below it, then an orde
 
 </details>
 
-## EVAL_07  W2221585980  (VisSpecTool.tex, line 129)
+## EVAL_07  W2221585980  (VisSpecTool.tex, line 139)
 
 *VISPEC: A graphical tool for elicitation of MTL requirements* (2015), licence tier: custom_or_arxiv
 
@@ -267,7 +271,7 @@ at some point in the first 30 seconds, the vehicle speed will go over 100 and st
 <details><summary>Context given to the model</summary>
 
 ```
-$\phi_{2}=\Diamond_{[0,39]} (speed > 100)$.} \label{fig:speedG100} \vspacemod{-10pt} \end{figure} \ifthenelse{\boolean{TECHREP}}{ \begin{figure}[h] \vspacemod{-5pt} \begin{center} \includegraphics[width=6.5cm]{tempguiEvenAlwaysG100.png} \end{center} \vspacemod{-5pt} \caption{Example \ref{exmp:evenAlways}: The graphical formalism for the MTL specification $\phi_{3}=\Diamond_{[0,30]}\Box_{[0,10]} (speed > 100)$.} \label{fig:evenAlways} \vspacemod{-5pt} \end{figure} For the \textit{Eventually Always} ($\Diamond\Box$) operator, at least once in the timing interval of the eventually operator, the signal should go above the threshold and stay there for the entire timing interval of the always operator. Two types of shading will indicate the timing bounds of the MTL operators. \begin{exmp} Consider the specification $\phi_{3}=\Diamond_{[0,30]}\Box_{[0,10]} (speed > 100)$. The formula states that at some point in the first 30 seconds, the vehicle speed will go over 100 and stay above for 10 seconds. The corresponding graphical formalism for this formula is presented in Fig. \ref{fig:evenAlways}. \label{exmp:evenAlways} \end{exmp} For the \textit{Repeatedly Often and Finally} ($\Box\Diamond$) operator, an oscillating signal is presented where two
+the \textit{Eventually Always} ($\Diamond\Box$) operator, at least once in the timing interval of the eventually operator, the signal should go above the threshold and stay there for the entire timing interval of the always operator. Two types of shading will indicate the timing bounds of the MTL operators. \begin{exmp} Consider the specification $\phi_{3}=\Diamond_{[0,30]}\Box_{[0,10]} (speed > 100)$. The formula states that at some point in the first 30 seconds, the vehicle speed will go over 100 and stay above for 10 seconds. The corresponding graphical formalism for this formula is presented in Fig. \ref{fig:evenAlways}. \label{exmp:evenAlways} \end{exmp} For the \textit{Repeatedly Often and Finally} ($\Box\Diamond$) operator, an oscillating signal is presented where two
 ```
 
 </details>
@@ -775,7 +779,7 @@ one-dimensional signal showing multiple stable equilibria, a crossroad scenario,
 
 </details>
 
-## EVAL_21  W4406866240  (discussion.tex, line 191)
+## EVAL_21  W4406866240  (discussion.tex, line 202)
 
 *Finding Safety Violations of AI-Enabled Control Systems through the Lens of Synthesized Proxy Programs* (2025), licence tier: custom_or_arxiv
 
@@ -807,7 +811,7 @@ requires the car to reach a state where the steering angle $\eta$ is within 90 d
 <details><summary>Context given to the model</summary>
 
 ```
-\renewcommand{\familydefault}{\sfdefault}\normalfont \scalebox{0.86}{ \begin{tabular}{@{}c|c|c|c|c|c|c@{}} \hline \hline \multirow{2}{*}{Safety Specification} & \multicolumn{2}{c|}{Setting 1 (50 trials)} & \multicolumn{2}{c|}{Setting 2 (10 minutes)} & \multicolumn{2}{c}{Coverage} \\ \cline{2-7} & \baseline & \tool & \baseline & \tool & \baseline & \tool \\ \hline\hline $\square_{[0,200]} \Diamond_{[0,20]}\left(|\eta|<90^{\circ} \wedge|d|<2.0\right)$ & 100.0\% & 100.0\% & 98.8 & {\bf 378.8 (3.8$\times$)} & 50.0\% & {\bf 100.0\% (+100.0\%)} \\ \hline $\square_{[0,200]}\left(|d|>2.0 \rightarrow \Diamond_{[0,20]}(|d|<2.0)\right)$ & 66.7\% & {\bf 100.0\% (+49.9\%)} & 38.4 & {\bf 154.5 (4.0$\times$)} & 50.0\% & {\bf 100.0\% (+100.0\%)} \\ \hline \hline Average & 83.4\% & {\bf 100.0\% (+19.9\%)} & 68.6 & {\bf 266.7 (3.9$\times$)} & 50.0\% & {\bf 100.0\% (+100.0\%)} \\ \hline\hline \end{tabular} } \end{table} In our experiments, the conjunctive safety specifications typically take the form of $\square_{\mathcal{I}} \varphi_1 \wedge \varphi_2$, requiring the system to satisfy both $\varphi_1$ and $\varphi_2$ at every time step within the interval $\mathcal{I}$. However, real-world safety specifications are often more intricate, involving nested temporal operators or complex logical expressions. We believe \tool is capable of falsifying such complex safety specifications, benefiting from our implementation on top of the infrastructure components from \baseline and utilizing the off-the-shelf tool RTAMT to compute the qualitative robustness semantics (as we mentioned in Section~\ref{sec:implementation}). Both can handle complex safety specifications, equipping \tool with the same capability. To further quantitatively assess \tool's effectiveness in falsifying more intricate safety specifications, we construct additional specifications that involve nested temporal operators, such as $\square_{\mathcal{I}} \left(\Diamond_{\mathcal{I}} \varphi\right)$ or $\square_{\mathcal{I}} \left(\varphi_1 \rightarrow \Diamond_{\mathcal{I}} \varphi_2\right)$, for more experiments. Since the benchmarks used in our experiments only include specifications of the form $\square_{\mathcal{I}} \varphi$, these additional specifications can be only manually designed, requiring domain expertise and making them difficult to scale. We only evaluate \tool on two intricate safety specifications using the Self Driving control system introduced in Section~\ref{sec:motivation}, which is representative of real-world autonomous driving systems, as a proof of concept. The safety specifications and corresponding results are presented in Table~\ref{tab:case_studies}. The first specification ($\square_{[0,200]} \Diamond_{[0,20]}\left(|\eta|<90^{\circ} \wedge|d|<2.0\right)$) requires the car to reach a state where the steering angle $\eta$ is within 90 degrees and the distance $d$ between the car's front and the road's centerline is within 2.0 meters, within 20 time steps at every point during the 200 time steps, enforcing a proactive condition where the system must regularly check and ensure safety. The second specification ($\square_{[0,200]}\left(|d|>2.0 \rightarrow \Diamond_{[0,20]}(|d|<2.0)\right)$) requires the car to steer back to a safe distance within
+evaluate \tool on two intricate safety specifications using the Self Driving control system introduced in Section~\ref{sec:motivation}, which is representative of real-world autonomous driving systems, as a proof of concept. The safety specifications and corresponding results are presented in Table~\ref{tab:case_studies}. The first specification ($\square_{[0,200]} \Diamond_{[0,20]}\left(|\eta|<90^{\circ} \wedge|d|<2.0\right)$) requires the car to reach a state where the steering angle $\eta$ is within 90 degrees and the distance $d$ between the car's front and the road's centerline is within 2.0 meters, within 20 time steps at every point during the 200 time steps, enforcing a proactive condition where the system must regularly check and ensure safety. The second specification ($\square_{[0,200]}\left(|d|>2.0 \rightarrow \Diamond_{[0,20]}(|d|<2.0)\right)$) requires the car to steer back to a safe distance within
 ```
 
 </details>
@@ -1644,7 +1648,7 @@ eventually, between time 1.2 and 5 (not including), $y$ should drop below $-10$}
 
 </details>
 
-## EVAL_44  W3046650501  (Leung.Arechiga.Pavone.IJRR21.tex, line 276)
+## EVAL_44  W3046650501  (Leung.Arechiga.Pavone.IJRR21.tex, line 301)
 
 *Backpropagation through signal temporal logic specifications: Infusing logical structure into gradient-based methods* (2022), licence tier: custom_or_arxiv
 
@@ -1675,12 +1679,12 @@ a signal $y$ should, at some time in the future, stay below -0.02 for 0.4 second
 <details><summary>Context given to the model</summary>
 
 ```
-= \max_{t^\prime \in [t+a, t+b]} \min\lbrace\rho(s_{t^\prime}, \psi), \min_{\tau\in [t, t^\prime]} \rho(s_{\tau}, \phi)\rbrace. \end{aligned} \label{eq:STL robustness} \end{equation} } \end{boxedminipage} \vspace{3mm} \begin{figure*}[t] \centering \includegraphics[width=\textwidth]{figs/Until_toy_example.pdf} \caption{\revised{Robustness traces of $\psi_1 = \lozenge\, \square_{[0,0.4]} \, ( y < -0.02 )$ (left), $\psi_2 = \lozenge_{[0, 0.8]}\, \square_{[0, 0.4]} \, ( y > 0.2 )$ (center), and $\psi_1\, \mathcal{U}\, \psi_2$ (right). The input signal $y$ is shown in blue, and the corresponding robustness trace is shown in orange.}} \label{fig:until toy example} \end{figure*} \revised{We refer to the quantitative semantics as \emph{robustness formulas}. The formulas represent a natural way to measure the degree of satisfaction or violation, and we highlight a few formulas to illustrate the intuition behind the robustness formulas. The robustness formula for the predicate $\mu(x) > 0$ measures how much greater $\mu(x)$ is than $c$. For the And operation, $\phi \wedge \psi$, since we want $\phi$ and $\psi$ to both hold, the robustness formula computes the lower of the two robustness values. Similarly, for the Or operation, we want either $\phi$ or $\psi$ to hold, therefore we consider the higher of the two robustness values. For the Until operator, the $\min_{\tau \in [t, t^\prime]} \rho(s_\tau, \phi)$ term corresponds to the condition that $\phi$ needs to hold for all times in $[t,t^\prime]$ where $t^\prime \in [t+a, t+b]$. Then the outer $\min$ operation corresponds to the condition that $\psi$ also needs to hold at time $t^\prime$. Finally, the outer $\max$ operation requires that the previous two conditions holds at least once within the time interval $[t+a, t+b]$. } Further, we define the \emph{robustness trace} as a sequence of robustness values of every subsignal $s_{t_i}$ of signal $s_{t_0}$, $t_i \geq t_0$. \revised{The definition of robustness trace is presented formally below, and Example~\ref{eg:robustness trace} visualizes the robustness traces of various temporal operators.} \revised{\begin{definition}[Robustness trace] Given a signal $s_{t_0}$ and an STL formula $\phi$, the robustness trace $\tau(s_{t_0},\phi)$ is a sequence of robustness values of $\phi$ for each subsignal of $s_{t_0}$. Specifically, \[\tau(s_{t_0}, \phi) = \rho(s_{t_0}, \phi),\,\rho(s_{t_1}, \phi),\ldots, \rho(s_{t_T}, \phi)\] where $t_{i-1} < t_i$. \end{definition}} \revised{ \begin{example}\label{eg:robustness trace} Let $\psi_1 = \lozenge\, \square_{[0,0.4]} \, ( y < -0.02 )$ which specifies that a signal $y$ should, at some time in the future, stay below -0.02 for 0.4 seconds. Let $\psi_2 = \lozenge_{[0, 0.8]}\, \square_{[0, 0.4]} \, ( y > 0.2 )$ which specifies that a signal $y$ should, within 0.8 seconds in the future, be greater than 0.2 for 0.4 seconds. Then a formula $\psi_1 \, \mathcal{U} \, \psi_2$ specifies that $\psi_1$
+an STL formula $\phi$, the robustness trace $\tau(s_{t_0},\phi)$ is a sequence of robustness values of $\phi$ for each subsignal of $s_{t_0}$. Specifically, \[\tau(s_{t_0}, \phi) = \rho(s_{t_0}, \phi),\,\rho(s_{t_1}, \phi),\ldots, \rho(s_{t_T}, \phi)\] where $t_{i-1} < t_i$. \end{definition}} \revised{ \begin{example}\label{eg:robustness trace} Let $\psi_1 = \lozenge\, \square_{[0,0.4]} \, ( y < -0.02 )$ which specifies that a signal $y$ should, at some time in the future, stay below -0.02 for 0.4 seconds. Let $\psi_2 = \lozenge_{[0, 0.8]}\, \square_{[0, 0.4]} \, ( y > 0.2 )$ which specifies that a signal $y$ should, within 0.8 seconds in the future, be greater than 0.2 for 0.4 seconds. Then a formula $\psi_1 \, \mathcal{U} \, \psi_2$ specifies that $\psi_1$
 ```
 
 </details>
 
-## EVAL_45  W3046650501  (Leung.Arechiga.Pavone.IJRR21.tex, line 276)
+## EVAL_45  W3046650501  (Leung.Arechiga.Pavone.IJRR21.tex, line 301)
 
 *Backpropagation through signal temporal logic specifications: Infusing logical structure into gradient-based methods* (2022), licence tier: custom_or_arxiv
 
@@ -1711,7 +1715,7 @@ a signal $y$ should, within 0.8 seconds in the future, be greater than 0.2 for 0
 <details><summary>Context given to the model</summary>
 
 ```
-\psi), \min_{\tau\in [t, t^\prime]} \rho(s_{\tau}, \phi)\rbrace. \end{aligned} \label{eq:STL robustness} \end{equation} } \end{boxedminipage} \vspace{3mm} \begin{figure*}[t] \centering \includegraphics[width=\textwidth]{figs/Until_toy_example.pdf} \caption{\revised{Robustness traces of $\psi_1 = \lozenge\, \square_{[0,0.4]} \, ( y < -0.02 )$ (left), $\psi_2 = \lozenge_{[0, 0.8]}\, \square_{[0, 0.4]} \, ( y > 0.2 )$ (center), and $\psi_1\, \mathcal{U}\, \psi_2$ (right). The input signal $y$ is shown in blue, and the corresponding robustness trace is shown in orange.}} \label{fig:until toy example} \end{figure*} \revised{We refer to the quantitative semantics as \emph{robustness formulas}. The formulas represent a natural way to measure the degree of satisfaction or violation, and we highlight a few formulas to illustrate the intuition behind the robustness formulas. The robustness formula for the predicate $\mu(x) > 0$ measures how much greater $\mu(x)$ is than $c$. For the And operation, $\phi \wedge \psi$, since we want $\phi$ and $\psi$ to both hold, the robustness formula computes the lower of the two robustness values. Similarly, for the Or operation, we want either $\phi$ or $\psi$ to hold, therefore we consider the higher of the two robustness values. For the Until operator, the $\min_{\tau \in [t, t^\prime]} \rho(s_\tau, \phi)$ term corresponds to the condition that $\phi$ needs to hold for all times in $[t,t^\prime]$ where $t^\prime \in [t+a, t+b]$. Then the outer $\min$ operation corresponds to the condition that $\psi$ also needs to hold at time $t^\prime$. Finally, the outer $\max$ operation requires that the previous two conditions holds at least once within the time interval $[t+a, t+b]$. } Further, we define the \emph{robustness trace} as a sequence of robustness values of every subsignal $s_{t_i}$ of signal $s_{t_0}$, $t_i \geq t_0$. \revised{The definition of robustness trace is presented formally below, and Example~\ref{eg:robustness trace} visualizes the robustness traces of various temporal operators.} \revised{\begin{definition}[Robustness trace] Given a signal $s_{t_0}$ and an STL formula $\phi$, the robustness trace $\tau(s_{t_0},\phi)$ is a sequence of robustness values of $\phi$ for each subsignal of $s_{t_0}$. Specifically, \[\tau(s_{t_0}, \phi) = \rho(s_{t_0}, \phi),\,\rho(s_{t_1}, \phi),\ldots, \rho(s_{t_T}, \phi)\] where $t_{i-1} < t_i$. \end{definition}} \revised{ \begin{example}\label{eg:robustness trace} Let $\psi_1 = \lozenge\, \square_{[0,0.4]} \, ( y < -0.02 )$ which specifies that a signal $y$ should, at some time in the future, stay below -0.02 for 0.4 seconds. Let $\psi_2 = \lozenge_{[0, 0.8]}\, \square_{[0, 0.4]} \, ( y > 0.2 )$ which specifies that a signal $y$ should, within 0.8 seconds in the future, be greater than 0.2 for 0.4 seconds. Then a formula $\psi_1 \, \mathcal{U} \, \psi_2$ specifies that $\psi_1$ must always hold before $\psi_2$ holds. Figure~\ref{fig:until toy example} shows the signal $y$ (blue) and the corresponding robustness trace (orange) for each of the formulas.
+\[\tau(s_{t_0}, \phi) = \rho(s_{t_0}, \phi),\,\rho(s_{t_1}, \phi),\ldots, \rho(s_{t_T}, \phi)\] where $t_{i-1} < t_i$. \end{definition}} \revised{ \begin{example}\label{eg:robustness trace} Let $\psi_1 = \lozenge\, \square_{[0,0.4]} \, ( y < -0.02 )$ which specifies that a signal $y$ should, at some time in the future, stay below -0.02 for 0.4 seconds. Let $\psi_2 = \lozenge_{[0, 0.8]}\, \square_{[0, 0.4]} \, ( y > 0.2 )$ which specifies that a signal $y$ should, within 0.8 seconds in the future, be greater than 0.2 for 0.4 seconds. Then a formula $\psi_1 \, \mathcal{U} \, \psi_2$ specifies that $\psi_1$ must always hold before $\psi_2$ holds. Figure~\ref{fig:until toy example} shows the signal $y$ (blue) and the corresponding robustness trace (orange) for each of the formulas.
 ```
 
 </details>
@@ -1890,10 +1894,14 @@ Source:
 - `x_1`: charging rate of the battery energy storage system (BESS), in kW
 - `x_2`: voltage of the microgrid, in p.u.
 
-**Requirement**
+**Requirement** (stated 2 times in the paper: the model has to report every passage)
 
 ```
 the BESS charging rate should remain above {100 kW}, \emph{until} some time $t$ within the near future (e.g., 2 hours, which is $7200$ seconds), where the cumulative amount of time over the following hour (i.e., $[0, 3600]$) during which the voltage $x_2$ remains below {1.1 p.u.} exceeds {3000 seconds} (i.e., 50 minutes)
+```
+
+```
+the BESS charges to absorb excess power until the voltage is stable for at least 50 minutes in a 1-hour window
 ```
 
 **Note:** Not plain STL: uses an extension of the logic. (CT-STL, cumulative-time operator)
@@ -1926,16 +1934,18 @@ Source:
 
 **Variables**
 
-- `x`: signal collected by an accelerometer on the rolling element bearing (not described next to the formula)
+- `x`: signal obtained from the vibration measurement of the rolling element bearing (second temporal moment of the wavelet-decomposed signal)
 
-**Requirement:** none
+**Requirement**
 
-**Why none:** Learned formula in a results table, next to robustness and error numbers only.
+```
+eventually within $[0,5]$, always within $[58,66]$, the signals should be larger than or equal to 0.05, and always within $[14,31]$, the signals should be smaller than 0.3, and always within $[45,52]$, the signals should be smaller than 0.04.
+```
 
 <details><summary>Context given to the model</summary>
 
 ```
-race, outer race and rolling element faults with real experiment data.} \resizebox{\textwidth}{!}{ \begin{tabular}{llllll} \hline \hline\\[-2.5mm] \textbf{Fault Type} &{Interpretation}&\multicolumn{2}{c}{\textbf{Robustness Degree}} &\multicolumn{2}{c}{\textbf{Error Rate}} \\[0.5ex] \hline -& -& Training & Testing& Training & Testing\\ Inner Race & $\varphi_{I} = \lozenge_{[0,5]}\square_{[58,66]}(x\geq 0.05)\wedge \square_{[14,31]}(x<0.3)\wedge \square_{[45,52]}(x<0.04)$ &0.0012 &0.0082& 0.000&0.000 \\ \hline Outer Race &$\varphi_{O}=\lozenge_{[60,68]}(x<0.1)\wedge \lozenge_{[44,50]}(x\geq 0.08)\wedge \lozenge_{[0,5]}\square_{[18,30]}(x< 0.3) $& 0.0022 & -0.030& 0.000 &0.045 \\ \hline Rolling Element& $\varphi_{R}=\lozenge_{[0,5]}\square_{[20,25]}(x<0.1)\wedge
+race, outer race and rolling element faults with real experiment data.} \resizebox{\textwidth}{!}{ \begin{tabular}{llllll} \hline \hline\\[-2.5mm] \textbf{Fault Type} &{Interpretation}&\multicolumn{2}{c}{\textbf{Robustness Degree}} &\multicolumn{2}{c}{\textbf{Error Rate}} \\[0.5ex] \hline -& -& Training & Testing& Training & Testing\\ Inner Race & $\varphi_{I} = \lozenge_{[0,5]}\square_{[58,66]}(x\geq 0.05)\wedge \square_{[14,31]}(x<0.3)\wedge \square_{[45,52]}(x<0.04)$ &0.0012 &0.0082& 0.000&0.000 \\ \hline Outer Race &$\varphi_{O}=\lozenge_{[60,68]}(x<0.1)\wedge \lozenge_{[44,50]}(x\geq 0.08)\wedge \lozenge_{[0,5]}\square_{[18,30]}(x< 0.3) $& 0.0022 & -0.030& 0.000 &0.045 \\ \hline Rolling Element& $\varphi_{R}=\lozenge_{[0,5]}\square_{[20,25]}(x<0.1)\wedge \square_{[65,72]}(x\geq 0.3)$ & 0.0022 & -0.030& 0.000 &0.045 \\ \hline Normal& $\varphi_{N}= \lozenge_{[0, 5]}\square_{[15,25]}(x\geq 0.4)\vee \square_{[0, 5]}(x\geq 0.12)$ &0.043 &0.011& 0.000 &0.000 \\ \hline \hline \end{tabular} } \label{tab:table4} \end{table*} Table \ref{tab:table4} shows the learning results of the TLNN for the four conditions, where the weights are omitted since they do not help interpret the faults. The formulas can be seen as the interpretation of the faults. For example, for the inner race fault, the formula $\varphi_{I}$ can be read ``eventually within $[0,5]$, always within $[58,66]$, the signals should be larger than or equal to 0.05, and always within $[14,31]$, the signals should be smaller than 0.3, and always within $[45,52]$, the signals should be smaller than 0.04.'' The other faults can be interpreted in the same way. The visualization of these formulas can be found in Fig. \ref{fig:visuall_inner}-\ref{fig:visuall_normal}, where the blue signals are positively labelled, and red signals are negatively labelled,
 ```
 
 </details>
@@ -1997,14 +2007,16 @@ Source:
 - `\bar{G}^{\textrm{S}}`: predicate: the robot is inside the rectangle 3 <= x <= 4, 3 <= y <= 5 of the gridworld
 - `\bar{Y}^{\textrm{S}}`: predicate: the robot is inside the rectangle 7 <= x <= 8, 5 <= y <= 8 of the gridworld
 
-**Requirement:** none
+**Requirement**
 
-**Why none:** Formula reported as the output of a learning step, followed only by predicate definitions.
+```
+first reach $\bar{G}^{\textrm{S}}$ during the time interval [1, 15] and stay there for 4 time units, then reach $\bar{Y}^{\textrm{S}}$ during the time interval [21, 39]
+```
 
 <details><summary>Context given to the model</summary>
 
 ```
-correspond to the rectangular regions in the 9$\times$9 gridworld. For computing the information gain of MITL$_{f}$ formulas, we use the uniform distribution for the prior probability distribution $\mathcal{G}_L$. Following the first two steps illustrated in Section \ref{Sec_transferLogic}, we obtain the following satisfying formulas: \[ \begin{split} \phi^{\textrm{S}}=&\Diamond_{[1,15]}\Box_{[0,4]}\bar{G}^{\textrm{S}}\wedge \Diamond_{[21,39]}\bar{Y}^{\textrm{S}}~\textrm{and}\\ \phi^{\textrm{T}}=&\Diamond_{[5,18]}\Box_{[0,5]}\bar{G}^{\textrm{T}}\wedge \Diamond_{[24,39]}\bar{Y}^{\textrm{T}}, \end{split} \] where \color{black} \[ \begin{split} &\bar{G}^{\textrm{S}}=(x>=3)\wedge(x<=4)\wedge(y>=3)\wedge(y<=5),\\
+correspond to the rectangular regions in the 9$\times$9 gridworld. For computing the information gain of MITL$_{f}$ formulas, we use the uniform distribution for the prior probability distribution $\mathcal{G}_L$. Following the first two steps illustrated in Section \ref{Sec_transferLogic}, we obtain the following satisfying formulas: \[ \begin{split} \phi^{\textrm{S}}=&\Diamond_{[1,15]}\Box_{[0,4]}\bar{G}^{\textrm{S}}\wedge \Diamond_{[21,39]}\bar{Y}^{\textrm{S}}~\textrm{and}\\ \phi^{\textrm{T}}=&\Diamond_{[5,18]}\Box_{[0,5]}\bar{G}^{\textrm{T}}\wedge \Diamond_{[24,39]}\bar{Y}^{\textrm{T}}, \end{split} \] where \color{black} \[ \begin{split} &\bar{G}^{\textrm{S}}=(x>=3)\wedge(x<=4)\wedge(y>=3)\wedge(y<=5),\\ &\bar{Y}^{\textrm{S}}=(x>=7)\wedge(x<=8)\wedge(y>=5)\wedge(y<=8),\\ &\bar{G}^{\textrm{T}}=(x>=5)\wedge(x<=6)\wedge(y>=6)\wedge(y<=7),\\ &\bar{Y}^{\textrm{T}}=(x>=4)\wedge(x<=7)\wedge(y>=1)\wedge(y<=2). \end{split} \] $\phi^{\textrm{S}}$ reads as ``first reach $\bar{G}^{\textrm{S}}$ during the time interval [1, 15] and stay there for 4 time units, then reach $\bar{Y}^{\textrm{S}}$ during the time interval [21, 39]''. $\phi^{\textrm{T}}$ reads as ``first reach $\bar{G}^{\textrm{T}}$ during the time interval [5, 18] and stay there for 5 time units, then reach $\bar{Y}^{\textrm{T}}$ during the time interval [24, 39]''. \color{black}The regions $\bar{G}^{\textrm{S}}$,
 ```
 
 </details>
@@ -2176,14 +2188,20 @@ Source:
 - `h`: height of the magnet levitating above the electromagnet
 - `Ref`: reference height
 
-**Requirement:** none
+**Requirement** (stated 2 times in the paper: the model has to report every passage)
 
-**Why none:** Table of specifications with formulas only.
+```
+the magnet should \emph{always} settle to a new reference position within two seconds
+```
+
+```
+the magnet should \emph{eventually} remain within the specified range of the reference position for one second
+```
 
 <details><summary>Context given to the model</summary>
 
 ```
-\bottomrule \end{tabularx} \label{AT_Spec} \end{minipage} \end{tabular} \end{table*} \begin{table*}[b] \centering \caption{Neural network specifications and environmental parameters} \begin{tabularx}{\linewidth}{p{3cm} X} \toprule \textbf{Specification} & \textbf{STL specification}\\ \midrule $\varphi_{1}$ & $\mathbf{G}(h < 3.9)$\\ $\varphi_{2}$ & $\mathbf{G}_{[0,50]}(\neg(|h-Ref| > 0.005+0.04|Ref|)\Rightarrow \mathbf{F}_{[0,2]}\mathbf{G}_{[0,1]}(\left | h-Ref \right |\leq 0.005+0.04\left | Ref \right |))$\\ \end{tabularx} \begin{tabularx}{\linewidth}{p{3cm} p{1.5cm} X} \toprule \textbf{Parameter} & \textbf{Symbol} & \textbf{Range}\\ \midrule Reference & $Ref$ & $[0,3]^{8}$\\ \bottomrule \end{tabularx} \label{NN_Table} \end{table*} \subsection{Case Study
+\bottomrule \end{tabularx} \label{AT_Spec} \end{minipage} \end{tabular} \end{table*} \begin{table*}[b] \centering \caption{Neural network specifications and environmental parameters} \begin{tabularx}{\linewidth}{p{3cm} X} \toprule \textbf{Specification} & \textbf{STL specification}\\ \midrule $\varphi_{1}$ & $\mathbf{G}(h < 3.9)$\\ $\varphi_{2}$ & $\mathbf{G}_{[0,50]}(\neg(|h-Ref| > 0.005+0.04|Ref|)\Rightarrow \mathbf{F}_{[0,2]}\mathbf{G}_{[0,1]}(\left | h-Ref \right |\leq 0.005+0.04\left | Ref \right |))$\\ \end{tabularx} \begin{tabularx}{\linewidth}{p{3cm} p{1.5cm} X} \toprule \textbf{Parameter} & \textbf{Symbol} & \textbf{Range}\\ \midrule Reference & $Ref$ & $[0,3]^{8}$\\ \bottomrule \end{tabularx} \label{NN_Table} \end{table*} \subsection{Case Study 2: Automatic Transmission} The automatic transmission environment is a scenario that simulates the speed of a $4$-gear vehicle with an automatic transmission. The simulation has two observable properties: the vehicle's speed $\dot{x}$ and engine speed $\omega$. We consider four sources of uncertainty whose ranges are provided in Table \ref{AT_Spec}. We consider two input signals, the throttle angle $\theta_{thr}$ and brake angle $\theta_{brk}$. We explore the uncertainty space for a combination of environmental parameters that cause the vehicle to violate one of the following two specifications presented in Table \ref{AT_Spec}. First, the vehicle's speed should \emph{always} remain below $80$mph. Second, the engine speed should \emph{always} remain below $1400$rpm. \subsection{Case Study 3: Neural Network Controller} This environment models a magnet levitating above an electromagnet, maintaining a specific reference height. The simulation tracks the height $h$ of the magnet, with the only input being the reference position. Thus, the model incorporates eight sources of uncertainty, detailed in Table \ref{NN_Table}. We evaluate the nonlinear autoregressive moving average (NARMA) neural controller's capability to move the magnet to a reference position by controlling the current \cite{NN_cite}. The neural controller consists of a neural network with nine hidden layers. The controller is subjected to two safety specifications given in STL format in Table \ref{NN_Table}. First, the controller should \emph{always} keep the magnet below $3.9$mm. Second, the magnet should \emph{always} settle to a new reference position within two seconds. This can be reworded as the magnet should \emph{eventually} remain within the specified range of the reference position for one second. \subsection{Case Study 4: F16-Ground Collision Avoidance} This environment simulates the F-$16$ control system, with a specific focus on the aircraft’s ground collision avoidance inner-loop controller, modeled by $16$ continuous piece-wise nonlinear
 ```
 
 </details>

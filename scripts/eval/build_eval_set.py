@@ -19,6 +19,7 @@ repo = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(repo)); sys.path.insert(0, str(Path(__file__).parent))
 from src.analysis import estimator as e
 from labels import DOMAINS, LABELS, NEGATIVES, PARTIAL
+from src.extraction.extractor import REQUIREMENT_KINDS
 
 def norm_with_lines(text):
     """Collapses whitespace; returns the normalised text and, per character, its 1-based source line."""
@@ -40,7 +41,8 @@ corpus = json.load(open(repo / "data/corpus.json", encoding="utf-8"))
 # A labelled paper may since have been merged into another entry as a duplicate: follow it to the entry that was kept
 merged_into = {old: pid for pid, p in corpus.items() for old in p.get("alternate_ids") or []}
 entries, problems = [], []
-rows = list(LABELS) + [(pid, f, None, note, domain, variables) for pid, f, note, domain, variables in NEGATIVES]
+# A six-field entry of NEGATIVES is a "none" case that was relabelled with a requirement and kept at its place
+rows = list(LABELS) + [t if len(t) == 6 else (t[0], t[1], None, t[2], t[3], t[4]) for t in NEGATIVES]
 for n, (pid, formula, req, note, domain, variables) in enumerate(rows, 1):
     pid = merged_into.get(pid, pid)
     if domain not in DOMAINS:
@@ -52,7 +54,16 @@ for n, (pid, formula, req, note, domain, variables) in enumerate(rows, 1):
     if note.startswith("REQ_PREFIX:"):
         prefix, note = note[len("REQ_PREFIX:"):], ""
     note = note or PARTIAL.get(n, "")
-    f_n = ws(formula); r_n = ws(req) if req else None
+    f_n = ws(formula)
+    # One passage, or the list of every passage that states the requirement
+    passages = [req] if isinstance(req, (str, tuple)) else req or []
+    # A passage is specific unless written as ("generic", text)
+    kinds = [p[0] if isinstance(p, tuple) else "specific" for p in passages]
+    reqs = [ws(p[1] if isinstance(p, tuple) else p) for p in passages]
+    if any(kind not in REQUIREMENT_KINDS for kind in kinds) or len(set(kinds)) > 1:
+        problems.append((n, pid, "requirement kinds must be all specific or all generic"))
+    if prefix and len(reqs) != 1:
+        problems.append((n, pid, "REQ_PREFIX needs exactly one requirement"))
     folder = repo / "data/raw/latex" / pid
     found, formula_seen = None, False
     for tex in sorted(folder.rglob("*.tex")):
@@ -60,25 +71,30 @@ for n, (pid, formula, req, note, domain, variables) in enumerate(rows, 1):
         # blank out comments without removing lines, so line numbers stay true
         stripped = "\n".join(re.sub(r"(?<!\\)%.*$", "", l) for l in raw.splitlines())
         text, line_of = norm_with_lines(stripped)
-        fi = text.find(f_n)
-        if fi < 0:
+        f_positions = [m.start() for m in re.finditer(re.escape(f_n), text)]
+        if not f_positions:
             continue
         formula_seen = True
         if nows(e.strip_latex_comments(raw)).find(nows(formula)) < 0:
             continue  # only present inside a disabled block in this file
-        lo, hi = fi, fi + len(f_n)
-        if r_n:
-            r_positions = [m.start() for m in re.finditer(re.escape(r_n), text)]
-            if not r_positions:
+        fi = f_positions[0]
+        if reqs:
+            r_positions = [[m.start() for m in re.finditer(re.escape(r), text)] for r in reqs]
+            if not all(r_positions):
                 continue
-            ri = min(r_positions, key=lambda p: abs(p - fi))
+            # A formula printed more than once (in the text, again in a caption): take the occurrence the requirement stands next to
+            fi = min(f_positions, key=lambda f: min(abs(p - f) for p in r_positions[0]))
+            starts = [min(positions, key=lambda p: abs(p - fi)) for positions in r_positions]
             if prefix:
+                ri = starts[0]
                 pi = text.rfind(ws(prefix), 0, ri)
                 if pi < 0 or ri - pi > len(ws(prefix)) + 12:
                     problems.append((n, pid, "prefix not adjacent"))
                 else:
-                    r_n = text[pi:ri + len(r_n)]; ri = pi
-            lo, hi = min(lo, ri), max(hi, ri + len(r_n))
+                    reqs[0] = text[pi:ri + len(reqs[0])]; starts[0] = pi
+        lo, hi = fi, fi + len(f_n)
+        for start, r in zip(starts if reqs else [], reqs):
+            lo, hi = min(lo, start), max(hi, start + len(r))
         a = max(0, lo - 350); b = min(len(text), hi + 250)
         a = text.rfind(" ", 0, a) + 1 if a else 0
         b = text.find(" ", b) if text.find(" ", b) > 0 else len(text)
@@ -93,7 +109,8 @@ for n, (pid, formula, req, note, domain, variables) in enumerate(rows, 1):
         "id": f"EVAL_{n:02d}", "paper_id": pid, "title": p.get("title"), "year": p.get("year"),
         "arxiv_id": p.get("arxiv_id"), "license_tier": (p.get("license_info") or {}).get("tier"),
         "source_file": str(tex.relative_to(folder)).replace(chr(92), "/"), "line": line,
-        "formula": f_n, "has_requirement": r_n is not None, "requirement": r_n,
+        "formula": f_n, "has_requirement": bool(reqs),
+        "requirements": [{"text": r, "kind": kind} for r, kind in zip(reqs, kinds)],
         "domain": domain, "variables": {ws(s): meaning for s, meaning in variables.items()}, "context": context, "note": note,
     })
 
@@ -115,6 +132,9 @@ pos = sum(x["has_requirement"] for x in entries)
 md = ["# Evaluation set: requirement-formula pairs", "",
       f"{len(entries)} entries picked by hand from the LaTeX sources: {pos} with a requirement and {len(entries) - pos} \"none\" cases.", "",
       "`Formula` and `Requirement` are verbatim substrings of the source file (whitespace collapsed). "
+      "When the paper states the requirement of a formula more than once, in different words, every passage is listed. "
+      "A passage is specific when it carries the particulars of the formula (numbers, thresholds, named regions) and "
+      "generic when it only says what the formula is for; a generic passage is labelled only when the paper has no specific one. "
       "A \"none\" case means the context given to the model holds no statement of what the formula requires; "
       "the paper may still describe it somewhere outside that context.", "",
       "`Domain` and `Variables` are written by the labeller, not copied: the domain is the application area of the system "
@@ -140,7 +160,10 @@ for x in entries:
     md += ["Source:", "", "```latex", x["formula"], "```", "", f"**Domain:** {x['domain']}", "", "**Variables**", ""]
     md += [f"- `{s}`: {meaning}" for s, meaning in x["variables"].items()] + [""]
     if x["has_requirement"]:
-        md += ["**Requirement**", "", "```", x["requirement"], "```", ""]
+        many = len(x["requirements"]) > 1
+        md += ["**Requirement**" + (f" (stated {len(x['requirements'])} times in the paper: the model has to report every passage)" if many else ""), ""]
+        for r in x["requirements"]:
+            md += (["*Generic: it does not carry the particulars of the formula.*", ""] if r["kind"] == "generic" else []) + ["```", r["text"], "```", ""]
         if x["note"]:
             md += [f"**Note:** {x['note']}", ""]
     else:

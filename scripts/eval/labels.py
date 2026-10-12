@@ -1,11 +1,17 @@
 # (paper_id, formula, requirement, note, domain, variables) - formula and requirement are copied verbatim from the LaTeX source.
+# When the paper states the requirement of a formula more than once, in different words, requirement is the list of
+# all those passages, in the order they appear: the model has to report every one of them.
+# A passage is "specific" (it carries the numbers, thresholds or named regions of the formula) unless it is written
+# as ("generic", r"""text"""): one that only says what the formula is for. Generic passages are labelled only when the
+# paper has no specific one for the formula.
 # domain is one of DOMAINS: the application area of the system the formula is about, "generic" when the formula is an
 # abstract example over an unnamed signal. variables maps each symbol of the formula (verbatim) to what it stands for.
 from src.extraction.extractor import DOMAINS  # the extraction model picks from the same list
 EXT = "Not plain STL: uses an extension of the logic."
 LABELS = [
 ("W4410555947", r"""(w \leq 30)\until_{[5,10]} (w = 0) \land (m \leq 30)\until_{[5,10]} (m = 0)""",
- r"""The wheel subsystem must ensure that its value does not exceed 30 within the timeframe and ultimately reaches zero between 5 and 10 seconds. Simultaneously, the motor control subsystem has the same requirement.""", "",
+ [r"""The wheel subsystem must ensure that its value does not exceed 30 within the timeframe and ultimately reaches zero between 5 and 10 seconds. Simultaneously, the motor control subsystem has the same requirement.""",
+  r"""both the wheels and motor control must ultimately reach $0$ within a time frame of $5$ to $10$ seconds while maintaining the values no larger than $30$ until then"""], "",
  "automotive", {r"w": "signal of the wheel subsystem of the vehicle (no unit given)", r"m": "signal of the motor control subsystem of the vehicle (no unit given)"}),
 ("W2293445725", r"""\phi_{2} = \left(\globally \neg p_{\Unsafe} \right) ~ \wedge \eventually_{[5.5, 7.5]} ~ \left( \globally_{[0,1.5]} ~ p_{\Goal} \right)""",
  r"""In this scenario the requirement is still to avoid the unsafe region always and to eventually reach the goal region sometime within \(5.5\) to \(7.5\) seconds and stay there for \(1.5\) seconds.""", "",
@@ -155,20 +161,25 @@ LABELS = [
  r"""The average air quality within 5km of all schools should always be above \textit{Moderate} in the next 3 hours.""", EXT + " (SaSTL, spatial aggregation)",
  "smart city", {r"x_{\mathsf{air}}": "air quality at a location", r"\mathsf{School}": "label selecting the locations that are schools", r"\mathsf{Moderate}": "the air quality level 'Moderate', used as threshold"}),
 ("W4413499266", r"""\varphi = x_1 > 100 \ \mathbf{U}_{[0,7200]} \ \mathbf{C}_{[0,3600]}^{3000} \ x_2 < 1.1""",
- r"""the BESS charging rate should remain above {100 kW}, \emph{until} some time $t$ within the near future (e.g., 2 hours, which is $7200$ seconds), where the cumulative amount of time over the following hour (i.e., $[0, 3600]$) during which the voltage $x_2$ remains below {1.1 p.u.} exceeds {3000 seconds} (i.e., 50 minutes)""", EXT + " (CT-STL, cumulative-time operator)",
+ [r"""the BESS charging rate should remain above {100 kW}, \emph{until} some time $t$ within the near future (e.g., 2 hours, which is $7200$ seconds), where the cumulative amount of time over the following hour (i.e., $[0, 3600]$) during which the voltage $x_2$ remains below {1.1 p.u.} exceeds {3000 seconds} (i.e., 50 minutes)""",
+  r"""the BESS charges to absorb excess power until the voltage is stable for at least 50 minutes in a 1-hour window"""], EXT + " (CT-STL, cumulative-time operator)",
  "power systems", {r"x_1": "charging rate of the battery energy storage system (BESS), in kW", r"x_2": "voltage of the microgrid, in p.u."}),
+# Was the first "none" case: the formula stands in a results table and its reading follows in the text after the table
+("W4406233973", r"""\varphi_{I} = \lozenge_{[0,5]}\square_{[58,66]}(x\geq 0.05)\wedge \square_{[14,31]}(x<0.3)\wedge \square_{[45,52]}(x<0.04)""",
+ r"""eventually within $[0,5]$, always within $[58,66]$, the signals should be larger than or equal to 0.05, and always within $[14,31]$, the signals should be smaller than 0.3, and always within $[45,52]$, the signals should be smaller than 0.04.""", "",
+ "industrial machinery", {r"x": "signal obtained from the vibration measurement of the rolling element bearing (second temporal moment of the wavelet-decomposed signal)"}),
 ]
 
 # (paper_id, formula, why the context holds no requirement for it, domain, variables)
+# An entry with six fields, written like the ones of LABELS, was first labelled "none" and turned out to have a
+# requirement: it stays at its place in this list so that no EVAL_nn number changes.
 NEGATIVES = [
-("W4406233973", r"""\varphi_{I} = \lozenge_{[0,5]}\square_{[58,66]}(x\geq 0.05)\wedge \square_{[14,31]}(x<0.3)\wedge \square_{[45,52]}(x<0.04)""",
- "Learned formula in a results table, next to robustness and error numbers only.",
- "industrial machinery", {r"x": "signal collected by an accelerometer on the rolling element bearing (not described next to the formula)"}),
 ("W2964352321", r"""\Always_{[0,10]} \Eventually_{[0,5]}\, 2-x_1 \!<\! 0""",
  "Property named as the thing being verified; the text never says what it means.",
  "generic", {r"x_1": "height of a ball bouncing on a moving table (defined in an earlier example of the paper)"}),
+# Relabelled: the reading of the formula follows after the definitions of its predicates
 ("W2964890016", r"""\phi^{\textrm{S}}=&\Diamond_{[1,15]}\Box_{[0,4]}\bar{G}^{\textrm{S}}\wedge \Diamond_{[21,39]}\bar{Y}^{\textrm{S}}""",
- "Formula reported as the output of a learning step, followed only by predicate definitions.",
+ r"""first reach $\bar{G}^{\textrm{S}}$ during the time interval [1, 15] and stay there for 4 time units, then reach $\bar{Y}^{\textrm{S}}$ during the time interval [21, 39]""", "",
  "mobile robotics", {r"\bar{G}^{\textrm{S}}": "predicate: the robot is inside the rectangle 3 <= x <= 4, 3 <= y <= 5 of the gridworld", r"\bar{Y}^{\textrm{S}}": "predicate: the robot is inside the rectangle 7 <= x <= 8, 5 <= y <= 8 of the gridworld"}),
 ("W4292070345", r"""\Phi&=\Phi_1\wedge\Phi_2=F_{[0,5]}x\geq10\wedge F_{[1,6]}x\leq5""",
  "Example of conflicting subtasks; the text discusses the control method, not what the formula demands.",
@@ -183,7 +194,9 @@ NEGATIVES = [
  "Quoted as an example of formulas that come without a natural-language reading.",
  "generic", {r"z": "not explained (the formula is quoted from another paper)"}),
 ("W4401210599", r"""\mathbf{G}_{[0,50]}(\neg(|h-Ref| > 0.005+0.04|Ref|)\Rightarrow \mathbf{F}_{[0,2]}\mathbf{G}_{[0,1]}(\left | h-Ref \right |\leq 0.005+0.04\left | Ref \right |))""",
- "Table of specifications with formulas only.",
+ # Relabelled: the text after the table states the requirement, then rewords it
+ [r"""the magnet should \emph{always} settle to a new reference position within two seconds""",
+  r"""the magnet should \emph{eventually} remain within the specified range of the reference position for one second"""], "",
  "mechatronics", {r"h": "height of the magnet levitating above the electromagnet", r"Ref": "reference height"}),
 ("W4407951071", r"""\varphi_{12}= F_{[30,40]} \|\vec{p}_{12}\| \leq 5""",
  "Listed among task formulas in a simulation setup, with no wording of the task.",
