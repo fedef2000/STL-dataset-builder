@@ -1,5 +1,6 @@
 import bisect
 import re
+import unicodedata
 from pathlib import Path
 
 # Files that can hold author macro definitions (formulas are only counted in .tex files)
@@ -60,11 +61,44 @@ MACRO_BODY_NAME_PATTERN = re.compile(
     r"[GFU]|(?i:alw|always|ev|eventually|glob|globally|finally|until|release|once|since|hist|historically)"
 )
 
-# PDF Regex: PDFs lose LaTeX macros, so we look for raw text approximations (e.g., G[0, 5], Always_[0, 10], □[0, 5])
-PDF_CONCRETE_PATTERN = re.compile(
-    r"(?:(?<![A-Za-z])[GFU](?![A-Za-z])|\b(?i:always|eventually|globally|finally|until)\b|[□◇◊♢⋄])"
-    r"\s*[\[_\{]\s*\d+(?:\.\d+)?\s*,\s*\d+(?:\.\d+)?\s*[\]\}]"
-)
+# PDF text: PDFs lose the LaTeX markup, so the operators are looked for as the text layer gives them
+# (e.g., G[0, 5], □[0,∞), ♦(0, 3], ⊟[1,2], ◇≤3, F≤100(x > 1)). The text is first normalised (NFKC), which turns
+# the mathematical letters (𝑭, 𝐆, 𝒰) into plain ones.
+PDF_NUM = r"\d+(?:\.\d+)?"
+PDF_NUMERIC = rf"(?:{PDF_NUM}|[+-]?\s*(?:∞|inf\b))"
+PDF_NUMERIC_PATTERN = re.compile(PDF_NUMERIC)
+PDF_UNIT = r"(?:\s*(?:ms|sec|min|s|h)\b)?"
+# A subscript marker that survived the conversion, e.g. G_[0,5] or G_{[0,5]}
+PDF_SEP = r"\s*_?\s*\{?\s*"
+PDF_RELATION = r"(?:≤|⩽|<=|<|≥|⩾|>=|>)"
+# Box and diamond glyphs, with the past-time variants (⊟, ⊞) and what some math fonts turn them into (✷, ✸)
+PDF_GLYPH = r"[□◇◊♢⋄♦◻■◆✷✸⊟⊞]"
+PDF_WORD = r"\b(?i:always|eventually|globally|finally|until|release|once|since|historically)\b"
+# A bare G, F or U; "x ∼ U[0, 1]" is a uniform distribution, not an until
+PDF_LETTER = r"(?<![A-Za-z∼~])(?<![∼~]\s)[GFU]"
+# Symbolic bounds: any short name after a glyph, only the usual names of time bounds after a letter or a word
+PDF_NAME = r"[A-Za-zͰ-Ͽ][A-Za-z0-9Ͱ-Ͽ′']{0,4}"
+PDF_TIME_NAME = r"[abcdlutTτ][0-9′']?"
+
+def _pdf_interval(opening: str, bound: str) -> str:
+    return (rf"(?P<open>{opening})\s*(?P<lo>{bound}){PDF_UNIT}\s*,\s*(?P<hi>{bound}){PDF_UNIT}\s*(?P<close>[\]\)])")
+
+PDF_PATTERNS = [
+    # □[0, 5], ♦(0, ∞), ⊟[1.5, 3], □[a, b], and the past-time ♢−(10, 183]
+    re.compile(rf"{PDF_GLYPH}[−-]?{PDF_SEP}" + _pdf_interval(r"[\[\(]", rf"(?:{PDF_NUMERIC}|{PDF_NAME})")),
+    # ♦≤10, ✸<2
+    re.compile(rf"{PDF_GLYPH}{PDF_SEP}{PDF_RELATION}\s*(?P<lo>{PDF_NUM}){PDF_UNIT}"),
+    # G[0, 5], U[0,∞), Always[0, 10], F[a, b], G[0, T]: square opening only, G(0, 1) is a function call
+    re.compile(rf"(?:{PDF_LETTER}|{PDF_WORD})_?\{{?" + _pdf_interval(r"\[", rf"(?:{PDF_NUMERIC}|{PDF_TIME_NAME})")),
+    # F [0,10](x > 3), tt U [0,2] infected, finally [0, 200]: a space before the interval, numeric bounds only.
+    # find_pdf_operators drops the ones that look like a citation, e.g. "at once [28, 36]"
+    re.compile(rf"(?P<prose>[a-z,.;:]\s)?(?P<op>{PDF_LETTER}|{PDF_WORD})\s+" + _pdf_interval(r"\[", PDF_NUMERIC) + r"(?P<applied>\s*\()?"),
+    # F≤100(x > 1), F<100G<5p: only when written tight and applied to something, "F < 5" alone is a comparison
+    re.compile(rf"{PDF_LETTER}{PDF_RELATION}(?P<lo>{PDF_NUM})(?=[(\[A-Za-zͰ-Ͽ¬□◇♢♦])"),
+    # 2[0, 10] and 3[0, 2]: the box and diamond of the AMS symbol font come out as the digits 2 and 3;
+    # a private-use character is a glyph the font gives no meaning for
+    re.compile(rf"(?:(?<![\w.,\])])[23]|[-])" + _pdf_interval(r"\[", PDF_NUMERIC)),
+]
 
 # Blocks that authors disabled without using %: the comment environment and \iffalse ... \fi
 DISABLED_BLOCK_PATTERN = re.compile(
@@ -335,6 +369,41 @@ def estimate_tex_folder(tex_folder: Path) -> dict:
             counts[key] += file_counts[f][key]
     return counts
 
+def find_pdf_operators(text: str) -> list[tuple[int, str]]:
+    """Finds the bounded temporal operators in NFKC-normalised PDF text, as (position, 'concrete' or 'symbolic')."""
+    found = []
+    for pattern in PDF_PATTERNS:
+        for m in pattern.finditer(text):
+            groups = m.groupdict()
+            bounds = [b for b in (groups.get("lo"), groups.get("hi")) if b is not None]
+            numeric_bounds = sum(1 for b in bounds if PDF_NUMERIC_PATTERN.fullmatch(b))
+            if "op" in groups:
+                # Operator and interval separated by a space. Two positive integers can be a citation ("[9, 17]"):
+                # they only count for a letter that is applied to something or does not follow a word
+                citation_like = all(re.fullmatch(r"[1-9]\d*", b) for b in bounds) and not groups["applied"]
+                if citation_like and (groups["prose"] or len(groups["op"]) > 1):
+                    continue
+                found.append((m.start("op"), "concrete"))
+            elif numeric_bounds == len(bounds):
+                found.append((m.start(), "concrete"))
+            # as in LaTeX, □(i, j) is far more often a pair of indices than an open interval
+            elif numeric_bounds or not (groups.get("open") == "(" and groups.get("close") == ")"):
+                found.append((m.start(), "symbolic"))
+    return found
+
+def count_pdf_page(text: str) -> dict:
+    """Counts the bounded temporal operators of one page of PDF text and the formulas they form."""
+    counts = dict(EMPTY_COUNTS)
+    text = unicodedata.normalize("NFKC", text)
+    kinds_per_line = {}
+    for pos, kind in find_pdf_operators(text):
+        counts[kind] += 1
+        # PDF text has no math markup, so operators on the same text line count as one formula
+        kinds_per_line.setdefault(text.count("\n", 0, pos), set()).add(kind)
+    for kinds in kinds_per_line.values():
+        counts["formulas_concrete" if "concrete" in kinds else "formulas_symbolic"] += 1
+    return counts
+
 def estimate_pdf_file(pdf_path: Path) -> dict:
     """Scans PDF text for raw formula representations."""
     counts = dict(EMPTY_COUNTS)
@@ -348,11 +417,8 @@ def estimate_pdf_file(pdf_path: Path) -> dict:
 
         with pymupdf.open(pdf_path) as doc:
             for page in doc:
-                text = page.get_text()
-                match_lines = [text.count("\n", 0, m.start()) for m in PDF_CONCRETE_PATTERN.finditer(text)]
-                counts["concrete"] += len(match_lines)
-                # PDF text has no math markup, so operators on the same text line count as one formula
-                counts["formulas_concrete"] += len(set(match_lines))
+                for key, value in count_pdf_page(page.get_text()).items():
+                    counts[key] += value
     except Exception:
         pass
 

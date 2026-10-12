@@ -26,7 +26,7 @@ A modular, resumable pipeline that discovers academic papers on Signal Temporal 
   * Covers future and past-time operators: box and diamond symbols and their variants (`\boxminus`, `\diamondminus`, ...), `G`/`F`/`U` letters, and named operators (`\always`, `\eventually`, `\until`, `\once`, `\since`, `\historically`, `\LTL...`).
   * Recognises each paper's own operator macros (`\newcommand`, `\def`, `\DeclareMathOperator`, `\NewDocumentCommand`), including macros defined in terms of other macros.
   * Ignores commented-out lines, `comment` environments, `\iffalse ... \fi` blocks, and `.tex` files that the main document does not `\input` (old drafts, unused files).
-  * For PDF-only papers, falls back to a plain-text approximation that counts concrete formulas only.
+  * For PDF-only papers, falls back to the text layer of the PDF, where a formula is one text line. It recognises box and diamond glyphs (`□[0,5]`, `♦(0,∞)`, the past-time `⊟[1,2]`), the letters and words (`G[0,5]`, `U[0,∞)`, `Always[0,10]`), single bounds (`♦≤10`, `F≤100(x > 1)`), symbolic bounds (`□[a,b]`, `G[0,T]`), mathematical letters (`𝑭[0,20]`) and the digits `2` and `3` that the AMS symbol font leaves in place of a box and a diamond (`2[0,10](x ≤ 1.2)`). A bare `G`, `F` or `U` needs a square bracket, `x ∼ U[0,1]` is read as a uniform distribution, and an interval after a space that looks like a citation (`at once [28, 36]`) is not counted. Operators whose glyph is lost in the text layer are missed, so PDF counts stay lower than LaTeX counts.
 
 ---
 
