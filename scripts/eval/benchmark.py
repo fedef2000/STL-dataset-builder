@@ -76,11 +76,21 @@ def load_tasks(limit: int | None = None):
 
 # ---------------------------------------------------------------- calling the models
 
+def read_answers(answers_file: Path) -> list[dict]:
+    """The stored answers. A last line cut short by an interruption is skipped: that call is simply made again."""
+    rows = []
+    for line in open(answers_file, encoding="utf-8"):
+        try:
+            rows.append(json.loads(line))
+        except ValueError:
+            continue
+    return rows
+
+
 def run_calls(args, regions: dict, answers_file: Path) -> None:
     done = set()
     if answers_file.exists():
-        for line in open(answers_file, encoding="utf-8"):
-            row = json.loads(line)
+        for row in read_answers(answers_file):
             if not row.get("error"):
                 done.add((row["model"], row["reasoning"], row["run"], row["paper_id"], row["region"]))
     # The reasoning levels of each model: the ones asked for, otherwise the model's own defaults
@@ -117,6 +127,9 @@ def run_calls(args, regions: dict, answers_file: Path) -> None:
         }
 
     started, finished, failed = time.monotonic(), 0, 0
+    if answers_file.exists() and answers_file.stat().st_size and not answers_file.read_bytes().endswith(b"\n"):
+        with open(answers_file, "a", encoding="utf-8") as out:
+            out.write("\n")   # close a line cut short by an interruption, so the next answer starts on its own line
     with open(answers_file, "a", encoding="utf-8") as out, ThreadPoolExecutor(max_workers=args.workers) as pool:
         try:
             for future in as_completed([pool.submit(call, task) for task in todo]):
@@ -193,8 +206,7 @@ RIGHT = ("none, right", "exact", "overlap")
 def score_all(placed: list, answers_file: Path) -> dict:
     """Returns {(model, reasoning): {run: {"calls": [...], "scores": {entry id: score}}}} from the stored answers."""
     rows = {}
-    for line in open(answers_file, encoding="utf-8"):
-        row = json.loads(line)
+    for row in read_answers(answers_file):
         key = (row["model"], row["reasoning"], row["run"], row["paper_id"], row["region"])
         if key not in rows or rows[key].get("error"):
             rows[key] = row   # a retry replaces a failed call
