@@ -22,13 +22,10 @@ def print_report(rows: list, scanned: int) -> None:
     print("                 STL FORMULA YIELD ESTIMATION REPORT")
     print("=" * 80)
     print(f"Total Papers Scanned:              {scanned}")
-    print(f"Papers with >= 1 Concrete Formula: {papers_with_concrete} ({(papers_with_concrete/max(1, scanned))*100:.1f}%)")
     print("-" * 80)
     print("A formula is concrete when at least one of its temporal operators has numeric time bounds.")
     print(f"Concrete Formulas:                 {total('formulas_concrete')}")
     print(f"Symbolic/Parametric Formulas:      {total('formulas_symbolic')}")
-    print(f"Operators with Numeric Bounds:     {total('concrete')}")
-    print(f"Operators with Symbolic Bounds:    {total('symbolic')}")
     print("-" * 80)
     for label, key in (("LaTeX", "downloaded_latex"), ("PDF", "downloaded_pdf")):
         subset = [r for r in rows if r[3] == key]
@@ -36,7 +33,7 @@ def print_report(rows: list, scanned: int) -> None:
               f"{total('formulas_concrete', subset):>6} concrete formulas | {total('formulas_symbolic', subset):>6} symbolic formulas")
     print("=" * 80)
 
-    print("\nTOP 20 MOST PROMISING PAPERS:")
+    print("\nTOP 20 PAPERS WITH MOST NUMBER OF FORMULAS:")
     print(f"{'Formulas':<9} | {'Operators':<9} | {'Symbolic':<9} | {'Source':<7} | {'Paper ID':<16} | {'Title'}")
     print("-" * 120)
 
