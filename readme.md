@@ -60,8 +60,10 @@ STL_dataset_builder/
 │   ├── licensing/
 │   │   ├── resolver.py                # Deep license scanner (.tex, PDF, arXiv OAI, OpenAlex)
 │   │   └── stats.py                   # License tier classification & reporting tables
-│   └── analysis/
-│       └── estimator.py               # Counts concrete and symbolic STL formulas (macro-aware)
+│   ├── analysis/
+│   │   └── estimator.py               # Counts and locates concrete and symbolic STL formulas (macro-aware)
+│   └── extraction/
+│       └── context.py                 # Builds what the extraction model reads: paper header and regions with marked formulas
 │
 └── scripts/                           # Executable CLI entrypoints
     ├── 01_build_corpus.py             # Step 1: Discover papers (citations & keywords) and enrich them with missing links
@@ -70,6 +72,7 @@ STL_dataset_builder/
     ├── 04_estimate_formulas.py        # Step 4: Estimate the STL formula yield per paper
     └── eval/
         ├── build_eval_set.py          # Checks the labels against the LaTeX sources and writes the evaluation set
+        ├── check_contexts.py          # Checks the context builder against the evaluation set; previews a paper's regions
         ├── labels.py                  # The hand-written labels: edit this file to change the set
         └── render.py                  # Expands each paper's macros so the formulas render in eval_set.md
 
@@ -267,6 +270,33 @@ python scripts/04_estimate_formulas.py --stats
 |---|---|
 | `--limit N` | Scans only the first `N` downloaded papers (for testing). |
 | `--stats` | Prints the same report from the estimates already stored in `data/corpus.json`, then exits. No file is scanned. |
+
+### Extraction: what the model reads (in progress)
+
+The extraction step is not written yet. Its first part is the context builder (`src/extraction/context.py`), which decides what the model reads about a paper held as LaTeX:
+
+* **Header:** the title and the abstract of the paper.
+* **Regions:** pieces of one `.tex` file around the concrete formulas found in step 4. A region starts about 2,000 characters before a formula and ends about 3,000 after it, at paragraph ends, and stays inside the formula's `\section`. Formulas that lie close together share a region, so the same text is not sent once per formula; a run of more than 15 formulas is split into several regions.
+* **Formula IDs:** every formula is numbered (`F1`, `F2`, ...) and wrapped in `⟦F1⟧ ... ⟦/F1⟧` in the text given to the model, which answers once per ID.
+
+```bash
+# Coverage of the evaluation set: is every labelled formula marked, and its requirement inside the same region?
+python scripts/eval/check_contexts.py
+
+# Print the regions of one paper as the model sees them
+python scripts/eval/check_contexts.py --paper W4410555912
+
+# Regions, formulas and input tokens over every LaTeX paper of the corpus
+python scripts/eval/check_contexts.py --corpus
+```
+
+| Flag | What it does |
+|---|---|
+| `--paper ID` | Prints the header and the regions of one paper. Long regions are shortened unless `--full` is given. |
+| `--corpus` | Reports the size of the job over the whole corpus instead of the evaluation set. |
+| `--before N`, `--after N` | Characters of context before and after a formula (default 2000 and 3000). |
+| `--max-formulas N` | Most formulas marked in one region (default 15). |
+| `--symbolic` | Also marks the formulas whose time bounds are all symbolic. |
 
 ---
 
