@@ -1,0 +1,139 @@
+"""
+Builds the evaluation set (data/processed/eval_set.json and eval_set.md) from the hand-written labels in labels.py.
+
+Every formula and requirement in labels.py must be a verbatim substring of the paper's LaTeX source in
+data/raw/latex/<paper_id>/: the script looks each one up, records the file and line, and cuts out the surrounding
+context. If a label is not found it prints the problem and writes nothing.
+
+    python scripts/eval/build_eval_set.py                    # check the labels and rewrite both files
+    python scripts/eval/build_eval_set.py --show-negatives   # print the context of the "none" cases, write nothing
+
+To change the set, edit labels.py and run the script again. Entries are numbered in the order of LABELS followed by
+NEGATIVES, so add new labels at the end of a list, otherwise the EVAL_nn ids and the PARTIAL notes shift.
+"""
+import collections, json, re, sys
+from pathlib import Path
+repo = Path(__file__).resolve().parent.parent.parent
+sys.path.insert(0, str(repo)); sys.path.insert(0, str(Path(__file__).parent))
+from src.analysis import estimator as e
+from labels import LABELS, NEGATIVES, PARTIAL
+
+def norm_with_lines(text):
+    """Collapses whitespace; returns the normalised text and, per character, its 1-based source line."""
+    out, lines, line, prev_space = [], [], 1, True
+    for ch in text:
+        if ch.isspace():
+            if not prev_space:
+                out.append(" "); lines.append(line)
+            prev_space = True
+        else:
+            out.append(ch); lines.append(line); prev_space = False
+        if ch == "\n":
+            line += 1
+    return "".join(out), lines
+
+ws = lambda s: re.sub(r"\s+", " ", s).strip()
+nows = lambda s: re.sub(r"\s+", "", s)
+corpus = json.load(open(repo / "data/corpus.json", encoding="utf-8"))
+# A labelled paper may since have been merged into another entry as a duplicate: follow it to the entry that was kept
+merged_into = {old: pid for pid, p in corpus.items() for old in p.get("alternate_ids") or []}
+entries, problems = [], []
+rows = [(pid, f, r, note) for pid, f, r, note in LABELS] + [(pid, f, None, note) for pid, f, note in NEGATIVES]
+for n, (pid, formula, req, note) in enumerate(rows, 1):
+    pid = merged_into.get(pid, pid)
+    prefix = ""
+    if note.startswith("REQ_PREFIX:"):
+        prefix, note = note[len("REQ_PREFIX:"):], ""
+    note = note or PARTIAL.get(n, "")
+    f_n = ws(formula); r_n = ws(req) if req else None
+    folder = repo / "data/raw/latex" / pid
+    found, formula_seen = None, False
+    for tex in sorted(folder.rglob("*.tex")):
+        raw = tex.read_text(encoding="utf-8", errors="ignore")
+        # blank out comments without removing lines, so line numbers stay true
+        stripped = "\n".join(re.sub(r"(?<!\\)%.*$", "", l) for l in raw.splitlines())
+        text, line_of = norm_with_lines(stripped)
+        fi = text.find(f_n)
+        if fi < 0:
+            continue
+        formula_seen = True
+        if nows(e.strip_latex_comments(raw)).find(nows(formula)) < 0:
+            continue  # only present inside a disabled block in this file
+        lo, hi = fi, fi + len(f_n)
+        if r_n:
+            r_positions = [m.start() for m in re.finditer(re.escape(r_n), text)]
+            if not r_positions:
+                continue
+            ri = min(r_positions, key=lambda p: abs(p - fi))
+            if prefix:
+                pi = text.rfind(ws(prefix), 0, ri)
+                if pi < 0 or ri - pi > len(ws(prefix)) + 12:
+                    problems.append((n, pid, "prefix not adjacent"))
+                else:
+                    r_n = text[pi:ri + len(r_n)]; ri = pi
+            lo, hi = min(lo, ri), max(hi, ri + len(r_n))
+        a = max(0, lo - 350); b = min(len(text), hi + 250)
+        a = text.rfind(" ", 0, a) + 1 if a else 0
+        b = text.find(" ", b) if text.find(" ", b) > 0 else len(text)
+        found = (tex, line_of[fi], text[a:b])
+        break
+    if not found:
+        problems.append((n, pid, "requirement not found near formula" if formula_seen else "formula not found"))
+        continue
+    tex, line, context = found
+    p = corpus[pid]
+    entries.append({
+        "id": f"EVAL_{n:02d}", "paper_id": pid, "title": p.get("title"), "year": p.get("year"),
+        "arxiv_id": p.get("arxiv_id"), "license_tier": (p.get("license_info") or {}).get("tier"),
+        "source_file": str(tex.relative_to(folder)).replace(chr(92), "/"), "line": line,
+        "formula": f_n, "has_requirement": r_n is not None, "requirement": r_n, "context": context, "note": note,
+    })
+
+print("labels:", len(rows), "| verified entries:", len(entries), "| problems:", len(problems))
+for pr in problems:
+    print("  PROBLEM", pr)
+if problems:
+    sys.exit(1)
+
+if "--show-negatives" in sys.argv:
+    for x in entries:
+        if not x["has_requirement"]:
+            print(f"--- {x['id']} {x['paper_id']} {x['source_file']} L{x['line']}\n{x['context']}")
+    sys.exit(0)
+
+out_dir = repo / "data/processed"
+json.dump(entries, open(out_dir / "eval_set.json", "w", encoding="utf-8"), indent=2, ensure_ascii=False)
+pos = sum(x["has_requirement"] for x in entries)
+md = ["# Evaluation set: requirement-formula pairs", "",
+      f"{len(entries)} entries picked by hand from the LaTeX sources: {pos} with a requirement and {len(entries) - pos} \"none\" cases.", "",
+      "`Formula` and `Requirement` are verbatim substrings of the source file (whitespace collapsed). "
+      "A \"none\" case means the context given to the model holds no statement of what the formula requires; "
+      "the paper may still describe it somewhere outside that context.", ""]
+import render
+md += ["The rendered formula is a reading aid: each paper's own macros are expanded so the Markdown preview can draw it. "
+       "The source line under it is the verbatim text and is what counts.", ""]
+approx = 0
+for x in entries:
+    tex, guessed, by_name = render.expand(x["formula"], render.paper_macros(repo / "data/raw/latex" / x["paper_id"], e.strip_latex_comments))
+    md += [f"## {x['id']}  {x['paper_id']}  ({x['source_file']}, line {x['line']})", "",
+           f"*{x['title']}* ({x['year']}), licence tier: {x['license_tier']}", "",
+           "**Formula**", "", "$$", tex, "$$", ""]
+    if guessed or by_name:
+        approx += 1
+        parts = []
+        if guessed:
+            parts.append("symbol guessed for " + ", ".join(f"`\\{g}`" for g in sorted(guessed)))
+        if by_name:
+            parts.append("shown by name: " + ", ".join(f"`\\{g}`" for g in sorted(by_name)))
+        md += ["*Rendering is approximate (the paper's definition of these macros is not on disk): " + "; ".join(parts) + ".*", ""]
+    md += ["Source:", "", "```latex", x["formula"], "```", ""]
+    if x["has_requirement"]:
+        md += ["**Requirement**", "", "```", x["requirement"], "```", ""]
+        if x["note"]:
+            md += [f"**Note:** {x['note']}", ""]
+    else:
+        md += ["**Requirement:** none", "", f"**Why none:** {x['note']}", ""]
+    md += ["<details><summary>Context given to the model</summary>", "", "```", x["context"], "```", "", "</details>", ""]
+(out_dir / "eval_set.md").write_text("\n".join(md), encoding="utf-8")
+print("written:", len(entries), "entries |", pos, "with requirement,", len(entries) - pos, "none | papers:", len({x["paper_id"] for x in entries}))
+print("none cases per licence tier:", dict(collections.Counter(x["license_tier"] for x in entries if not x["has_requirement"])))

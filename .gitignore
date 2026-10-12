@@ -1,5 +1,7 @@
 data/logs
 data/raw
-data/processed
+data/processed/*
+!data/processed/eval_set.json
+!data/processed/eval_set.md
 __pycache__
 .env

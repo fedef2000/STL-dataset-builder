@@ -45,7 +45,9 @@ STL_dataset_builder/
 │   ├── raw/                           # (gitignored)
 │   │   ├── latex/                     # Extracted source folders: data/raw/latex/{paper_id}/
 │   │   └── pdfs/                      # Downloaded PDFs:          data/raw/pdfs/{paper_id}.pdf
-│   └── processed/                     # (gitignored) derived files, e.g. a hand-labelled evaluation set
+│   └── processed/                     # Derived files (gitignored, except the evaluation set)
+│       ├── eval_set.json              # Hand-labelled (requirement, formula) pairs for evaluating the extraction
+│       └── eval_set.md                # The same set, readable, with rendered formulas
 │
 ├── src/                               # Reusable Python modules
 │   ├── storage.py                     # CorpusStore class (deduplication & atomic JSON persistence)
@@ -65,7 +67,11 @@ STL_dataset_builder/
     ├── 01_build_corpus.py             # Step 1: Discover papers (citations & keywords) and enrich them with missing links
     ├── 02_download_papers.py          # Step 2: Download LaTeX sources and fallback PDFs; download stats
     ├── 03_audit_and_print_licenses.py # Step 3: Verify licenses & print statistical tables
-    └── 04_estimate_formulas.py        # Step 4: Estimate the STL formula yield per paper
+    ├── 04_estimate_formulas.py        # Step 4: Estimate the STL formula yield per paper
+    └── eval/
+        ├── build_eval_set.py          # Checks the labels against the LaTeX sources and writes the evaluation set
+        ├── labels.py                  # The hand-written labels: edit this file to change the set
+        └── render.py                  # Expands each paper's macros so the formulas render in eval_set.md
 
 ```
 
