@@ -46,7 +46,7 @@ STL_dataset_builder/
 │   │   ├── latex/                     # Extracted source folders: data/raw/latex/{paper_id}/
 │   │   └── pdfs/                      # Downloaded PDFs:          data/raw/pdfs/{paper_id}.pdf
 │   └── processed/                     # Derived files (gitignored, except the evaluation set)
-│       ├── eval_set.json              # Hand-labelled (requirement, formula) pairs for evaluating the extraction
+│       ├── eval_set.json              # Hand-labelled (requirement, formula) pairs, with domain and variable meanings, for evaluating the extraction
 │       └── eval_set.md                # The same set, readable, with rendered formulas
 │
 ├── src/                               # Reusable Python modules
@@ -188,6 +188,9 @@ python scripts/02_download_papers.py --stats
 # Go back over papers that failed on a network problem or a server error
 python scripts/02_download_papers.py --retry-transient
 
+# Fetch the LaTeX source of the papers held as PDF for which an arXiv ID is now known
+python scripts/02_download_papers.py --upgrade-pdfs
+
 ```
 
 Each run first compares `data/corpus.json` with the files on disk and corrects the recorded status. Without any flag, only `pending` papers are downloaded: those never tried, and those for which the enrichment of step 1 found a new link.
@@ -196,11 +199,13 @@ Each run first compares `data/corpus.json` with the files on disk and corrects t
 |---|---|
 | `--retry-unavailable` | Also retries **every** paper marked `unavailable`, whatever the reason. |
 | `--retry-transient` | Also retries the `unavailable` papers whose failure reason is a connection error, a timeout, HTTP 429 or HTTP 500/502/503/504. |
+| `--upgrade-pdfs` | Only goes over the papers held as PDF that have an arXiv ID (usually found by the enrichment after the PDF was downloaded) and fetches their LaTeX source, one request every 3.5 seconds, then prints a report and exits. When the source is downloaded, the paper's PDF is deleted. A paper for which arXiv has no LaTeX source is recorded under `local_files.latex_upgrade` and not asked again; a network failure is tried again on the next run. Run steps 3 and 4 afterwards. |
+| `--delay S` | With `--upgrade-pdfs`: seconds to pause between two papers (default 3.5). When arXiv answers HTTP 429 or 503, the same paper is tried again after 30, 60, 120 and 300 seconds and the pause between papers doubles (up to 30 seconds); it halves again after 10 papers without a refusal. If arXiv still refuses after the last wait, the run stops and reports how many papers were not tried. A dropped connection or a timeout is tried once more after 10 seconds. |
 | `--limit N` | Processes only the first `N` papers of the queue (for testing). |
 | `--stats` | Prints the status counts and failure reasons of the whole corpus, then exits. Nothing is downloaded. |
 | `--relabel` | Rewrites the stored failure reasons in the current wording, prints the same report as `--stats`, then exits. Nothing is downloaded. |
 
-`--retry-transient` is redundant with `--retry-unavailable`, which already includes those papers. `--stats` and `--relabel` take precedence over all the download flags.
+`--retry-transient` is redundant with `--retry-unavailable`, which already includes those papers. `--stats` and `--relabel` take precedence over all the download flags, and `--upgrade-pdfs` over the retry flags.
 
 #### Failure reasons
 
@@ -212,7 +217,8 @@ A paper that could not be downloaded gets `status: "unavailable"` and one of the
 | `No Link Found (open access, but no URL listed)` | Same, for a paper that OpenAlex marks as open access. |
 | `No Link Found (a lookup got no answer, run the enrichment again)` | No link is known, but an enrichment lookup of step 1 got no answer for this paper, so one may still exist. |
 | `arXiv Error: HTTP 404 (Not Found)` / `HTTP 403 (Forbidden/Blocked)` / `HTTP <code>` | arXiv refused or does not have the source bundle. |
-| `arXiv Error: Connection Timeout` / `Network/System Exception` | Network problem while fetching the arXiv bundle. |
+| `arXiv Error: Connection Timeout` | arXiv did not answer in time. |
+| `arXiv Error: Network/System Exception (<error>)` | Any other problem while fetching or unpacking the arXiv bundle. The brackets name the error and the one underneath it, e.g. `(ConnectionError: NameResolutionError)` for a DNS failure or `(SSLError: SSLCertVerificationError)` for a certificate problem. |
 | `Archive contained no .tex files` | The arXiv bundle was unpacked but holds no LaTeX. |
 | `Invalid archive format or PDF only` | arXiv only has a PDF for this paper, or the bundle could not be read. |
 | `HTTP 403 (Paywall or Bot Protection)` | The host refuses automated downloads. |

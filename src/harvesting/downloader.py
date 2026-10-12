@@ -56,6 +56,28 @@ def verify_disk_status(paper_id: str) -> tuple[str, str | None]:
 
     return "pending", None
 
+def describe_exception(exc: BaseException) -> str:
+    """
+    Names an exception and the error underneath it, e.g. 'ConnectionError: NameResolutionError' or
+    'PermissionError: Permission denied'. Only class names and the system's error text are used, never the
+    full message, which holds the URL and would give every paper a different failure reason.
+    """
+    root, seen = exc, {id(exc)}
+    while True:
+        reason = getattr(root, "reason", None)  # urllib3 keeps the real error here
+        inner = reason if isinstance(reason, BaseException) else (root.__cause__ or root.__context__)
+        if inner is None or id(inner) in seen:
+            break
+        seen.add(id(inner))
+        root = inner
+    names = [type(exc).__name__]
+    if type(root) is not type(exc):
+        names.append(type(root).__name__)
+    if isinstance(root, OSError) and root.strerror:
+        names.append(root.strerror)
+    return ": ".join(names)
+
+
 def download_and_extract_arxiv_tex(eprint_url: str, target_folder: Path) -> tuple[bool, str]:
     """Downloads an arXiv e-print bundle. Returns (success, reason)."""
     temp_archive = Path(f"{target_folder}_temp")
@@ -119,7 +141,7 @@ def download_and_extract_arxiv_tex(eprint_url: str, target_folder: Path) -> tupl
     except Exception as e:
         shutil.rmtree(target_folder, ignore_errors=True)
         temp_archive.unlink(missing_ok=True)
-        return False, f"arXiv Error: Network/System Exception"
+        return False, f"arXiv Error: Network/System Exception ({describe_exception(e)})"
 
 
 # What the less common HTTP answers from PDF hosts mean in practice
