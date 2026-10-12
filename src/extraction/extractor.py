@@ -1,6 +1,6 @@
 """
 The extraction call: one request to a model (through OpenRouter) per region of a paper. The model answers once per
-marked formula with the formula itself, the sentence of the paper that states what it requires (or none), the
+marked formula with the formula itself, every passage of the paper that states what it requires (possibly none), the
 application domain and the meaning of the variables. Every answer is then checked against the region: the formula and
 the requirement must be copied from it, not rewritten.
 """
@@ -23,6 +23,9 @@ MAX_OUTPUT_TOKENS = 16000
 
 # "generic": an abstract example over an unnamed signal, with no application behind it
 DOMAINS = ("aerial robotics", "automotive", "aviation", "epidemiology", "industrial machinery", "marine robotics", "mechatronics", "mobile robotics", "power systems", "railway", "robotic manipulation", "smart city", "smart home", "social dynamics", "generic")
+# A specific passage carries the particulars of its formula (numbers, thresholds, named regions); a generic one only
+# says what the formula is for. The kind lets the final dataset be sorted by quality.
+REQUIREMENT_KINDS = ("specific", "generic")
 REASONING_LEVELS = ("off", "minimal", "low", "medium", "high")
 # Used in place of "off" for a model that cannot answer without reasoning
 LOWEST_REASONING = "minimal"
@@ -36,20 +39,31 @@ delimiters and environment commands around it ($, \\[, \\begin{{equation}}, \\la
 that belongs to the sentence. Keep a name the paper gives it (e.g. "\\varphi_1 = ..."). Do not expand macros, \
 fix typos or change spacing inside the formula.
 
-2. requirement: the passage of the excerpt that states in natural language what this formula requires, copied \
-character for character, LaTeX commands included. Rules:
+2. requirements: every passage of the excerpt that states in natural language what this formula requires, each \
+copied character for character, LaTeX commands included. A paper often states the same requirement more than once \
+in different words, e.g. once before the formula and again after it: report every such passage as its own item, in \
+the order they appear. Do not pick one and do not merge them. Every passage is given a kind:
+   - "specific": it carries the particulars of this formula, i.e. its numbers, thresholds, time bounds or named \
+regions, even if not all of them. E.g. "the vehicle must reach the goal within 10 seconds".
+   - "generic": it says what the formula is for without those particulars. E.g. "the vehicle reaches a goal \
+location within a certain time limit" or "this bounds the number of spreaders from above". The test: if the \
+numbers of the formula were replaced by others and the passage would still fit, it is generic.
+   Report every specific passage. Report a generic passage only when the excerpt has no specific one for this \
+formula; then report the generic ones. Never mix the two kinds for one formula.
+Rules:
    - It must say what this particular formula demands of the system, e.g. "the vehicle must reach the goal within \
 10 seconds". A general explanation of an operator, of the logic or of the notation is not a requirement.
    - It must state the behaviour itself: what has to happen or hold. A passage that only names, announces or \
 motivates the formula is not a requirement, e.g. "we must add a mutual separation formula", "the safety \
 specification is" or "consider the following property". Nor is a passage that only explains a symbol of the \
 formula, e.g. "in which $s$ is a lower bound on the separation": that belongs under variables. If the excerpt says \
-nothing more than this about the formula, answer null.
-   - Take the shortest passage that states the whole requirement: usually one sentence or part of one. Leave out \
+nothing more than this about the formula, give an empty list.
+   - Each item is the shortest passage that states the whole requirement: usually one sentence or part of one. Leave out \
 lead-ins such as "This is expressed by the formula" or "the specification", and the quotation marks when the paper \
 puts the requirement in quotes.
    - When one sentence states the requirements of several formulas, give each formula the part that concerns it.
-   - Never write or complete a requirement yourself. If the excerpt does not state one for this formula, answer null. \
+   - Never write or complete a requirement yourself. If the excerpt does not state one for this formula, give an \
+empty list. \
 Many marked formulas have none: definitions of the syntax or semantics, formulas in tables, formulas used only in \
 a proof or a benchmark list.
 
@@ -62,8 +76,8 @@ from the formula and a short explanation of what it stands for, with the unit wh
 Do not list temporal or logical operators or numbers. Take the meaning from the excerpt; when the excerpt does not \
 explain a symbol, say what can be inferred and add "(not explained in the excerpt)".
 
-Answer with one JSON object and nothing else: {{"formulas": [{{"id": "F1", "formula": "...", "requirement": "..." or \
-null, "domain": "...", "variables": [{{"symbol": "...", "meaning": "..."}}]}}]}}. Give exactly one entry for every \
+Answer with one JSON object and nothing else: {{"formulas": [{{"id": "F1", "formula": "...", "requirements": [{{"text": "...", "kind": "specific"}}], \
+"domain": "...", "variables": [{{"symbol": "...", "meaning": "..."}}]}}]}}. Give exactly one entry for every \
 marked ID, in the order they appear. Formulas that are not marked are not to be reported."""
 
 ANSWER_SCHEMA = {
@@ -76,7 +90,15 @@ ANSWER_SCHEMA = {
                 "properties": {
                     "id": {"type": "string"},
                     "formula": {"type": "string"},
-                    "requirement": {"type": ["string", "null"]},
+                    "requirements": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {"text": {"type": "string"}, "kind": {"type": "string", "enum": list(REQUIREMENT_KINDS)}},
+                            "required": ["text", "kind"],
+                            "additionalProperties": False,
+                        },
+                    },
                     "domain": {"type": "string", "enum": list(DOMAINS)},
                     "variables": {
                         "type": "array",
@@ -88,7 +110,7 @@ ANSWER_SCHEMA = {
                         },
                     },
                 },
-                "required": ["id", "formula", "requirement", "domain", "variables"],
+                "required": ["id", "formula", "requirements", "domain", "variables"],
                 "additionalProperties": False,
             },
         },
@@ -103,7 +125,7 @@ class Extraction:
     """The answer for one marked formula, with the result of the checks."""
     id: str
     formula: str
-    requirement: str | None
+    requirements: list[dict]    # every passage that states the requirement, as {"text", "kind"}; empty when the paper states none
     domain: str
     variables: dict[str, str]
     problems: list[str] = field(default_factory=list)
@@ -224,23 +246,34 @@ def check_answer(region: Region, items: list[dict]) -> tuple[list[Extraction], l
             problems.append(f"{fid} answered twice: the second answer is dropped")
             continue
         seen.add(fid)
-        requirement = item.get("requirement")
-        # Some models write the word instead of the JSON null
-        if isinstance(requirement, str) and requirement.strip().lower() in ("", "null", "none"):
-            requirement = None
+        given = item.get("requirements")
+        requirements = []
+        for passage in given if isinstance(given, list) else []:
+            text = passage.get("text") if isinstance(passage, dict) else passage
+            kind = passage.get("kind") if isinstance(passage, dict) else None
+            # Some models write the word instead of leaving the list empty; the same passage twice counts once
+            if isinstance(text, str) and text.strip().lower() not in ("", "null", "none") \
+                    and _without_spaces(text) not in [_without_spaces(r["text"]) for r in requirements]:
+                requirements.append({"text": text, "kind": str(kind or "")})
         variables = {}
         for v in item.get("variables") or []:
             if isinstance(v, dict) and v.get("symbol"):
                 variables[str(v["symbol"])] = str(v.get("meaning") or "")
-        x = Extraction(id=fid, formula=str(item.get("formula") or ""), requirement=requirement,
+        x = Extraction(id=fid, formula=str(item.get("formula") or ""), requirements=requirements,
                        domain=str(item.get("domain") or ""), variables=variables)
 
         if not x.formula.strip():
             x.problems.append("no formula given")
         elif _without_spaces(x.formula) not in _without_spaces(marked[fid].source):
             x.problems.append("the formula is not a copy of the marked text")
-        if x.requirement is not None and _without_spaces(x.requirement) not in region_text:
-            x.problems.append("the requirement is not a copy of the excerpt")
+        for n, passage in enumerate(x.requirements, 1):
+            which = f" (passage {n})" if len(x.requirements) > 1 else ""
+            if _without_spaces(passage["text"]) not in region_text:
+                x.problems.append("the requirement is not a copy of the excerpt" + which)
+            if passage["kind"] not in REQUIREMENT_KINDS:
+                x.problems.append(f"unknown kind of requirement: {passage['kind'] or '(none)'}" + which)
+        if len({passage["kind"] for passage in x.requirements}) > 1:
+            x.problems.append("specific and generic requirements given together")
         if x.domain not in DOMAINS:
             x.problems.append(f"unknown domain: {x.domain or '(none)'}")
         for symbol in x.variables:

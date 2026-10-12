@@ -31,7 +31,14 @@ def print_region_result(region, result) -> None:
             print("   NOT ANSWERED")
             continue
         print(f"   Formula:     {x.formula}")
-        print(f"   Requirement: {x.requirement if x.requirement is not None else '(none stated)'}")
+        if not x.requirements:
+            print("   Requirement: (none stated)")
+        elif len(x.requirements) == 1:
+            print(f"   Requirement: [{x.requirements[0]['kind']}] {x.requirements[0]['text']}")
+        else:
+            print(f"   Requirement, stated {len(x.requirements)} times:")
+            for n, passage in enumerate(x.requirements, 1):
+                print(f"      {n}. [{passage['kind']}] {passage['text']}")
         print(f"   Domain:      {x.domain}")
         print("   Variables:" + ("" if x.variables else "   (none)"))
         for symbol, meaning in x.variables.items():
@@ -99,7 +106,7 @@ def main():
         totals["output"] += result.output_tokens
         totals["cost"] += result.cost
         totals["answered"] += len(result.extractions)
-        totals["with_requirement"] += sum(1 for x in result.extractions if x.requirement is not None)
+        totals["with_requirement"] += sum(1 for x in result.extractions if x.requirements)
         totals["problems"] += len(result.problems) + sum(len(x.problems) for x in result.extractions)
 
     if not args.dry_run:

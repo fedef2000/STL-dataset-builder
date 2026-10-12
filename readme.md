@@ -74,6 +74,7 @@ STL_dataset_builder/
     ├── 05_extract_requirements.py     # Step 5 (in progress): Try the extraction of one paper with a model
     └── eval/
         ├── build_eval_set.py          # Checks the labels against the LaTeX sources and writes the evaluation set
+        ├── benchmark.py               # Runs several models over the evaluation set and compares accuracy, time and cost
         ├── check_contexts.py          # Checks the context builder against the evaluation set; previews a paper's regions
         ├── labels.py                  # The hand-written labels: edit this file to change the set
         └── render.py                  # Expands each paper's macros so the formulas render in eval_set.md
@@ -295,7 +296,8 @@ python scripts/eval/check_contexts.py --corpus
 
 | Flag | What it does |
 |---|---|
-| `--paper ID` | Prints the header and the regions of one paper. Long regions are shortened unless `--full` is given. |
+| `--entry EVAL_NN` | Prints the one region the model reads for an entry of the evaluation set, with the labelled formula pointed out and the label above it. Use it to review a label. |
+| `--paper ID` | Prints the header and every region of one paper, with every concrete formula step 4 found (the evaluation set labels only a few of them). Long regions are shortened unless `--full` is given. |
 | `--corpus` | Reports the size of the job over the whole corpus instead of the evaluation set. |
 | `--before N`, `--after N` | Characters of context before and after a formula (default 2000 and 3000). |
 | `--max-formulas N` | Most formulas marked in one region (default 15). |
@@ -303,7 +305,9 @@ python scripts/eval/check_contexts.py --corpus
 
 ### Step 5: Extract the Requirements (in progress)
 
-One request per region goes to a model through [OpenRouter](https://openrouter.ai) (`src/extraction/extractor.py`). For every marked formula the model returns the formula, the passage of the paper that states what it requires (or none), the application domain from a fixed list, and the meaning of the variables. Each answer is then checked against the region: the formula and the requirement must be copies of the source, every marked formula must be answered once, the domain must be on the list and every variable must appear in the formula. Answers that fail a check are kept and flagged.
+One request per region goes to a model through [OpenRouter](https://openrouter.ai) (`src/extraction/extractor.py`). For every marked formula the model returns the formula, every passage of the paper that states what it requires (a paper may state it more than once in different words; possibly none), each tagged `specific` or `generic`, the application domain from a fixed list, and the meaning of the variables. Each answer is then checked against the region: the formula and the requirement must be copies of the source, every marked formula must be answered once, the domain must be on the list and every variable must appear in the formula. Answers that fail a check are kept and flagged.
+
+A requirement passage is `specific` when it carries the particulars of its formula (numbers, thresholds, time bounds, named regions), e.g. "the vehicle must reach the goal within 10 seconds", and `generic` when it only says what the formula is for, e.g. "the vehicle reaches a goal location within a certain time limit". The test: if the numbers of the formula were replaced by others and the passage would still fit, it is generic. Every specific passage is reported; a generic one is reported only when the paper has no specific one for the formula. The tag lets the final dataset be sorted by quality.
 
 The script currently tries a model on one paper and prints the answers with their time, tokens and cost; nothing is stored yet. It needs `OPENROUTER_API_KEY` in `.env`.
 
@@ -325,6 +329,42 @@ python scripts/05_extract_requirements.py --paper W3080701220 --model anthropic/
 | `--reasoning LEVEL` | `off` (default), `minimal`, `low`, `medium` or `high`. Reasoning tokens are billed as output. |
 | `--region N` | Only the N-th region of the paper. |
 | `--dry-run` | Prints the prompts and exits. |
+
+#### Choosing a model: the benchmark
+
+`scripts/eval/benchmark.py` runs several models over the evaluation set and compares how many answers are right, how long a call takes and what it costs. Only the regions that hold a labelled formula are sent (57 calls per model, reasoning level and run).
+
+```bash
+# Run what is missing, then print the comparison (five models, reasoning off and medium, Claude Sonnet 5.5 at medium only, three runs each)
+python scripts/eval/benchmark.py
+
+# Score the stored answers again without calling any model, e.g. after correcting a label
+python scripts/eval/benchmark.py --report
+
+# A quick, cheap trial
+python scripts/eval/benchmark.py --name trial --entries 8 --models z-ai/glm-5.3-flash --reasoning off --runs 1
+```
+
+Answers are stored in `data/processed/benchmark/<name>/answers.jsonl` as they arrive, so an interrupted run continues where it stopped. `report.md` in the same folder holds the comparison table, the entries where most models disagree with the label (check those labels first) and the variable meanings side by side.
+
+How an entry is scored:
+
+* **Requirement:** right when the label is "none" and the model gives none, or when the model gives every labelled passage and nothing else (a label lists all the passages that state the requirement). Two passages match when they share at least half of the shorter one. `exact` counts the answers whose passages are nearly identical to the labels, `partly` the ones with a passage left out or an extra one, `invented` a requirement given for a "none" label, `missed` a "none" given for a labelled requirement. `Passages found` and `Extra passages` count single passages over the whole set, and `Kind right` the found passages that were given the kind (`specific` or `generic`) of their label.
+* **Domain:** the same domain as the label.
+* **Variables:** the share of the labelled symbols the model explained. The meanings are not graded.
+
+When a paper prints the same formula more than once, the entry is scored on the occurrence its requirement stands next to.
+
+| Flag | What it does |
+|---|---|
+| `--models ID ...` | OpenRouter model IDs (default: Claude Sonnet 5.5, Gemini 3.8 Flash, DeepSeek V4.1 Flash, GLM 5.3 Flash, GPT-6 Luna). |
+| `--reasoning LEVEL ...` | Reasoning levels tried for every model. Without it, every model runs at `off` and `medium`, except Claude Sonnet 5.5, which runs at `medium` only because it answers the same at every level. A model that cannot switch reasoning off runs `off` as `minimal`, and the table says so. |
+| `--runs N` | How many times every model answers the whole set (default 3); answers vary between runs. |
+| `--name NAME` | Folder under `data/processed/benchmark` (default `main`). |
+| `--workers N` | Calls made at the same time (default 8). |
+| `--budget D` | Stops starting new calls once `D` dollars are spent in this invocation (default 15). |
+| `--entries N` | Only the first `N` entries of the evaluation set. |
+| `--report` | Scores the stored answers and prints the comparison. No model is called. |
 
 ---
 
