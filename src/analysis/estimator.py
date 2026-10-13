@@ -124,8 +124,28 @@ CONNECTIVE = (
     r"(?:\\(?:wedge|land|vee|lor|rightarrow|Rightarrow|Longrightarrow|implies|to|leftrightarrow|Leftrightarrow|iff"
     r"|bigwedge|bigvee)(?![a-zA-Z]))"
 )
-ROW_STARTS_WITH_CONNECTIVE = re.compile(rf"[\s&]*{CONNECTIVE}")
-ROW_ENDS_WITH_CONNECTIVE = re.compile(rf"{CONNECTIVE}[\s&]*$")
+# Alignment marks and spacing that may stand before the first symbol of a row
+ROW_INDENT = r"(?:\s|&|~|\\(?:quad|qquad)(?![a-zA-Z])|\\[,;:! ]|\\(?:hspace|hphantom|phantom)\*?\{[^{}]*\})*"
+ROW_STARTS_WITH_CONNECTIVE = re.compile(rf"{ROW_INDENT}{CONNECTIVE}")
+# A row that ends with a connective or with "=" is completed by the next row
+ROW_ENDS_WITH_CONNECTIVE = re.compile(rf"(?:{CONNECTIVE}|=)[\s&]*$")
+# Environments that hold one formula, however many rows it is broken into
+SINGLE_FORMULA_ENVIRONMENTS = ("multline", "multline*", "dmath", "dmath*")
+# Time intervals: half-open ones such as [0, \infty) would upset the count of open parentheses
+INTERVAL_PATTERN = re.compile(r"[\[\(][^\[\]\(\)]{0,40}?,[^\[\]\(\)]{0,40}?[\]\)]")
+
+# A row that opens with a name and "=" or ":" (\phi_2 &= ..., \text{AT31}: & ...) starts a formula of its own,
+# even when a parenthesis of the row before was never closed (a typo in the source)
+ROW_NAMES_A_FORMULA = re.compile(
+    ROW_INDENT
+    + r"(?:\\text\{[^{}]*\}|\\[A-Za-z]+\{[^{}]*\}|\\?[A-Za-z]+)(?:[_^](?:\{[^{}]*\}|\w))*['′]?"
+    r"(?:\s|&|\\[;,:! ])*(?::=|=|:)"
+)
+
+def open_parentheses(text: str) -> int:
+    """How many round parentheses of a piece of formula are still open at its end, intervals aside."""
+    text = INTERVAL_PATTERN.sub("", text)
+    return text.count("(") - text.count(")")
 
 # Files pulled into a document: \input{f}, \include{f}, \subfile{f}, \import{dir}{f}, \input f
 INPUT_PATTERN = re.compile(
@@ -239,12 +259,13 @@ def classify_match(m: re.Match, needs_numeric: bool) -> str | None:
 def find_formula_units(text: str) -> list[tuple[int, int]]:
     """
     Splits the math of a file into formula units, as sorted (start, end) spans. An inline span is one unit.
-    A display environment is split at its row breaks, except where a row continues the previous one with a connective.
+    A display environment is split at its row breaks, except where a row continues the previous one: it starts with a
+    connective, the previous row ends with a connective or "=", or a parenthesis opened earlier is still open.
     """
     units = []
     for span in MATH_SPAN_PATTERN.finditer(text):
         is_display = span.group(0).startswith(("\\begin", "\\[", "$$"))
-        if not is_display:
+        if not is_display or span.group(1) in SINGLE_FORMULA_ENVIRONMENTS:
             units.append((span.start(), span.end()))
             continue
         rows = []
@@ -256,7 +277,11 @@ def find_formula_units(text: str) -> list[tuple[int, int]]:
 
         unit_start, unit_end = rows[0]
         for start, end in rows[1:]:
-            continues = ROW_STARTS_WITH_CONNECTIVE.match(text, start, end) or ROW_ENDS_WITH_CONNECTIVE.search(text[unit_start:unit_end])
+            so_far = text[unit_start:unit_end]
+            continues = (
+                ROW_STARTS_WITH_CONNECTIVE.match(text, start, end) or ROW_ENDS_WITH_CONNECTIVE.search(so_far)
+                or (open_parentheses(so_far) > 0 and not ROW_NAMES_A_FORMULA.match(text, start, end))
+            )
             if continues:
                 unit_end = end
             else:
