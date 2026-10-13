@@ -1514,9 +1514,9 @@
     "formula": "\\mathcal{G}_{[0, 24]} \\mathcal{F}_{[0,12]} \\, \\xi \\le 37.26",
     "has_requirement": false,
     "requirements": [],
-    "domain": "generic",
+    "domain": "railway",
     "variables": {
-      "\\xi": "the time series being classified as regular or anomalous"
+      "\\xi": "trajectory from the train cruise control dataset, being classified as regular or anomalous"
     },
     "context": "further discuss the results obtained with one of the seeds. Let's see some other local explanations provided by ECATS, starting from one provided for a regular trajectory. As earlier, consider the post-processed explanation given for a signal $\\xi$ correctly classified as regular, which can be visualised in Figure~\\ref{fig:regular1v2}: \\begin{equation*} \\mathcal{G}_{[0, 24]} \\mathcal{F}_{[0,12]} \\, \\xi \\le 37.26 \\end{equation*} Keeping Figure~\\ref{fig:dataset} at hand, this formula doesn't seem to describe any particular class since in the considered time interval most trajectories are $\\le 37.26$. However, by plotting the robustness (Figure~\\ref{fig:normalrob2})",
     "note": "Learned explanation formula; the text discusses how well it separates classes, not what it requires."

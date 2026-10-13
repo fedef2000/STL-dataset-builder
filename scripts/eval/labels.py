@@ -209,7 +209,7 @@ NEGATIVES = [
  "generic", {r"s": "a real-valued signal"}),
 ("W4402366853", r"""\mathcal{G}_{[0, 24]} \mathcal{F}_{[0,12]} \, \xi \le 37.26""",
  "Learned explanation formula; the text discusses how well it separates classes, not what it requires.",
- "generic", {r"\xi": "the time series being classified as regular or anomalous"}),
+ "railway", {r"\xi": "trajectory from the train cruise control dataset, being classified as regular or anomalous"}),
 ("W2604275565", r"""\f_3=\G_{[0,0.5]}\F_{[0,0.1]}(x_t^{(1)}>0.1)""",
  "One of a bare list of benchmark formulas.",
  "generic", {r"x_t^{(1)}": "first component of the three-dimensional signal x at time t"}),

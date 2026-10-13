@@ -2325,11 +2325,11 @@ Source:
 \mathcal{G}_{[0, 24]} \mathcal{F}_{[0,12]} \, \xi \le 37.26
 ```
 
-**Domain:** generic
+**Domain:** railway
 
 **Variables**
 
-- `\xi`: the time series being classified as regular or anomalous
+- `\xi`: trajectory from the train cruise control dataset, being classified as regular or anomalous
 
 **Requirement:** none
 
