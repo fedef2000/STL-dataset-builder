@@ -21,8 +21,7 @@ An entry of the evaluation set is scored on three things:
   variables    the share of the labelled symbols the model explained. The meanings are not graded: report.md
                puts them side by side.
 """
-import argparse, collections, difflib, json, re, statistics, sys, threading, time
-from concurrent.futures import ThreadPoolExecutor, as_completed
+import argparse, collections, json, re, statistics, sys
 from pathlib import Path
 
 repo = Path(__file__).resolve().parent.parent.parent
@@ -31,6 +30,7 @@ from check_contexts import find_ignoring_spaces
 from config import PROCESSED_DIR, RAW_LATEX_DIR
 from src.extraction import context as c
 from src.extraction import extractor as x
+from src.extraction.runs import latest_answers, matches_region, nearly_equal, run_calls, same_passage
 
 sys.stdout.reconfigure(encoding="utf-8")
 DEFAULT_MODELS = ["anthropic/claude-sonnet-5.5", "google/gemini-3.8-flash", "deepseek/deepseek-v4.1-flash", "z-ai/glm-5.3-flash", "openai/gpt-6-luna"]
@@ -76,91 +76,16 @@ def load_tasks(limit: int | None = None):
 
 # ---------------------------------------------------------------- calling the models
 
-def read_answers(answers_file: Path) -> list[dict]:
-    """The stored answers. A last line cut short by an interruption is skipped: that call is simply made again."""
-    rows = []
-    for line in open(answers_file, encoding="utf-8"):
-        try:
-            rows.append(json.loads(line))
-        except ValueError:
-            continue
-    return rows
-
-
-def run_calls(args, regions: dict, answers_file: Path) -> None:
-    done = set()
-    if answers_file.exists():
-        for row in read_answers(answers_file):
-            if not row.get("error"):
-                done.add((row["model"], row["reasoning"], row["run"], row["paper_id"], row["region"]))
+def run_benchmark_calls(args, regions: dict, answers_file: Path) -> None:
     # The reasoning levels of each model: the ones asked for, otherwise the model's own defaults
     pairs = [(model, reasoning) for model in args.models
              for reasoning in (args.reasoning or MODEL_REASONING.get(model, DEFAULT_REASONING))]
-    todo = [
-        (model, reasoning, run, pid, n)
-        for run in range(1, args.runs + 1) for model, reasoning in pairs for (pid, n) in sorted(regions)
-        if (model, reasoning, run, pid, n) not in done
-    ]
-    total = args.runs * len(pairs) * len(regions)
-    print(f"{len(pairs)} model and reasoning pairs x {args.runs} runs x {len(regions)} regions = {total} calls"
-          f" | {total - len(todo)} already stored | {len(todo)} to make")
-    if not todo:
-        return
-
-    spent, stop = [0.0], threading.Event()
-
-    def call(task):
-        model, reasoning, run, pid, n = task
-        if stop.is_set():
-            return None
-        paper, region = regions[(pid, n)]
-        row = dict(model=model, reasoning=reasoning, run=run, paper_id=pid, region=n, file=region.file, line_start=region.line_start)
-        try:
-            result = x.extract_region(paper, region, model, reasoning)
-        except x.ExtractionError as exc:
-            return {**row, "error": str(exc)}
-        return {
-            **row, "seconds": round(result.seconds, 2), "input_tokens": result.input_tokens, "output_tokens": result.output_tokens,
-            "reasoning_tokens": result.reasoning_tokens, "cost": result.cost, "notes": result.notes, "problems": result.problems,
-            "extractions": [dict(id=e.id, formula=e.formula, requirements=e.requirements, domain=e.domain, variables=e.variables, problems=e.problems)
-                            for e in result.extractions],
-        }
-
-    started, finished, failed = time.monotonic(), 0, 0
-    if answers_file.exists() and answers_file.stat().st_size and not answers_file.read_bytes().endswith(b"\n"):
-        with open(answers_file, "a", encoding="utf-8") as out:
-            out.write("\n")   # close a line cut short by an interruption, so the next answer starts on its own line
-    with open(answers_file, "a", encoding="utf-8") as out, ThreadPoolExecutor(max_workers=args.workers) as pool:
-        try:
-            for future in as_completed([pool.submit(call, task) for task in todo]):
-                row = future.result()
-                if row is None:
-                    continue
-                out.write(json.dumps(row, ensure_ascii=False) + "\n")
-                out.flush()
-                finished += 1
-                failed += 1 if row.get("error") else 0
-                spent[0] += row.get("cost", 0)
-                if row.get("error"):
-                    print(f"   FAILED | {row['model']} ({row['reasoning']}) | {row['paper_id']} region {row['region']} | {row['error'][:120]}")
-                if finished % 25 == 0 or finished == len(todo):
-                    print(f"   {finished}/{len(todo)} calls | {failed} failed | ${spent[0]:.2f} spent | {time.monotonic() - started:.0f} s")
-                if spent[0] >= args.budget and not stop.is_set():
-                    stop.set()
-                    print(f"   Budget of ${args.budget:g} reached: no new call is started. Run again with a higher --budget to continue.")
-        except KeyboardInterrupt:
-            stop.set()
-            print("   Interrupted: the answers received so far are stored. Run the same command again to continue.")
-    if failed:
-        print(f"{failed} calls failed: run the same command again to retry them.")
+    print(f"{len(pairs)} model and reasoning pairs x {args.runs} runs x {len(regions)} regions")
+    tasks = [(model, reasoning, run, pid, n) for run in range(1, args.runs + 1) for model, reasoning in pairs for (pid, n) in sorted(regions)]
+    run_calls(tasks, regions, answers_file, args.workers, args.budget)
 
 
 # ---------------------------------------------------------------- scoring
-
-def common_length(a: str, b: str) -> int:
-    """Length of the longest passage two texts share."""
-    return difflib.SequenceMatcher(None, a, b, autojunk=False).find_longest_match(0, len(a), 0, len(b)).size
-
 
 def score_entry(entry: dict, answer: dict | None) -> dict:
     """Scores one entry against the model's answer for its formula (None when the formula was not answered)."""
@@ -177,8 +102,7 @@ def score_entry(entry: dict, answer: dict | None) -> dict:
         score["requirement"] = "missed"
     else:
         # Which labelled passages the model found, and which of its passages match no label
-        same = lambda a, b: common_length(a, b) >= 0.5 * min(len(a), len(b))
-        nearly_equal = lambda a, b: common_length(a, b) / (len(a) + len(b) - common_length(a, b)) >= 0.9
+        same = same_passage
         labels, answers = [nows(r["text"]) for r in labelled], [nows(r["text"]) for r in given]
         score["passages_found"] = sum(1 for a in labels if any(same(a, b) for b in answers))
         score["passages_extra"] = sum(1 for b in answers if not any(same(a, b) for a in labels))
@@ -203,13 +127,9 @@ def score_entry(entry: dict, answer: dict | None) -> dict:
 RIGHT = ("none, right", "exact", "overlap")
 
 
-def score_all(placed: list, answers_file: Path) -> dict:
+def score_all(placed: list, answers_file: Path, regions: dict) -> dict:
     """Returns {(model, reasoning): {run: {"calls": [...], "scores": {entry id: score}}}} from the stored answers."""
-    rows = {}
-    for row in read_answers(answers_file):
-        key = (row["model"], row["reasoning"], row["run"], row["paper_id"], row["region"])
-        if key not in rows or rows[key].get("error"):
-            rows[key] = row   # a retry replaces a failed call
+    rows = latest_answers(answers_file)
     configs = collections.defaultdict(dict)
     for (model, reasoning, run, _, _), row in rows.items():
         configs[(model, reasoning)].setdefault(run, {"calls": [], "scores": {}})["calls"].append(row)
@@ -219,8 +139,12 @@ def score_all(placed: list, answers_file: Path) -> dict:
                 answer = None
                 if where:
                     row = rows.get((model, reasoning, run, where[0], where[1]))
-                    if row is None:
-                        continue  # this region was not asked in this run (e.g. a run that was interrupted)
+                    if row is None or (not row.get("error") and not matches_region(row, regions[where[:2]][1])):
+                        # This region was not asked in this run (e.g. a run that was interrupted), or the stored
+                        # answer is about the region as it was before the formulas were found differently
+                        continue
+                    if not row.get("error"):
+                        x.recheck_stored(row.get("extractions") or [], regions[where[:2]][1])
                     answer = next((e for e in row.get("extractions") or [] if e["id"] == where[2]), None)
                 data["scores"][entry["id"]] = score_entry(entry, answer)
     return configs
@@ -374,11 +298,11 @@ def main():
     unplaced = [entry["id"] for entry, where in placed if not where]
     print(f"Evaluation set: {len(placed)} entries in {len(regions)} regions" + (f" | not marked in any region: {', '.join(unplaced)}" if unplaced else ""))
     if not args.report:
-        run_calls(args, regions, answers_file)
+        run_benchmark_calls(args, regions, answers_file)
     if not answers_file.exists():
         sys.exit("No stored answers yet.")
 
-    configs = score_all(placed, answers_file)
+    configs = score_all(placed, answers_file, regions)
     table = comparison_table(summarise(configs, placed), CORPUS_REGIONS)
     print()
     print_table(table)

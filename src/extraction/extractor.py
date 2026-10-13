@@ -226,13 +226,133 @@ def _without_spaces(text: str) -> str:
     return re.sub(r"\s+", "", text)
 
 
+# Spacing that models drop or add when they copy: \, \! \; \: "\ " ~ \quad \qquad
+SPACING_PATTERN = r"\\[,;:! ]|~|\\q?quad(?![a-zA-Z])"
+
+# A line break of the source that a model wrote as the two characters \n instead of a newline. Followed by a letter
+# it would be a command (\neg, \nu) and is left alone.
+WRITTEN_NEWLINE_PATTERN = r"\\n(?![a-zA-Z])"
+
+# What lays a formula out on the page without being part of it: row breaks, alignment marks, labels, math delimiters,
+# spacing. The model is told to leave these out, so they are not compared.
+FORMULA_LAYOUT_PATTERN = re.compile(
+    WRITTEN_NEWLINE_PATTERN + "|" + SPACING_PATTERN
+    + r"|\\\\(?:\s*\[[^\]]*\])?|&|\$|\\label\{[^{}]*\}|\\(?:nonumber|notag)(?![a-zA-Z])"
+    r"|\\(?:begin|end)\{[a-zA-Z*]+\}(?:\[[^\]]*\])?(?:\{[^{}]*\})?|\\[\[\]]|\s+"
+)
+
+# What may differ between a passage and its copy: math delimiters, row breaks (also of a word hyphenated across
+# rows), spacing, quotation marks, the markers put around the formulas, and a backslash before a sign (\% against %).
+PASSAGE_LAYOUT_PATTERN = re.compile(
+    WRITTEN_NEWLINE_PATTERN + "|" + SPACING_PATTERN
+    + r"|-?\\\\|-\s+(?=[a-z])|\$|``|''|[\"“”]|⟦/?F\d+⟧|\\(?![a-zA-Z])|\s+"
+)
+
+# A passage given in pieces is "joined" rather than "not a copy" when it has at most this many pieces, each at least
+# this long (after the layout is removed).
+MAX_JOINED_PIECES = 3
+MIN_JOINED_PIECE = 15
+
+
+def _formula_core(text: str) -> str:
+    return FORMULA_LAYOUT_PATTERN.sub("", text)
+
+
+def passage_core(text: str) -> str:
+    return PASSAGE_LAYOUT_PATTERN.sub("", text)
+
+
+# How a symbol is written rather than which symbol it is: its font, its braces (p_2 against p_{2}), a backslash
+# before a sign (in_room against in\_room).
+SYMBOL_WRITING_PATTERN = re.compile(
+    r"\\(?:math(?:bf|rm|it|sf|tt|cal|bb|frak|scr)|text(?:bf|rm|it|sf|tt|normal)?|rm|bf|it|sf|tt|cal|boldsymbol|bm|operatorname\*?)(?![a-zA-Z])"
+    r"|[{}]|\\(?![a-zA-Z])"
+)
+
+
+def _symbol_core(text: str) -> str:
+    return SYMBOL_WRITING_PATTERN.sub("", _formula_core(text))
+
+
+def _symbol_in_formula(symbol: str, formula_symbols: str) -> bool:
+    """
+    True when the symbol is written in the formula (given as its _symbol_core), or when it is one of an indexed
+    family the formula writes with another index: x_3 in a formula over x_i, or over x_1, ..., x_6.
+    """
+    core = _symbol_core(symbol)
+    if core in formula_symbols:
+        return True
+    base = re.split(r"[_^]", core, maxsplit=1)[0]
+    return base != core and bool(base) and re.search(r"(?<![A-Za-z\\])" + re.escape(base) + r"(?![A-Za-z])", formula_symbols) is not None
+
+
+def _pieces_in_order(passage: str, source: str) -> int | None:
+    """In how many pieces `passage` is found in `source`, one after the other; None when it is not, or in too many."""
+    position, start, pieces = 0, 0, 0
+    while start < len(passage):
+        if pieces == MAX_JOINED_PIECES:
+            return None
+        # The longest stretch from `start` found at or after `position` (every shorter stretch is found there too)
+        low, high = 0, len(passage) - start
+        while low < high:
+            middle = (low + high + 1) // 2
+            if source.find(passage[start:start + middle], position) >= 0:
+                low = middle
+            else:
+                high = middle - 1
+        if low < min(MIN_JOINED_PIECE, len(passage) - start):
+            return None
+        position = source.find(passage[start:start + low], position) + low
+        start += low
+        pieces += 1
+    return pieces
+
+
+def check_passage(text: str, region_core: str) -> str | None:
+    """
+    None when the passage is a copy of the excerpt, otherwise what is wrong with it. A sentence end or a bracket
+    left over at the edges of the copy is not compared.
+    """
+    core = passage_core(text).strip(".,;:()[]{}")
+    if not core or core in region_core:
+        return None
+    if _pieces_in_order(core, region_core):
+        return "the requirement joins separate parts of the excerpt"
+    return "the requirement is not a copy of the excerpt"
+
+
+def check_extraction(x: Extraction, formula_source: str, region_core: str) -> list[str]:
+    """The problems of one answer, against the marked formula and the excerpt (given as passage_core of its text)."""
+    problems = []
+    if not x.formula.strip():
+        problems.append("no formula given")
+    elif _formula_core(x.formula) not in _formula_core(formula_source):
+        problems.append("the formula is not a copy of the marked text")
+    for n, passage in enumerate(x.requirements, 1):
+        which = f" (passage {n})" if len(x.requirements) > 1 else ""
+        problem = check_passage(passage["text"], region_core)
+        if problem:
+            problems.append(problem + which)
+        if passage["kind"] not in REQUIREMENT_KINDS:
+            problems.append(f"unknown kind of requirement: {passage['kind'] or '(none)'}" + which)
+    if len({passage["kind"] for passage in x.requirements}) > 1:
+        problems.append("specific and generic requirements given together")
+    if x.domain not in DOMAINS:
+        problems.append(f"unknown domain: {x.domain or '(none)'}")
+    formula_symbols = _symbol_core(x.formula)
+    for symbol in x.variables:
+        if not _symbol_in_formula(symbol, formula_symbols):
+            problems.append(f"variable not in the formula: {symbol}")
+    return problems
+
+
 def check_answer(region: Region, items: list[dict]) -> tuple[list[Extraction], list[str]]:
     """
-    Turns the model's entries into Extractions and checks them against the region. Line breaks and spacing are not
-    compared: a requirement copied across a line break of the source is still a copy.
+    Turns the model's entries into Extractions and checks them against the region. Line breaks, spacing and other
+    layout are not compared: a requirement copied across a line break of the source is still a copy.
     """
     marked = {f.id: f for f in region.formulas}
-    region_text = _without_spaces(region.text)
+    region_core = passage_core(region.text)
     extractions, problems, seen = [], [], set()
     for item in items:
         if not isinstance(item, dict):
@@ -261,30 +381,26 @@ def check_answer(region: Region, items: list[dict]) -> tuple[list[Extraction], l
                 variables[str(v["symbol"])] = str(v.get("meaning") or "")
         x = Extraction(id=fid, formula=str(item.get("formula") or ""), requirements=requirements,
                        domain=str(item.get("domain") or ""), variables=variables)
-
-        if not x.formula.strip():
-            x.problems.append("no formula given")
-        elif _without_spaces(x.formula) not in _without_spaces(marked[fid].source):
-            x.problems.append("the formula is not a copy of the marked text")
-        for n, passage in enumerate(x.requirements, 1):
-            which = f" (passage {n})" if len(x.requirements) > 1 else ""
-            if _without_spaces(passage["text"]) not in region_text:
-                x.problems.append("the requirement is not a copy of the excerpt" + which)
-            if passage["kind"] not in REQUIREMENT_KINDS:
-                x.problems.append(f"unknown kind of requirement: {passage['kind'] or '(none)'}" + which)
-        if len({passage["kind"] for passage in x.requirements}) > 1:
-            x.problems.append("specific and generic requirements given together")
-        if x.domain not in DOMAINS:
-            x.problems.append(f"unknown domain: {x.domain or '(none)'}")
-        for symbol in x.variables:
-            if _without_spaces(symbol) not in _without_spaces(x.formula):
-                x.problems.append(f"variable not in the formula: {symbol}")
+        x.problems = check_extraction(x, marked[fid].source, region_core)
         extractions.append(x)
     for fid in marked:
         if fid not in seen:
             problems.append(f"{fid} was not answered")
     extractions.sort(key=lambda x: list(marked).index(x.id))
     return extractions, problems
+
+
+def recheck_stored(extractions: list[dict], region: Region) -> None:
+    """
+    Checks answers that were stored earlier again, against the region as it is built now, and replaces their
+    "problems". A change to the checks then shows in the stored answers without asking the models again.
+    """
+    marked = {f.id: f for f in region.formulas}
+    region_core = passage_core(region.text)
+    for e in extractions:
+        if e.get("id") in marked:
+            x = Extraction(id=e["id"], formula=e["formula"], requirements=e["requirements"], domain=e["domain"], variables=e["variables"])
+            e["problems"] = check_extraction(x, marked[e["id"]].source, region_core)
 
 
 def extract_region(paper: PaperContext, region: Region, model: str, reasoning: str = "off") -> RegionResult:
