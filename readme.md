@@ -74,6 +74,7 @@ STL_dataset_builder/
     ├── 03_audit_and_print_licenses.py # Step 3: Verify licenses & print statistical tables
     ├── 04_estimate_formulas.py        # Step 4: Estimate the STL formula yield per paper
     ├── 05_extract_requirements.py     # Step 5: Extract the requirements with two models, a third on their disagreements
+    ├── inspect_extractions.py         # Prints the undecided formulas and the answers that failed a check, to read
     └── eval/
         ├── build_eval_set.py          # Checks the labels against the LaTeX sources and writes the evaluation set
         ├── benchmark.py               # Runs several models over the evaluation set and compares accuracy, time and cost
@@ -416,6 +417,41 @@ Every answer is checked, and an answer that fails a check is flagged: the formul
 | `--tie-breaker ID[:REASONING]` | The third model. Default: `anthropic/claude-sonnet-5.5:medium`. |
 | `--workers N` | Calls made at the same time (default 8). |
 | `--budget D` | Stops starting new calls once `D` dollars are spent in this invocation, by all the models and over both kinds of formula (default 20). |
+
+#### Reading the answers
+
+`scripts/inspect_extractions.py` prints answers of step 5 for a person to read, from the `formulas.jsonl` files written by its last run or report. Every entry shows the paper, the path and line of the source file, the formula, and the answers.
+
+```bash
+# The formulas the vote leaves undecided, with the answer of every model and why no two agree
+python scripts/inspect_extractions.py undecided
+
+# The answers that failed a check: a count per check, then the answers grouped by check, each with
+# what the check is about (the passage given, the formula given against the one in the paper, the symbol)
+python scripts/inspect_extractions.py flags
+
+# Only some checks, and only the first 5 answers of each
+python scripts/inspect_extractions.py flags --check variable formula-copy --limit 5
+```
+
+| Flag | What it does |
+|---|---|
+| `--limit N` | Prints only the first `N` formulas (for `flags`: the first `N` answers of each check). |
+| `--check CHECK ...` | With `flags`: only these checks (one or more of the names below). |
+| `--concrete` / `--parametric` | Only that kind of formula. |
+
+| `--check` | The check |
+|---|---|
+| `variable` | variable not in the formula |
+| `formula-copy` | the formula is not a copy of the marked text |
+| `no-formula` | no formula given |
+| `requirement-copy` | the requirement is not a copy of the excerpt |
+| `joined` | the requirement joins separate parts of the excerpt |
+| `mixed-kinds` | specific and generic requirements given together |
+| `unknown-kind` | unknown kind of requirement |
+| `unknown-domain` | unknown domain |
+
+The flags are those of the checks at the last run or report of step 5: after a change to the checks, `python scripts/05_extract_requirements.py --report` refreshes them.
 
 #### Choosing a model: the benchmark
 
