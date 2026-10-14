@@ -51,20 +51,32 @@ def matches_region(row: dict, region) -> bool:
     return row.get("line_start") == region.line_start and {e["id"] for e in row.get("extractions") or []} <= {f.id for f in region.formulas}
 
 
-def run_calls(tasks: list[tuple], regions: dict, answers_file: Path, workers: int = 8, budget: float = 15.0) -> None:
+def unanswered(row: dict) -> int:
+    """How many formulas of the region a stored answer leaves without an answer (skipped, or an answer that is not JSON)."""
+    answered = {e["id"] for e in row.get("extractions") or []}
+    return sum(1 for f in row.get("formulas") or [] if f["id"] not in answered)
+
+
+def run_calls(tasks: list[tuple], regions: dict, answers_file: Path, workers: int = 8, budget: float = 15.0,
+              retry_incomplete: bool = True) -> float:
     """
     Makes the calls of `tasks` that are not stored yet. A task is (model, reasoning, run, paper_id, region number);
     `regions` maps (paper_id, region number) to (PaperContext, Region). Stops starting new calls once `budget`
-    dollars are spent in this invocation.
+    dollars are spent in this invocation. With `retry_incomplete`, a call whose answer left formulas unanswered is
+    made again (the benchmark keeps such answers: they are part of what it measures). Returns the dollars spent.
     """
     stored = latest_answers(answers_file)
-    done = {key for key, row in stored.items() if not row.get("error") and key[3:] in regions and matches_region(row, regions[key[3:]][1])}
+    current = {key for key, row in stored.items() if not row.get("error") and key[3:] in regions and matches_region(row, regions[key[3:]][1])}
+    incomplete = {key for key in current if retry_incomplete and unanswered(stored[key])}
+    done = current - incomplete
     todo = [task for task in tasks if task not in done]
-    outdated = sum(1 for task in todo if task in stored and not stored[task].get("error"))
+    outdated = sum(1 for task in todo if task in stored and not stored[task].get("error") and task not in incomplete)
+    again = sum(1 for task in todo if task in incomplete)
     print(f"{len(tasks)} calls | {len(tasks) - len(todo)} already stored | {len(todo)} to make"
-          + (f" ({outdated} of them again, because their region has changed since the stored answer)" if outdated else ""))
+          + (f" ({outdated} of them again, because their region has changed since the stored answer)" if outdated else "")
+          + (f" ({again} of them again, because the stored answer left formulas unanswered)" if again else ""))
     if not todo:
-        return
+        return 0.0
 
     spent, stop = [0.0], threading.Event()
 
@@ -114,6 +126,7 @@ def run_calls(tasks: list[tuple], regions: dict, answers_file: Path, workers: in
             print("   Interrupted: the answers received so far are stored. Run the same command again to continue.")
     if failed:
         print(f"{failed} calls failed: run the same command again to retry them.")
+    return spent[0]
 
 
 # ---------------------------------------------------------------- comparing passages

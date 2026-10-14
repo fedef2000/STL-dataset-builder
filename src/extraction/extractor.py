@@ -80,6 +80,31 @@ Answer with one JSON object and nothing else: {{"formulas": [{{"id": "F1", "form
 "domain": "...", "variables": [{{"symbol": "...", "meaning": "..."}}]}}]}}. Give exactly one entry for every \
 marked ID, in the order they appear. Formulas that are not marked are not to be reported."""
 
+
+# The prompt for the parametric formulas (time bounds given as symbols): the same task, with the two kinds of
+# requirement told apart without numbers, and the parameters asked for among the variables.
+_CONCRETE_KINDS = SYSTEM_PROMPT[SYSTEM_PROMPT.index('   - "specific": it carries'):SYSTEM_PROMPT.index("   Report every specific passage.")]
+_PARAMETRIC_KINDS = """   - "specific": it expresses this formula: it says what has to hold, when and for how long, naming a parameter \
+where the formula has one (or giving its value, if the excerpt does). E.g. for G_{[0,T]}(v < v_{max}): "the speed \
+must stay below $v_{max}$ during the first $T$ seconds" or "the speed never exceeds its maximum over the whole \
+horizon".
+   - "generic": it says what the formula is for without expressing it. E.g. "a safety constraint on the speed" or \
+"the vehicle reaches a goal location". The test: if the formula could be written down from the passage, up to the \
+names of its symbols, the passage is specific; if the passage would fit many different formulas, it is generic.
+"""
+_CONCRETE_VARIABLES = "Do not list temporal or logical operators or numbers."
+_PARAMETRIC_VARIABLES = ("Include the parameters of the formula (the symbols in its time bounds, its thresholds and constants) "
+                         "with what the excerpt says they stand for. Do not list temporal or logical operators or numbers.")
+_CONCRETE_NONE = "Many marked formulas have none:"
+_PARAMETRIC_NONE = ("The marked formulas are those whose time bounds are symbols; formulas with numeric time bounds are not marked. "
+                    "Most marked formulas have none:")
+for _part in (_CONCRETE_VARIABLES, _CONCRETE_NONE):
+    assert SYSTEM_PROMPT.count(_part) == 1, _part
+PARAMETRIC_SYSTEM_PROMPT = (
+    SYSTEM_PROMPT.replace(_CONCRETE_KINDS, _PARAMETRIC_KINDS).replace(_CONCRETE_VARIABLES, _PARAMETRIC_VARIABLES)
+    .replace(_CONCRETE_NONE, _PARAMETRIC_NONE).replace("F1", "P1")
+)
+
 ANSWER_SCHEMA = {
     "type": "object",
     "properties": {
@@ -160,7 +185,8 @@ def build_messages(paper: PaperContext, region: Region) -> list[dict]:
         + f"\n-----\n{region.marked_text()}\n-----\n\n"
         f"Marked formulas to report: {ids}"
     )
-    return [{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": user}]
+    parametric = all(f.kind == "symbolic" for f in region.formulas)
+    return [{"role": "system", "content": PARAMETRIC_SYSTEM_PROMPT if parametric else SYSTEM_PROMPT}, {"role": "user", "content": user}]
 
 
 def build_request(model: str, messages: list[dict], reasoning: str = "off", use_schema: bool = True) -> dict:
@@ -245,7 +271,7 @@ FORMULA_LAYOUT_PATTERN = re.compile(
 # rows), spacing, quotation marks, the markers put around the formulas, and a backslash before a sign (\% against %).
 PASSAGE_LAYOUT_PATTERN = re.compile(
     WRITTEN_NEWLINE_PATTERN + "|" + SPACING_PATTERN
-    + r"|-?\\\\|-\s+(?=[a-z])|\$|``|''|[\"“”]|⟦/?F\d+⟧|\\(?![a-zA-Z])|\s+"
+    + r"|-?\\\\|-\s+(?=[a-z])|\$|``|''|[\"“”]|⟦/?[A-Z]\d+⟧|\\(?![a-zA-Z])|\s+"
 )
 
 # A passage given in pieces is "joined" rather than "not a copy" when it has at most this many pieces, each at least

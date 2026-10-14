@@ -211,10 +211,12 @@ def build_file_regions(text: str, patterns: list, kinds: tuple[str, ...] = ("con
     return regions
 
 
-def build_paper_context(paper_id: str, title: str, tex_folder: Path, **options) -> PaperContext:
+def build_paper_context(paper_id: str, title: str, tex_folder: Path, id_prefix: str = "F", **options) -> PaperContext:
     """
     Reads the LaTeX source of a paper and returns its header and regions. `options` are passed to build_file_regions
-    (kinds, before, after, max_formulas). A paper without formulas of the wanted kinds has no regions.
+    (kinds, before, after, max_formulas). A paper without formulas of the wanted kinds has no regions. The formulas
+    are numbered through the paper, `id_prefix` first: the concrete ones are F1, F2, ... and the parametric ones,
+    which are found in a run of their own, P1, P2, ..., so that an ID is of one formula only.
     """
     context = PaperContext(paper_id=paper_id, title=title or "", abstract="")
     if not tex_folder.is_dir():
@@ -237,6 +239,6 @@ def build_paper_context(paper_id: str, title: str, tex_folder: Path, **options) 
             region.file = f.relative_to(tex_folder).as_posix()
             for formula in region.formulas:
                 n += 1
-                formula.id = f"F{n}"
+                formula.id = f"{id_prefix}{n}"
             context.regions.append(region)
     return context

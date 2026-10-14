@@ -73,8 +73,7 @@ STL_dataset_builder/
     ├── 02_download_papers.py          # Step 2: Download LaTeX sources and fallback PDFs; download stats
     ├── 03_audit_and_print_licenses.py # Step 3: Verify licenses & print statistical tables
     ├── 04_estimate_formulas.py        # Step 4: Estimate the STL formula yield per paper
-    ├── 05_extract_requirements.py     # Step 5: Extract the requirements with two models and compare their answers
-    ├── 06_break_ties.py               # Step 6: Ask a third model about the formulas the two disagree on
+    ├── 05_extract_requirements.py     # Step 5: Extract the requirements with two models, a third on their disagreements
     └── eval/
         ├── build_eval_set.py          # Checks the labels against the LaTeX sources and writes the evaluation set
         ├── benchmark.py               # Runs several models over the evaluation set and compares accuracy, time and cost
@@ -115,7 +114,7 @@ Copy `.env.example` to `.env` and fill in your email address and (optionally) yo
 USER_EMAIL=your.name@university.edu        # Enables OpenAlex Polite Pool
 OPENALEX_API_KEY=your_free_openalex_key    # Optional: Increases daily quota 10x (get at openalex.org)
 SEMANTIC_SCHOLAR_API_KEY=your_s2_key       # Optional: Lifts the anonymous rate limit (semanticscholar.org/product/api)
-OPENROUTER_API_KEY=your_openrouter_key     # Steps 5 and 6: the models are called and billed through openrouter.ai
+OPENROUTER_API_KEY=your_openrouter_key     # Step 5 only: the models are called and billed through openrouter.ai
 
 ```
 
@@ -308,104 +307,115 @@ python scripts/eval/check_contexts.py --corpus
 
 ### Step 5: Extract the Requirements
 
-One request per region goes to a model through [OpenRouter](https://openrouter.ai) (`src/extraction/extractor.py`). For every marked formula the model returns the formula, every passage of the paper that states what it requires (a paper may state it more than once in different words; possibly none), each tagged `specific` or `generic`, the application domain from a fixed list, and the meaning of the variables. Each answer is then checked against the region: the formula and the requirement must be copies of the source, every marked formula must be answered once, the domain must be on the list and every variable must appear in the formula. Answers that fail a check are kept and flagged.
+One request per region goes to a model through [OpenRouter](https://openrouter.ai) (`src/extraction/extractor.py`). For every marked formula the model returns the formula, every passage of the paper that states what it requires (a paper may state it more than once in different words; possibly none), each tagged `specific` or `generic`, the application domain from a fixed list, and the meaning of the variables.
 
 A requirement passage is `specific` when it carries the particulars of its formula (numbers, thresholds, time bounds, named regions), e.g. "the vehicle must reach the goal within 10 seconds", and `generic` when it only says what the formula is for, e.g. "the vehicle reaches a goal location within a certain time limit". The test: if the numbers of the formula were replaced by others and the passage would still fit, it is generic. Every specific passage is reported; a generic one is reported only when the paper has no specific one for the formula. The tag lets the final dataset be sorted by quality.
 
-The script runs two models over every paper held as LaTeX that has concrete formulas, keeps every answer, and reports where the two agree. The models were chosen with the benchmark below: Gemini 3.8 Flash with reasoning off and GPT-6 Luna with medium reasoning. It needs `OPENROUTER_API_KEY` in `.env`.
+Two models answer every region: Gemini 3.8 Flash with reasoning off and GPT-6 Luna with medium reasoning, chosen with the benchmark below. Where they disagree, `--tie-break` asks a third one, Claude Sonnet 5.5 with medium reasoning. The third model is not shown the two answers: it is asked the same question about every region that holds a disputed formula. The answers are then put to a vote (see *How a formula is decided*). The script needs `OPENROUTER_API_KEY` in `.env`.
 
 ```bash
-# Extract what is missing, then report
+# The two models over every region not answered yet, concrete and parametric formulas, then the summary
 python scripts/05_extract_requirements.py
 
-# Report on the stored answers, without calling a model
+# Also the third model, on the formulas the two disagree on
+python scripts/05_extract_requirements.py --tie-break
+
+# How many calls a run would make, and about what they cost (no call is made)
+python scripts/05_extract_requirements.py --tie-break --dry-run
+
+# The summary of the stored answers, without calling a model
 python scripts/05_extract_requirements.py --report
 
-# Only one paper, and print its answers
-python scripts/05_extract_requirements.py --paper W3080701220
+# The report of one kind of formula; --details adds its technical tables
+python scripts/05_extract_requirements.py --report --concrete
+python scripts/05_extract_requirements.py --report --parametric --details
 
-# Print the prompts that would be sent for a paper, without calling a model (no key needed)
-python scripts/05_extract_requirements.py --paper W3080701220 --dry-run
+# Only one paper, and print its answers; with --dry-run, print its prompts instead
+python scripts/05_extract_requirements.py --paper W3080701220
 ```
 
-Every answer is appended to `data/processed/extractions/answers.jsonl` as it arrives, so an interrupted run continues where it stopped; an answer stored for a region whose formulas have since changed is asked again. A run or a report over the whole corpus also writes `data/processed/extractions/formulas.jsonl`: one record per formula with its source, the answer of each model and how far the two agree on its requirement.
+Every answer is appended to `data/processed/extractions/answers.jsonl` as it arrives, so an interrupted run (Ctrl+C included) continues where it stopped. An answer stored for a region whose formulas have since changed is asked again, and so is one that left some formulas of its region unanswered. A run or a report over the whole corpus also writes `data/processed/extractions/formulas.jsonl`: one record per formula with its source, the answer of each model and the outcome of the vote.
 
-The agreement of the two models on a formula is one of:
+#### The report
+
+Without `--concrete` or `--parametric`, the script works on both kinds of formula and prints a summary with a column for each and one for the total:
+
+```
+RESULT                              what goes into the dataset
+  formulas with a requirement       specific, generic, or "the models split" on the kind
+  formulas without a requirement
+  undecided                         the models disagree, or a model has not answered yet
+  papers with a requirement         the total counts a paper once
+
+HOW EACH FORMULA WAS DECIDED
+  the two models agree              on the same passages, or on none
+  they disagree on the requirement  decided by the third model / undecided after it / not asked yet
+  same passage, kind disputed       third model not asked yet
+
+COST                                dollars per model
+NOTES                               what is left to do, and how many answers failed a check
+```
+
+`--concrete` or `--parametric` (or both) restricts the run to that kind of formula and prints its own report instead: the same sections with the number of calls per model. `--details` prints that report for each kind with its technical tables: the answers per model, the failed checks by kind, how the two models agree, and what the third model says about the disputed requirements.
+
+#### Concrete and parametric formulas
+
+The concrete formulas (numeric time bounds) and the parametric ones (time bounds given as symbols, e.g. `G_{[0,T]}(v < v_{max})`) are extracted apart: a plain run does the concrete ones first, then the parametric ones, and `--concrete` or `--parametric` does only one of them:
+
+```bash
+python scripts/05_extract_requirements.py --parametric --tie-break
+```
+
+When the parametric formulas are extracted, only they are marked and asked about; the concrete ones stay in the text as context. Three things differ from the concrete formulas:
+
+* The formulas are numbered `P1`, `P2`, ... instead of `F1`, `F2`, ..., so an ID stands for one formula of a paper only.
+* The answers are kept in `data/processed/extractions/parametric/` (`answers.jsonl`, `formulas.jsonl`). The regions of a paper are numbered per run, so in one file the answers of the two runs would be taken for one another.
+* The prompt tells the two kinds of requirement apart without numbers: a passage is specific when it expresses the formula, naming a parameter where a concrete formula has a number, and generic when it only says what the formula is for. The models are also asked to explain the parameters among the variables.
+
+#### How a formula is decided
+
+First the two answers are compared. Two passages are the same when they share at least half of the shorter one.
 
 | Agreement | Meaning |
 |---|---|
-| `same passages` | Both give the same requirement passages (two passages are the same when they share at least half of the shorter one). |
+| `same passages` | Both give the same requirement passages. |
 | `both none` | Both find no requirement. |
 | `partly the same` | Some passages are shared, but one model gives a passage the other does not. |
 | `different passages` | Both give a requirement, with no passage in common. |
 | `one gives none` | One model gives a requirement and the other none. |
 | `not answered` | A model has no answer for the formula (failed call, formula skipped). |
 
-The report counts each case, the formulas that would need a tie-breaker (the three middle cases), and how often the two models give the same domain.
+The three middle cases are disputed (`dispute` is `requirement` in the record), and so are the formulas with the same passages tagged specific by one model and generic by the other (`dispute` is `kind`). With `--tie-break`, the third model is asked about every region that holds a disputed formula, and the record gets a `tie_breaker` field with its answer and its verdict: `sides with the first` / `sides with the second` (the same requirement as that model, or none as it), `agrees with both`, `partly agrees` (a passage shared with one of them, but not all), `agrees with neither`. A region is sent whole, so the third model also answers its other formulas.
 
-Every answer is also checked, and an answer that fails a check is flagged: the formula and each requirement passage must be copies of the source, a specific and a generic passage may not be given together, the domain must be one of the list, and each explained symbol must appear in the formula. Layout is not compared (spacing, line and row breaks, math delimiters, quotation marks, a sentence end at the edge of a passage), and neither is the way a symbol is written (its font, `p_2` against `p_{2}`, one member of an indexed family against another, such as `x_3` in a formula over `x_i`). A passage made of up to three pieces of the excerpt, in their order, is flagged as joining separate parts rather than as not being a copy. The checks are run again on the stored answers at every report, so a change to them needs no new call to the models.
-
-| Flag | What it does |
-|---|---|
-| `--models ID[:REASONING] ...` | The models to run, each with an optional reasoning level (`off`, `minimal`, `low`, `medium`, `high`). Default: `google/gemini-3.8-flash:off openai/gpt-6-luna:medium`. The report compares the first two. |
-| `--paper ID` | Only this paper (repeatable). Its answers are printed. |
-| `--limit N` | Only the first `N` papers. |
-| `--report` | Reports on the stored answers and writes `formulas.jsonl`. No model is called. |
-| `--dry-run` | Prints the prompts and exits. |
-| `--workers N` | Calls made at the same time (default 8). |
-| `--budget D` | Stops starting new calls once `D` dollars are spent in this invocation (default 20). |
-
-### Step 6: Break the Ties
-
-Asks a third model, Claude Sonnet 5.5 with medium reasoning, about the formulas on whose requirement the two models of step 5 disagree (`partly the same`, `different passages`, `one gives none`). The third model is not shown the two answers: it is asked the same question as they were, about every region that holds a disputed formula, and its answer is compared with theirs.
-
-```bash
-# How many calls that would be, and about what they cost
-python scripts/06_break_ties.py --dry-run
-
-# Ask what is missing, then report
-python scripts/06_break_ties.py
-
-# Report on the stored answers, without calling a model
-python scripts/06_break_ties.py --report
-```
-
-Its answers are stored with the others in `data/processed/extractions/answers.jsonl`, so an interrupted run continues where it stopped. `formulas.jsonl` is written again: each disputed formula carries a `dispute` field (`requirement` or `kind`) and, once the third model has answered, a `tie_breaker` field with its answer, the kind of what it found, and its verdict:
-
-| Verdict | Meaning |
-|---|---|
-| `sides with the first` / `sides with the second` | It gives the same requirement as that model of step 5 (or none, as that model does). |
-| `agrees with both` | Its passages match those of both models. |
-| `partly agrees` | It shares a passage with one of them, but not all. |
-| `agrees with neither` | It gives a third answer. |
-
-After the first three verdicts two of the three models give the same requirement, and the formula counts as settled. The report counts the verdicts, how many formulas are settled with a specific, a generic or no requirement, and how many stay open.
-
-The verdict compares whole answers, so a formula stays open when the third model shares the main passage with another model and they differ on a second one. The dataset therefore takes a vote on each passage. Every record of `formulas.jsonl` has a `final` field with its result:
+Then the answers are put to a vote, passage by passage. Every record has a `final` field with its result:
 
 | Field of `final` | Meaning |
 |---|---|
-| `outcome` | `requirement` when at least one passage is given by two models; `none` when no passage is and two models give none; `open` otherwise. |
+| `outcome` | `requirement` when at least one passage is given by two models; `none` when no passage is and two models give none; `open` (undecided) otherwise. |
 | `requirements` | The passages kept, each with its `text`, its `kind`, the model the text is taken `from` and the models it is `given_by`. The text comes from a model whose passage is a copy of the source, the third model first. |
 | `kind` | `specific` when a kept passage is specific, `generic` when all are, `unclear` when the models that give a passage are split on its kind, `none` without a requirement. A generic passage is dropped when a specific one is kept. |
 | `domain` | The domain most models give; that of the first model when they all differ. |
 | `variables` | The symbols explained by any model, with the meaning of the first one that explains them. |
 | `models` | How many models answered the formula (2, or 3 where the third model was asked about its region). |
 
-The report ends with the count of each outcome, over all the formulas and over the disputed ones.
+#### Checks on the answers
 
-A region is sent whole, so the third model also answers its other formulas. Among them are those for which the two models give the same passages but tag them differently (`dispute` is `kind`): they get a `tie_breaker` field too, and `--kinds` also asks about the regions that hold only such formulas.
+Every answer is checked, and an answer that fails a check is flagged: the formula and each requirement passage must be copies of the source, every marked formula must be answered once, a specific and a generic passage may not be given together, the domain must be one of the list, and each explained symbol must appear in the formula. Layout is not compared (spacing, line and row breaks, math delimiters, quotation marks, a sentence end at the edge of a passage), and neither is the way a symbol is written (its font, `p_2` against `p_{2}`, one member of an indexed family against another, such as `x_3` in a formula over `x_i`). A passage made of up to three pieces of the excerpt, in their order, is flagged as joining separate parts rather than as not being a copy. The checks are run again on the stored answers at every report, so a change to them needs no new call to the models.
 
 | Flag | What it does |
 |---|---|
-| `--tie-breaker ID[:REASONING]` | The third model. Default: `anthropic/claude-sonnet-5.5:medium`. Step 5 keeps the answers of the default one in `formulas.jsonl`. |
-| `--models ID[:REASONING] ID[:REASONING]` | The two models of step 5 whose answers are compared. |
-| `--kinds` | Also asks about the formulas the two tag differently. |
-| `--paper ID` | Only this paper (repeatable). Its disputed formulas are printed. |
-| `--report` | Reports on the stored answers and writes `formulas.jsonl`. No model is called. |
-| `--dry-run` | Prints the number of calls and an estimate of their cost, and exits. |
+| `--tie-break` | Also asks the third model about the disputed formulas (requirement or kind). |
+| `--concrete` | Only the concrete formulas, with their own report instead of the summary. |
+| `--parametric` | Only the parametric formulas, with their own report instead of the summary. With `--concrete`: both, each with its own report. |
+| `--report` | Prints the summary (or the report of `--concrete` / `--parametric`) of the stored answers and writes `formulas.jsonl`. No model is called. |
+| `--details` | Prints the report of each kind of formula with its technical tables. |
+| `--dry-run` | Prints how many calls a run would make and about what they cost (at the average cost of the stored calls of each model), and exits. With `--paper`, also prints the prompts. |
+| `--paper ID` | Only this paper (repeatable). Its answers, and the passages the vote keeps, are printed. |
+| `--limit N` | Only the first `N` papers. |
+| `--models ID[:REASONING] ID[:REASONING]` | The two extraction models, each with an optional reasoning level (`off`, `minimal`, `low`, `medium`, `high`). Default: `google/gemini-3.8-flash:off openai/gpt-6-luna:medium`. |
+| `--tie-breaker ID[:REASONING]` | The third model. Default: `anthropic/claude-sonnet-5.5:medium`. |
 | `--workers N` | Calls made at the same time (default 8). |
-| `--budget D` | Stops starting new calls once `D` dollars are spent in this invocation (default 15). |
+| `--budget D` | Stops starting new calls once `D` dollars are spent in this invocation, by all the models and over both kinds of formula (default 20). |
 
 #### Choosing a model: the benchmark
 

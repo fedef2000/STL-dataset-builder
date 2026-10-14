@@ -1,10 +1,11 @@
 """
 Puts the stored answers of the models side by side: one record per formula, with how far the two extraction models
 agree on its requirement and, where a third model was asked to break the tie, which of them it sides with. Used by
-the extraction (step 5) and by the tie-breaker (step 6).
+the extraction (step 5).
 """
 import json
 import sys
+from pathlib import Path
 
 from config import PROCESSED_DIR, RAW_LATEX_DIR
 from src.storage import CorpusStore
@@ -19,6 +20,18 @@ DEFAULT_TIE_BREAKER = "anthropic/claude-sonnet-5.5:medium"
 EXTRACTIONS_DIR = PROCESSED_DIR / "extractions"
 ANSWERS_FILE = EXTRACTIONS_DIR / "answers.jsonl"
 FORMULAS_FILE = EXTRACTIONS_DIR / "formulas.jsonl"
+PARAMETRIC_DIR = EXTRACTIONS_DIR / "parametric"
+
+
+def store_files(parametric: bool = False) -> tuple[Path, Path]:
+    """
+    (answers file, formulas file). The parametric formulas have files of their own: the regions of a paper are
+    numbered per kind of formula, so the answers of the two kinds would otherwise be taken for one another.
+    """
+    folder = PARAMETRIC_DIR if parametric else EXTRACTIONS_DIR
+    return folder / "answers.jsonl", folder / "formulas.jsonl"
+
+
 # How far two models agree on the requirement of a formula, from full agreement down
 AGREEMENTS = ("same passages", "both none", "partly the same", "different passages", "one gives none", "not answered")
 AGREED = ("same passages", "both none")
@@ -31,8 +44,13 @@ def parse_model(spec: str) -> tuple[str, str]:
     return model, reasoning
 
 
-def load_contexts(store: CorpusStore, paper_ids: list[str] | None = None, limit: int | None = None) -> dict:
-    """The context of every paper held as LaTeX that has concrete formulas (or of the papers asked for)."""
+def load_contexts(store: CorpusStore, paper_ids: list[str] | None = None, limit: int | None = None, parametric: bool = False) -> dict:
+    """
+    The context of every paper held as LaTeX that has concrete formulas (or of the papers asked for). With
+    `parametric`, the formulas marked are the parametric ones instead, numbered P1, P2, ...
+    """
+    count = "symbolic" if parametric else "concrete"
+    options = dict(kinds=("symbolic",), id_prefix="P") if parametric else {}
     if paper_ids:
         for pid in paper_ids:
             paper = store.papers.get(pid)
@@ -43,11 +61,11 @@ def load_contexts(store: CorpusStore, paper_ids: list[str] | None = None, limit:
     else:
         paper_ids = [
             pid for pid, p in store.papers.items()
-            if p.get("local_files", {}).get("status") == "downloaded_latex" and (p.get("formula_estimates") or {}).get("concrete")
+            if p.get("local_files", {}).get("status") == "downloaded_latex" and (p.get("formula_estimates") or {}).get(count)
         ][:limit]
     contexts = {}
     for n, pid in enumerate(paper_ids, 1):
-        context = build_paper_context(pid, store.papers[pid].get("title"), RAW_LATEX_DIR / pid)
+        context = build_paper_context(pid, store.papers[pid].get("title"), RAW_LATEX_DIR / pid, **options)
         if context.regions:
             contexts[pid] = context
         if n % 100 == 0:
@@ -169,13 +187,14 @@ def vote(given: dict, region_core: str, prefer: list[str] = ()) -> dict:
     }
 
 
-def collect(store: CorpusStore, contexts: dict, pairs: list[tuple[str, str]], tie_breaker: tuple[str, str] | None = None) -> tuple[list[dict], dict]:
+def collect(store: CorpusStore, contexts: dict, pairs: list[tuple[str, str]], tie_breaker: tuple[str, str] | None = None,
+            answers_file: Path = ANSWERS_FILE) -> tuple[list[dict], dict]:
     """
     One record per formula with the answer of each model of `pairs`, and the calls of each model that are stored and
     current. Every record carries the outcome of the vote of the models (see vote). Where the first two models disagree and `tie_breaker` has a stored answer for the formula, the record
     also carries that answer and which of the two it sides with.
     """
-    rows = latest_answers(ANSWERS_FILE)
+    rows = latest_answers(answers_file)
     asked = pairs + ([tie_breaker] if tie_breaker and tie_breaker not in pairs else [])
     labels = [f"{model}:{reasoning}" for model, reasoning in asked]
     tie_label = labels[len(pairs)] if len(asked) > len(pairs) else None
@@ -217,8 +236,8 @@ def collect(store: CorpusStore, contexts: dict, pairs: list[tuple[str, str]], ti
     return records, calls
 
 
-def write_formulas(records: list[dict]) -> None:
-    EXTRACTIONS_DIR.mkdir(parents=True, exist_ok=True)
-    with open(FORMULAS_FILE, "w", encoding="utf-8") as out:
+def write_formulas(records: list[dict], formulas_file: Path = FORMULAS_FILE) -> None:
+    formulas_file.parent.mkdir(parents=True, exist_ok=True)
+    with open(formulas_file, "w", encoding="utf-8") as out:
         for record in records:
             out.write(json.dumps(record, ensure_ascii=False) + "\n")
