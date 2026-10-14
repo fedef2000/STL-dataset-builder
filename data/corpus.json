@@ -486,7 +486,7 @@
       "concrete": 11,
       "symbolic": 28,
       "formulas_concrete": 7,
-      "formulas_symbolic": 22
+      "formulas_symbolic": 21
     },
     "lookups": {
       "semantic_scholar": {
@@ -4775,7 +4775,7 @@
     "formula_estimates": {
       "concrete": 12,
       "symbolic": 17,
-      "formulas_concrete": 8,
+      "formulas_concrete": 6,
       "formulas_symbolic": 15
     },
     "lookups": {
@@ -5545,7 +5545,7 @@
     "formula_estimates": {
       "concrete": 8,
       "symbolic": 28,
-      "formulas_concrete": 8,
+      "formulas_concrete": 7,
       "formulas_symbolic": 26
     },
     "lookups": {
@@ -6442,7 +6442,7 @@
       "concrete": 2,
       "symbolic": 18,
       "formulas_concrete": 2,
-      "formulas_symbolic": 17
+      "formulas_symbolic": 16
     }
   },
   "W3184441520": {
@@ -12834,7 +12834,7 @@
     "formula_estimates": {
       "concrete": 14,
       "symbolic": 0,
-      "formulas_concrete": 9,
+      "formulas_concrete": 8,
       "formulas_symbolic": 0
     },
     "lookups": {
@@ -18406,7 +18406,7 @@
     "formula_estimates": {
       "concrete": 19,
       "symbolic": 2,
-      "formulas_concrete": 12,
+      "formulas_concrete": 10,
       "formulas_symbolic": 2
     },
     "lookups": {
@@ -24821,9 +24821,9 @@
       }
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 1,
       "symbolic": 0,
-      "formulas_concrete": 0,
+      "formulas_concrete": 1,
       "formulas_symbolic": 0
     },
     "lookups": {
@@ -38885,7 +38885,7 @@
       "concrete": 18,
       "symbolic": 14,
       "formulas_concrete": 14,
-      "formulas_symbolic": 13
+      "formulas_symbolic": 12
     },
     "lookups": {
       "semantic_scholar": {
@@ -42495,7 +42495,7 @@
     "formula_estimates": {
       "concrete": 17,
       "symbolic": 90,
-      "formulas_concrete": 7,
+      "formulas_concrete": 5,
       "formulas_symbolic": 64
     },
     "lookups": {
@@ -47213,7 +47213,7 @@
       "concrete": 15,
       "symbolic": 21,
       "formulas_concrete": 15,
-      "formulas_symbolic": 19
+      "formulas_symbolic": 18
     },
     "lookups": {
       "semantic_scholar": {
@@ -50635,7 +50635,7 @@
     "formula_estimates": {
       "concrete": 35,
       "symbolic": 43,
-      "formulas_concrete": 16,
+      "formulas_concrete": 14,
       "formulas_symbolic": 34
     },
     "lookups": {
@@ -57392,7 +57392,7 @@
       "concrete": 0,
       "symbolic": 9,
       "formulas_concrete": 0,
-      "formulas_symbolic": 7
+      "formulas_symbolic": 5
     },
     "lookups": {
       "semantic_scholar": {
@@ -61808,7 +61808,7 @@
       "concrete": 1,
       "symbolic": 2,
       "formulas_concrete": 1,
-      "formulas_symbolic": 1
+      "formulas_symbolic": 0
     }
   },
   "W4409496036": {
@@ -64219,7 +64219,7 @@
     "formula_estimates": {
       "concrete": 23,
       "symbolic": 5,
-      "formulas_concrete": 16,
+      "formulas_concrete": 15,
       "formulas_symbolic": 1
     },
     "lookups": {
@@ -78218,7 +78218,7 @@
     "formula_estimates": {
       "concrete": 12,
       "symbolic": 12,
-      "formulas_concrete": 8,
+      "formulas_concrete": 5,
       "formulas_symbolic": 10
     },
     "lookups": {
@@ -79235,7 +79235,7 @@
       "concrete": 3,
       "symbolic": 23,
       "formulas_concrete": 2,
-      "formulas_symbolic": 17
+      "formulas_symbolic": 16
     },
     "lookups": {
       "semantic_scholar": {
@@ -80508,8 +80508,8 @@
     "formula_estimates": {
       "concrete": 14,
       "symbolic": 25,
-      "formulas_concrete": 9,
-      "formulas_symbolic": 14
+      "formulas_concrete": 7,
+      "formulas_symbolic": 13
     },
     "lookups": {
       "semantic_scholar": {
@@ -80957,7 +80957,7 @@
     "formula_estimates": {
       "concrete": 14,
       "symbolic": 0,
-      "formulas_concrete": 6,
+      "formulas_concrete": 5,
       "formulas_symbolic": 0
     },
     "lookups": {
@@ -82053,7 +82053,7 @@
     "formula_estimates": {
       "concrete": 27,
       "symbolic": 28,
-      "formulas_concrete": 25,
+      "formulas_concrete": 22,
       "formulas_symbolic": 27
     },
     "lookups": {
@@ -108063,7 +108063,7 @@
     "formula_estimates": {
       "concrete": 13,
       "symbolic": 0,
-      "formulas_concrete": 8,
+      "formulas_concrete": 3,
       "formulas_symbolic": 0
     },
     "lookups": {
@@ -111005,7 +111005,7 @@
     "formula_estimates": {
       "concrete": 13,
       "symbolic": 8,
-      "formulas_concrete": 5,
+      "formulas_concrete": 3,
       "formulas_symbolic": 5
     },
     "lookups": {
@@ -121272,7 +121272,7 @@
       "concrete": 5,
       "symbolic": 13,
       "formulas_concrete": 4,
-      "formulas_symbolic": 10
+      "formulas_symbolic": 9
     },
     "alternate_ids": [
       "W2950518901"
@@ -123384,7 +123384,7 @@
       "concrete": 14,
       "symbolic": 29,
       "formulas_concrete": 4,
-      "formulas_symbolic": 22
+      "formulas_symbolic": 21
     },
     "lookups": {
       "semantic_scholar": {
@@ -125198,7 +125198,7 @@
       "concrete": 9,
       "symbolic": 24,
       "formulas_concrete": 7,
-      "formulas_symbolic": 21
+      "formulas_symbolic": 18
     },
     "lookups": {
       "semantic_scholar": {
@@ -159422,7 +159422,7 @@
     "formula_estimates": {
       "concrete": 82,
       "symbolic": 15,
-      "formulas_concrete": 49,
+      "formulas_concrete": 45,
       "formulas_symbolic": 14
     },
     "lookups": {
@@ -441357,9 +441357,9 @@
       ]
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 5,
       "symbolic": 0,
-      "formulas_concrete": 0,
+      "formulas_concrete": 5,
       "formulas_symbolic": 0
     },
     "lookups": {
@@ -443231,9 +443231,9 @@
       ]
     },
     "formula_estimates": {
-      "concrete": 0,
+      "concrete": 5,
       "symbolic": 0,
-      "formulas_concrete": 0,
+      "formulas_concrete": 5,
       "formulas_symbolic": 0
     },
     "lookups": {
@@ -531563,7 +531563,7 @@
     "formula_estimates": {
       "concrete": 16,
       "symbolic": 22,
-      "formulas_concrete": 13,
+      "formulas_concrete": 11,
       "formulas_symbolic": 20
     },
     "lookups": {}
@@ -532335,7 +532335,7 @@
     "formula_estimates": {
       "concrete": 23,
       "symbolic": 7,
-      "formulas_concrete": 8,
+      "formulas_concrete": 7,
       "formulas_symbolic": 5
     },
     "lookups": {}
@@ -533675,7 +533675,7 @@
       "concrete": 2,
       "symbolic": 11,
       "formulas_concrete": 2,
-      "formulas_symbolic": 4
+      "formulas_symbolic": 3
     },
     "lookups": {}
   },
@@ -533790,7 +533790,7 @@
       "concrete": 0,
       "symbolic": 26,
       "formulas_concrete": 0,
-      "formulas_symbolic": 14
+      "formulas_symbolic": 12
     },
     "lookups": {}
   },
@@ -537238,7 +537238,7 @@
     "formula_estimates": {
       "concrete": 125,
       "symbolic": 72,
-      "formulas_concrete": 48,
+      "formulas_concrete": 47,
       "formulas_symbolic": 45
     },
     "lookups": {}
@@ -541070,7 +541070,7 @@
     "formula_estimates": {
       "concrete": 16,
       "symbolic": 17,
-      "formulas_concrete": 12,
+      "formulas_concrete": 11,
       "formulas_symbolic": 14
     },
     "lookups": {}
@@ -541127,7 +541127,7 @@
       "concrete": 22,
       "symbolic": 7,
       "formulas_concrete": 11,
-      "formulas_symbolic": 5
+      "formulas_symbolic": 4
     },
     "lookups": {}
   },
@@ -542366,7 +542366,7 @@
       "concrete": 9,
       "symbolic": 13,
       "formulas_concrete": 6,
-      "formulas_symbolic": 9
+      "formulas_symbolic": 7
     },
     "lookups": {}
   },
@@ -548580,7 +548580,7 @@
       "concrete": 49,
       "symbolic": 25,
       "formulas_concrete": 22,
-      "formulas_symbolic": 13
+      "formulas_symbolic": 12
     },
     "alternate_ids": [
       "arxiv_1905.12990"
@@ -568342,7 +568342,7 @@
     "formula_estimates": {
       "concrete": 2,
       "symbolic": 5,
-      "formulas_concrete": 2,
+      "formulas_concrete": 1,
       "formulas_symbolic": 5
     },
     "lookups": {
@@ -569616,7 +569616,7 @@
     "formula_estimates": {
       "concrete": 52,
       "symbolic": 2,
-      "formulas_concrete": 22,
+      "formulas_concrete": 21,
       "formulas_symbolic": 2
     },
     "lookups": {
