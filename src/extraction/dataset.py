@@ -206,7 +206,9 @@ def dataset_record(record: dict, bounds: str, paper: dict) -> tuple[dict | None,
             "formula": how,
             "requirement_given_by": sorted({model for p in passages for model in p["given_by"]}),
             "formula_given_by": final.get("formula_given_by"),
-            "third_model_asked": "tie_breaker" in record,
+            # The first two models disagree on it. The third model may give the requirement without that: it answers
+            # every formula of a region it is asked about, and the vote counts those answers too
+            "disputed": "dispute" in record,
             # The checks failed by the answers the kept passages are taken from
             "flags": sorted({problem for model in from_models for problem in answers.get(model, {}).get("problems", [])}
                             | ({"the formula ends or starts with a connective: part of it may be on another row"} if looks_cut(formula) else set())),

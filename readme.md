@@ -567,7 +567,7 @@ A record (the same in both files):
 | `paper_id`, `title`, `year`, `doi`, `arxiv_id` | The paper |
 | `license_tier`, `license` | The licence tier (see *License Tiers*) and the licence that sets it (`cc-by`, `arxiv-nonexclusive`, ...): when a paper has several, the most restrictive one |
 | `source_type`, `location` | `latex` with the file and line, or `pdf` with the file and page |
-| `provenance` | How the formula was obtained, the models that give the requirement (and for a PDF the formula), whether the third model was asked, and `flags`: the checks failed by the answers the passages are taken from, and a formula that starts or ends with a connective (part of it may be on another row) |
+| `provenance` | How the formula was obtained, the models that give the requirement (and for a PDF the formula), `disputed` (the first two models disagree on the formula; the third model may be among the models giving the requirement even when it is not, as it answers every formula of a region it is asked about), and `flags`: the checks failed by the answers the passages are taken from, and a formula that starts or ends with a connective (part of it may be on another row) |
 
 `stats.md` counts the records by source and bounds of the formula, construct of another logic, licence, domain and provenance, the requirement passages by kind, the subsets for fine-tuning (records left as filters on passage kind, other logic and flags are added), the formulas without a requirement, and the formulas left out by reason. In `excluded.jsonl`, `outcome` is the vote of step 5 for the formula: `requirement`, `none` or `open` (undecided). It has no date, so a rebuild with the same answers leaves it unchanged.
 
