@@ -19,11 +19,12 @@
 | generic | 687 | 19.6% |
 | unclear | 169 | 4.8% |
 
-**specific**: it states what the formula says: e.g. "the predicted Air Quality Index should never exceed 50 in the next two hours" for `\always_{[0,2]} AQI < 50`
+| Kind | Meaning | Example |
+|---|---|---|
+| **specific** | it states what the formula says: its condition, with the thresholds and time bounds (or, for a formula with symbolic bounds, the names of its parameters) | "if the car detection sensor on road R1 detects a car and the traffic light is not green then it will be green within 3 time units" for `\Box_{[0,\infty)}((detect \wedge \neg g_1) \rightarrow \Diamond_{[0,3]} g_1)` (W3008764564:F22) |
+| **generic** | it only says what the formula is for, without what is needed to write it | "Maintaining safe distance from any lead vehicle" for `\mathbf{ \varphi_3 := G_{[0,T]} (safety\_flag_t \le 0) }` (W4311414009:P9) |
 
- **generic**:  it only says what the formula is for, without what is needed to write it, e.g. "reaching a goal while avoiding an obstacle" 
 
- **unclear**:  the models disagree on the kind
 | Licence tier | Records | Share |
 |---|---|---|
 | custom_or_arxiv | 1,712 | 52.6% |
@@ -81,8 +82,6 @@
 ## Formulas without a requirement
 
 6,592 formulas that the models agree have no requirement (`stl_formulas_unpaired.jsonl`): records with no passages.
-
- |
 
 | Construct of another logic | Records | Share |
 |---|---|---|
