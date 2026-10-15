@@ -114,39 +114,53 @@ def subsets(records: list[dict]) -> list[str]:
 
     with_specific = [r for r in records if specific(r)]
     clean = [r for r in with_specific if not r["other_logic"]]
-    lines = ["## Subsets for fine-tuning", "",
-             "The records left as filters are added one after another. The last but one is the cleanest set: a formula "
-             "with no construct of another logic, with a passage that states it.", "",
+    lines = ["## Best quality subset", "", "",
              "| Filter | Records | Papers |", "|---|---|---|",
              row("all records", records),
              row("... with a specific passage", with_specific),
-             row("... and no `other_logic`", clean),
-             row("... and no `provenance.flags`", [r for r in clean if not r["provenance"]["flags"]]), ""]
+             row("... and no `other_logic`", clean), ""]
     return lines + table("Licence tier of the cleanest set", collections.Counter(r["license_tier"] or "none" for r in clean), len(clean))
+
+
+# What each kind of requirement passage means, and a record of the dataset that shows it
+PASSAGE_KINDS = {
+    "specific": ("it states what the formula says: its condition, with the thresholds and time bounds (or, for a "
+                 "formula with symbolic bounds, the names of its parameters)", "W3008764564:F22"),
+    "generic": ("it only says what the formula is for, without what is needed to write it", "W4311414009:P9"),
+    "unclear": ("the models disagree on the kind", "W4311414009:P1"),
+}
+
+
+def passage_kinds(records: list[dict]) -> list[str]:
+    """What specific, generic and unclear mean, each with a real example."""
+    by_id = {r["id"]: r for r in records}
+    lines = ["| Kind | Meaning | Example |", "|---|---|---|"]
+    for kind, (meaning, example_id) in PASSAGE_KINDS.items():
+        example = by_id.get(example_id)
+        passage = next((p["text"] for p in example["requirements"] if p["kind"] == kind), None) if example else None
+        shown = (f"\"{passage}\" for `{example['formula']}` ({example_id})" if passage else "").replace("|", "\\|")
+        lines.append(f"| **{kind}** | {meaning} | {shown} |")
+    return lines + [""]
 
 
 def stats(records: list[dict], unpaired: list[dict], excluded: list[dict]) -> str:
     """stats.md: what the dataset holds. No date in it, so that a rebuild with the same data changes nothing."""
     total = len(records)
     lines = ["# STL dataset: statistics", "",
-             f"{total:,} records (one per formula with a requirement) from {len({r['paper_id'] for r in records}):,} papers, "
-             f"with {sum(len(r['requirements']) for r in records):,} requirement passages.", ""]
-    lines += table("Source and bounds of the formula", collections.Counter(f"{r['source_type']} · {r['bounds']}" for r in records), total)
+             f"{total:,} records (one per formula with a requirement), "
+             f"with {sum(len(r['requirements']) for r in records):,} requirement passages.", "", "", ""]
     lines += table("Construct of another logic", collections.Counter(r["other_logic"] or "none found" for r in records), total)
     kinds = collections.Counter(p["kind"] for r in records for p in r["requirements"])
     lines += table("Kind of requirement passage", kinds, sum(kinds.values()), unit="Passages")
+    lines += passage_kinds(records)
     lines += table("Licence tier", collections.Counter(r["license_tier"] or "none" for r in records), total)
     lines += table("Licence", collections.Counter(r["license"] or "none" for r in records), total)
     lines += table("Domain", collections.Counter(r["domain"] for r in records), total)
-    lines += table("How the formula was obtained", collections.Counter(r["provenance"]["formula"] for r in records), total)
-    flagged = sum(1 for r in records if r["provenance"]["flags"])
-    lines += [f"{flagged:,} records come from an answer that failed a check (`provenance.flags`).", ""]
-    lines += subsets(records)
+    lines += [""] + subsets(records)
     n = len(unpaired)
     lines += ["## Formulas without a requirement", "",
-              f"{n:,} formulas from {len({r['paper_id'] for r in unpaired}):,} papers that the models agree have no "
-              "requirement (`stl_formulas_unpaired.jsonl`): records with no passages.", ""]
-    lines += table("Source and bounds of the formula", collections.Counter(f"{r['source_type']} · {r['bounds']}" for r in unpaired), n)
+              f"{n:,} formulas that the models agree have no requirement (`stl_formulas_unpaired.jsonl`): records with "
+              "no passages.", ""]
     lines += table("Construct of another logic", collections.Counter(r["other_logic"] or "none found" for r in unpaired), n)
     lines += table("Licence tier", collections.Counter(r["license_tier"] or "none" for r in unpaired), n)
     lines += table("Domain", collections.Counter(r["domain"] for r in unpaired), n)
