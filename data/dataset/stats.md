@@ -1,18 +1,12 @@
 # STL dataset: statistics
 
-3,255 records (one per formula with a requirement) from 730 papers, with 3,507 requirement passages.
+3,255 records (one per formula with a requirement), with 3,507 requirement passages.
 
-| Source and bounds of the formula | Records | Share |
-|---|---|---|
-| latex · numeric | 1,705 | 52.4% |
-| latex · symbolic | 1,093 | 33.6% |
-| pdf · numeric | 330 | 10.1% |
-| pdf · symbolic | 127 | 3.9% |
 
-| Logic of the formula | Records | Share |
+
+| Construct of another logic | Records | Share |
 |---|---|---|
-| propositional | 1,550 | 47.6% |
-| stl | 1,544 | 47.4% |
+| none found | 3,094 | 95.1% |
 | past-time | 92 | 2.8% |
 | spatial-or-description | 35 | 1.1% |
 | probabilistic | 29 | 0.9% |
@@ -25,6 +19,11 @@
 | generic | 687 | 19.6% |
 | unclear | 169 | 4.8% |
 
+**specific**: it states what the formula says: e.g. "the predicted Air Quality Index should never exceed 50 in the next two hours" for `\always_{[0,2]} AQI < 50`
+
+ **generic**:  it only says what the formula is for, without what is needed to write it, e.g. "reaching a goal while avoiding an obstacle" 
+
+ **unclear**:  the models disagree on the kind
 | Licence tier | Records | Share |
 |---|---|---|
 | custom_or_arxiv | 1,712 | 52.6% |
@@ -62,51 +61,32 @@
 | railway | 13 | 0.4% |
 | social dynamics | 12 | 0.4% |
 
-| How the formula was obtained | Records | Share |
-|---|---|---|
-| as in the LaTeX source | 2,795 | 85.9% |
-| transcribed from the PDF page; two models agree | 457 | 14.0% |
-| the whole marked LaTeX text: no model's copy was found in it | 3 | 0.1% |
 
-164 records come from an answer that failed a check (`provenance.flags`).
+## Best quality subset
 
-## Subsets for fine-tuning
-
-The records left as filters are added one after another. The last but one is the cleanest set: a formula over real-valued signals, with a passage that states it.
 
 | Filter | Records | Papers |
 |---|---|---|
 | all records | 3,255 | 730 |
 | ... with a specific passage | 2,455 | 664 |
-| ... and logic `stl` | 1,085 | 387 |
-| ... and no `provenance.flags` | 1,033 | 377 |
-
-| Variant | Records | Papers |
-|---|---|---|
-| a specific passage, logic `stl` or `propositional` | 2,455 | 664 |
+| ... and no `other_logic` | 2,315 | 642 |
 
 | Licence tier of the cleanest set | Records | Share |
 |---|---|---|
-| custom_or_arxiv | 575 | 53.0% |
-| permissive_cc | 297 | 27.4% |
-| unspecified | 128 | 11.8% |
-| restricted_cc | 85 | 7.8% |
+| custom_or_arxiv | 1,248 | 53.9% |
+| permissive_cc | 668 | 28.9% |
+| unspecified | 221 | 9.5% |
+| restricted_cc | 178 | 7.7% |
 
 ## Formulas without a requirement
 
-6,592 formulas from 738 papers that the models agree have no requirement (`stl_formulas_unpaired.jsonl`): records with no passages.
+6,592 formulas that the models agree have no requirement (`stl_formulas_unpaired.jsonl`): records with no passages.
 
-| Source and bounds of the formula | Records | Share |
-|---|---|---|
-| latex · symbolic | 3,474 | 52.7% |
-| latex · numeric | 2,244 | 34.0% |
-| pdf · numeric | 494 | 7.5% |
-| pdf · symbolic | 380 | 5.8% |
+ |
 
-| Logic of the formula | Records | Share |
+| Construct of another logic | Records | Share |
 |---|---|---|
-| propositional | 3,988 | 60.5% |
-| stl | 2,329 | 35.3% |
+| none found | 6,317 | 95.8% |
 | past-time | 222 | 3.4% |
 | spatial-or-description | 33 | 0.5% |
 | probabilistic | 14 | 0.2% |
