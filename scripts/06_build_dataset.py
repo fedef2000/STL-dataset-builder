@@ -127,12 +127,11 @@ PASSAGE_KINDS = {
     "specific": ("it states what the formula says: its condition, with the thresholds and time bounds (or, for a "
                  "formula with symbolic bounds, the names of its parameters)", "W3008764564:F22"),
     "generic": ("it only says what the formula is for, without what is needed to write it", "W4311414009:P9"),
-    "unclear": ("the models disagree on the kind", "W4311414009:P1"),
 }
 
 
 def passage_kinds(records: list[dict]) -> list[str]:
-    """What specific, generic and unclear mean, each with a real example."""
+    """What specific and generic mean, each with a real example."""
     by_id = {r["id"]: r for r in records}
     lines = ["| Kind | Meaning | Example |", "|---|---|---|"]
     for kind, (meaning, example_id) in PASSAGE_KINDS.items():
@@ -140,7 +139,7 @@ def passage_kinds(records: list[dict]) -> list[str]:
         passage = next((p["text"] for p in example["requirements"] if p["kind"] == kind), None) if example else None
         shown = (f"\"{passage}\" for `{example['formula']}` ({example_id})" if passage else "").replace("|", "\\|")
         lines.append(f"| **{kind}** | {meaning} | {shown} |")
-    return lines + [""]
+    return lines + ["", ""]
 
 
 def stats(records: list[dict], unpaired: list[dict], excluded: list[dict]) -> str:
