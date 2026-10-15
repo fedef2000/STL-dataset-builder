@@ -42,7 +42,8 @@ STL_dataset_builder/
 │   ├── corpus.json                    # Single Source of Truth (metadata, status, licenses) - tracked in git
 │   ├── dataset/                       # The dataset built by step 6 - tracked in git
 │   │   ├── stl_dataset.jsonl          # One record per formula with a requirement
-│   │   ├── excluded.jsonl             # The formulas with a requirement that were left out, and why
+│   │   ├── stl_formulas_unpaired.jsonl # One record per formula without a requirement
+│   │   ├── excluded.jsonl             # The formulas left out of both, and why
 │   │   └── stats.md                   # What the dataset holds
 │   ├── logs/                          # (gitignored)
 │   │   └── pipeline.log               # Timestamped log of the download step
@@ -529,12 +530,13 @@ When a paper prints the same formula more than once, the entry is scored on the 
 
 ### Step 6: Build the Dataset
 
-Builds the dataset from the answers of step 5, with no model calls: one record per formula with a requirement, in `data/dataset/stl_dataset.jsonl`. It reads the four `formulas.jsonl` files of step 5, so run step 5 (or `python scripts/05_extract_requirements.py --report`) first. The dataset can be rebuilt at any time; the same answers give the same file.
+Builds the dataset from the answers of step 5, with no model calls: one record per formula with a requirement, in `data/dataset/stl_dataset.jsonl`, and one per formula without a requirement, in `data/dataset/stl_formulas_unpaired.jsonl`. It reads the four `formulas.jsonl` files of step 5, so run step 5 (or `python scripts/05_extract_requirements.py --report`) first. The dataset can be rebuilt at any time; the same answers give the same file.
 
 ```bash
 python scripts/06_build_dataset.py
 
-# Also a copy with only some licence tiers: data/dataset/stl_dataset_permissive_cc.jsonl
+# Also copies with only some licence tiers: data/dataset/stl_dataset_permissive_cc.jsonl
+# and data/dataset/stl_formulas_unpaired_permissive_cc.jsonl
 python scripts/06_build_dataset.py --licenses permissive_cc
 ```
 
@@ -546,26 +548,28 @@ A formula is in the dataset when the vote of step 5 gives it a requirement. It i
 * its requirement is not in English;
 * the same paper has the same formula with the same requirement elsewhere: it is kept once, and the record lists the other places in `also_at`.
 
-A record:
+The formulas the models agree have no requirement go to `stl_formulas_unpaired.jsonl`: definitions, examples, templates, proof steps, and formulas the paper does not explain. They are of no use for fine-tuning on (requirement, formula) pairs, but can serve as a corpus of real formulas (e.g. to test a parser), as negative examples for telling requirements apart, or for generating text from a formula with its domain and variables. The same rules leave formulas out of this file (the undecided ones are in neither file), with two differences: a formula repeated within a paper is kept once whatever its passages, and a formula the paper also has with a requirement is left out, as it is in `stl_dataset.jsonl` already.
+
+A record (the same in both files):
 
 | Field | Content |
 |---|---|
-| `id` | `<paper_id>:<formula ID>`, e.g. `W2082084336:P5` (`F` concrete, `P` parametric formulas) |
+| `id` | `<paper_id>:<formula ID>`, e.g. `W2082084336:P5` (`F` for numeric, `P` for symbolic bounds: the concrete and parametric formulas of steps 4 and 5) |
 | `formula` | The formula in LaTeX. From a LaTeX paper: the paper's own text, trimmed to the formula by a model's copy, with labels, row breaks, alignment marks and spacing commands taken out (the authors' macros are kept). From a PDF: the transcription two models agree on. |
-| `formula_kind` | `concrete` or `parametric` |
-| `requirements` | The requirement passages, each with its `text` (on one line) and `kind` (`specific`, `generic`, or `unclear` when the models are split) |
-| `quality` | `specific` when a passage is specific, `unclear` when one is unclear, `generic` otherwise |
+| `logic` | Found by patterns in the formula, as the corpus also holds papers on related timed logics. By the constructs of other logics: `strategic` (a strategy quantifier, as in timed ATL), `branching-time` (a path quantifier, as in TCTL), `probabilistic` (a probability operator), `spatial-or-description` (spatial operators, or the concept inclusion and intersection of description logics), `past-time` (past operators such as since, once, historically); without any: `stl` when a signal is compared with a value, `propositional` when not (atomic propositions, as in MTL, i.e. STL over Boolean signals, or placeholders only). Patterns, not a parser: e.g. `\sqcap` written for a conjunction reads as description logic, and `\in` in a quantifier as a comparison. |
+| `requirements` | The requirement passages, each with its `text` (on one line) and `kind` (`specific`, `generic`, or `unclear` when the models are split); empty in `stl_formulas_unpaired.jsonl` |
 | `domain`, `variables` | The application domain, and the meaning of the symbols |
+| `bounds` | `numeric` when a time bound at least is a number (`\Box_{[0,5]}`), `symbolic` when every one is a symbol (`\Box_{[0,T]}`). A description of the formula, not a measure of the pair: a symbolic formula whose requirement explains its parameters is as good a pair as a numeric one. |
 | `paper_id`, `title`, `year`, `doi`, `arxiv_id` | The paper |
 | `license_tier`, `license` | The licence tier (see *License Tiers*) and the licence (`cc-by`, `arxiv-nonexclusive`, ...) |
 | `source_type`, `location` | `latex` with the file and line, or `pdf` with the file and page |
 | `provenance` | How the formula was obtained, the models that give the requirement (and for a PDF the formula), whether the third model was asked, and `flags`: the checks failed by the answers the passages are taken from, and a formula that starts or ends with a connective (part of it may be on another row) |
 
-`stats.md` counts the records by source and kind of formula, quality, licence, domain and provenance, and the formulas left out by reason. It has no date, so a rebuild with the same answers leaves it unchanged.
+`stats.md` counts the records by source and bounds of the formula, logic, licence, domain and provenance, the requirement passages by kind, the subsets for fine-tuning (records left as filters on passage kind, logic and flags are added), the formulas without a requirement, and the formulas left out by reason. In `excluded.jsonl`, `outcome` is the vote of step 5 for the formula: `requirement`, `none` or `open` (undecided). It has no date, so a rebuild with the same answers leaves it unchanged.
 
 | Flag | What it does |
 |---|---|
-| `--licenses TIER ...` | Also writes a copy with only the records of these licence tiers (`permissive_cc`, `restricted_cc`, `custom_or_arxiv`, `unspecified`). |
+| `--licenses TIER ...` | Also writes copies of both files with only the records of these licence tiers (`permissive_cc`, `restricted_cc`, `custom_or_arxiv`, `unspecified`). |
 
 ---
 

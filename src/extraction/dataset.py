@@ -51,7 +51,7 @@ def _clean(formula: str) -> str:
 # Temporal operators as papers write them, and what is left of a formula once they and their bounds are taken out
 OPERATOR_PATTERN = re.compile(
     r"\\(?:square|Box|Diamond|lozenge|diamondsuit|boxminus|diamondminus|always|eventually|until|glob|even|alw|ev|fut"
-    r"|LTLg|LTLf|LTLu|G|F|U)(?![A-Za-z])|\\math(?:bf|sf|cal|rm)\{[GFU]\}|(?<![A-Za-z\\])[GFU](?![A-Za-z])")
+    r"|since|Since|once|historically|release|LTLg|LTLf|LTLu|G|F|U)(?![A-Za-z])|\\math(?:bf|sf|cal|rm)\{[GFU]\}|(?<![A-Za-z\\])[GFU](?![A-Za-z])")
 BOUND_PATTERN = re.compile(r"[_^]\s*\{[^{}]*\}|[_^]\s*\\?\w+")
 EMPTY_REST_PATTERN = re.compile(r"\\(?:left|right|big|Big|bigg|Bigg)(?![A-Za-z])|[{}()\[\]$.,;:\s]")
 # A connective at the end (or the start) of a formula: the rest of it is on another row of the source
@@ -77,6 +77,39 @@ def license_name(license: str | None) -> str | None:
     if m:
         return "cc0" if m.group(2) else "cc-" + m.group(1)
     return license
+
+
+# ---------------------------------------------------------------- the logic of a formula
+
+# The constructs of logics other than STL, found by keyword searches such as "Metric Temporal Logic" and by step 4,
+# which takes any time-bounded operator: the logic each one marks, the first found deciding
+LOGIC_PATTERNS = {
+    "strategic": re.compile(r"\\langle\s*\\langle|⟨⟨|\\llangle"),    # a strategy quantifier, as in timed ATL
+    # A path quantifier, as in TCTL. Not AF in letters: in the powertrain benchmarks it is the air-fuel ratio
+    "branching-time": re.compile(
+        r"(?<![A-Za-z\\])(?:[AE]\s*(?:\\Box|\\Diamond|\\square|\\lozenge|\\diamondsuit)|A[GXU]|E[GFXU])(?![A-Za-z])"
+        r"|\\(?:forall|exists)\s*\\(?:Box|Diamond|square|lozenge|diamondsuit)(?![A-Za-z])"),
+    "probabilistic": re.compile(                                          # a probability operator, as in PCTL or PrSTL
+        r"(?<![A-Za-z\\])P\s*_\s*\{?\s*(?:\\[gl]eq?|[<>]|\\sim)|\\mathbb\{E?P\}|\\Pr(?![a-z])"),
+    # Spatial operators (SSTL) and the concept inclusion and intersection of description logics
+    "spatial-or-description": re.compile(r"\\(?:sqsubseteq|sqcap|somewhere|everywhere)(?![A-Za-z])"),
+    "past-time": re.compile(r"\\(?:boxminus|diamondminus|since|Since|once|historically)(?![A-Za-z])|\\mathcal\{S\}"),
+}
+# A signal compared with a value; the bounds of the operators (\Diamond_{\leq 10}) are taken out first
+COMPARISON_PATTERN = re.compile(r"[<>≤≥]|\\(?:[lg]eq?|[lg]t|neq|in|notin)(?![A-Za-z])")
+SUBSCRIPT_PATTERN = re.compile(r"[_^]\s*\{[^{}]*\}")
+
+
+def logic_of(formula: str) -> str:
+    """
+    The logic of a formula, by its constructs: one of LOGIC_PATTERNS ("strategic", "branching-time", "probabilistic",
+    "spatial-or-description", "past-time"), else "stl" when a signal is compared with a value, else "propositional"
+    (atomic propositions only, as in MTL: STL over Boolean signals; or placeholders).
+    """
+    for logic, pattern in LOGIC_PATTERNS.items():
+        if pattern.search(formula):
+            return logic
+    return "stl" if COMPARISON_PATTERN.search(SUBSCRIPT_PATTERN.sub(" ", formula)) else "propositional"
 
 
 # ---------------------------------------------------------------- the language of a passage
@@ -121,21 +154,23 @@ def answers_of(record: dict) -> dict:
     return answers
 
 
-def dataset_record(record: dict, kind: str, paper: dict) -> tuple[dict | None, str | None]:
+def dataset_record(record: dict, bounds: str, paper: dict) -> tuple[dict | None, str | None]:
     """
-    (the record of the dataset, None), or (None, why the formula is left out). `kind` is "concrete" or "parametric";
-    `paper` is the paper's entry of the corpus.
+    (the record of the dataset, None), or (None, why the formula is left out). `bounds` is "numeric" (a concrete
+    formula of step 4: a bound at least is a number) or "symbolic" (a parametric one: every bound is a symbol);
+    `paper` is the paper's entry of the corpus. A formula the models agree has no requirement gets a record too, with
+    no passages (`requirements` empty): it goes to the file of the formulas without a requirement.
     """
     final = record["final"]
     if final["outcome"] == "open":
         return None, "undecided: no two models agree on a requirement"
-    if final["outcome"] != "requirement":
-        return None, None   # no requirement: not part of the dataset, and not worth listing
     if final.get("same_formula_as"):
         return None, f"the same formula as {final['same_formula_as']}, on another line of the PDF text"
-    passages = [p for p in final["requirements"] if is_english(p["text"])]
-    if not passages:
-        return None, "the requirement is not in English"
+    passages = []
+    if final["outcome"] == "requirement":
+        passages = [p for p in final["requirements"] if is_english(p["text"])]
+        if not passages:
+            return None, "the requirement is not in English"
     answers = answers_of(record)
     if record.get("source_type") == "pdf":
         if not final.get("formula"):
@@ -146,17 +181,16 @@ def dataset_record(record: dict, kind: str, paper: dict) -> tuple[dict | None, s
         how = "as in the LaTeX source" if found else "the whole marked LaTeX text: no model's copy was found in it"
     if is_fragment(formula):
         return None, "the formula is an operator alone, not a whole formula"
-    kinds = {p["kind"] for p in passages}
     from_models = {p["from"] for p in passages}
     license_info = paper.get("license_info") or {}
     return {
         "id": f"{record['paper_id']}:{record['formula_id']}",
         "formula": formula,
-        "formula_kind": kind,
+        "logic": logic_of(formula),
         "requirements": [{"text": " ".join(p["text"].split()), "kind": p["kind"]} for p in passages],
-        "quality": "specific" if "specific" in kinds else "unclear" if "unclear" in kinds else "generic",
         "domain": final["domain"],
         "variables": final["variables"],
+        "bounds": bounds,
         "paper_id": record["paper_id"],
         "title": record["title"],
         "year": record["year"],
@@ -179,6 +213,13 @@ def dataset_record(record: dict, kind: str, paper: dict) -> tuple[dict | None, s
 
 
 def duplicate_key(item: dict) -> tuple:
-    """Two records of one paper are the same when their formula and their passages are (layout aside)."""
+    """
+    Two records of one paper are the same when their formula and their passages are (layout aside). Without a
+    requirement, the formula alone.
+    """
     passages = tuple(sorted(re.sub(r"\s+", "", p["text"]) for p in item["requirements"]))
     return item["paper_id"], formula_key(item["formula"]), passages
+
+
+def formula_of_paper(item: dict) -> tuple:
+    return item["paper_id"], formula_key(item["formula"])
