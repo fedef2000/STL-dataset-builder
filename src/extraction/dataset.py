@@ -87,7 +87,7 @@ def license_of(license_info: dict) -> str | None:
     return next((n for n in names if classify_tier([n]) == tier), license_name(license_info.get("effective_license")))
 
 
-# ---------------------------------------------------------------- the logic of a formula
+# ---------------------------------------------------------------- constructs of other logics
 
 # The constructs of logics other than STL, found by keyword searches such as "Metric Temporal Logic" and by step 4,
 # which takes any time-bounded operator: the logic each one marks, the first found deciding
@@ -103,21 +103,15 @@ LOGIC_PATTERNS = {
     "spatial-or-description": re.compile(r"\\(?:sqsubseteq|sqcap|somewhere|everywhere)(?![A-Za-z])"),
     "past-time": re.compile(r"\\(?:boxminus|diamondminus|since|Since|once|historically)(?![A-Za-z])|\\mathcal\{S\}"),
 }
-# A signal compared with a value; the bounds of the operators (\Diamond_{\leq 10}) are taken out first
-COMPARISON_PATTERN = re.compile(r"[<>≤≥]|\\(?:[lg]eq?|[lg]t|neq|in|notin)(?![A-Za-z])")
-SUBSCRIPT_PATTERN = re.compile(r"[_^]\s*\{[^{}]*\}")
 
 
-def logic_of(formula: str) -> str:
+def other_logic_of(formula: str) -> str | None:
     """
-    The logic of a formula, by its constructs: one of LOGIC_PATTERNS ("strategic", "branching-time", "probabilistic",
-    "spatial-or-description", "past-time"), else "stl" when a signal is compared with a value, else "propositional"
-    (atomic propositions only, as in MTL: STL over Boolean signals; or placeholders).
+    The logic other than STL whose construct the formula holds: one of LOGIC_PATTERNS ("strategic", "branching-time",
+    "probabilistic", "spatial-or-description", "past-time"), or None when none is found. None does not make a formula
+    STL: no parser has checked it.
     """
-    for logic, pattern in LOGIC_PATTERNS.items():
-        if pattern.search(formula):
-            return logic
-    return "stl" if COMPARISON_PATTERN.search(SUBSCRIPT_PATTERN.sub(" ", formula)) else "propositional"
+    return next((logic for logic, pattern in LOGIC_PATTERNS.items() if pattern.search(formula)), None)
 
 
 # ---------------------------------------------------------------- the language of a passage
@@ -194,7 +188,7 @@ def dataset_record(record: dict, bounds: str, paper: dict) -> tuple[dict | None,
     return {
         "id": f"{record['paper_id']}:{record['formula_id']}",
         "formula": formula,
-        "logic": logic_of(formula),
+        "other_logic": other_logic_of(formula),
         "requirements": [{"text": " ".join(p["text"].split()), "kind": p["kind"]} for p in passages],
         "domain": final["domain"],
         "variables": final["variables"],

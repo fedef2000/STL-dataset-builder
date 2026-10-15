@@ -113,17 +113,15 @@ def subsets(records: list[dict]) -> list[str]:
         return f"| {name} | {len(rows):,} | {len({r['paper_id'] for r in rows}):,} |"
 
     with_specific = [r for r in records if specific(r)]
-    clean = [r for r in with_specific if r["logic"] == "stl"]
+    clean = [r for r in with_specific if not r["other_logic"]]
     lines = ["## Subsets for fine-tuning", "",
              "The records left as filters are added one after another. The last but one is the cleanest set: a formula "
-             "over real-valued signals, with a passage that states it.", "",
+             "with no construct of another logic, with a passage that states it.", "",
              "| Filter | Records | Papers |", "|---|---|---|",
              row("all records", records),
              row("... with a specific passage", with_specific),
-             row("... and logic `stl`", clean),
-             row("... and no `provenance.flags`", [r for r in clean if not r["provenance"]["flags"]]), "",
-             "| Variant | Records | Papers |", "|---|---|---|",
-             row("a specific passage, logic `stl` or `propositional`", [r for r in with_specific if r["logic"] != "other"]), ""]
+             row("... and no `other_logic`", clean),
+             row("... and no `provenance.flags`", [r for r in clean if not r["provenance"]["flags"]]), ""]
     return lines + table("Licence tier of the cleanest set", collections.Counter(r["license_tier"] or "none" for r in clean), len(clean))
 
 
@@ -134,7 +132,7 @@ def stats(records: list[dict], unpaired: list[dict], excluded: list[dict]) -> st
              f"{total:,} records (one per formula with a requirement) from {len({r['paper_id'] for r in records}):,} papers, "
              f"with {sum(len(r['requirements']) for r in records):,} requirement passages.", ""]
     lines += table("Source and bounds of the formula", collections.Counter(f"{r['source_type']} · {r['bounds']}" for r in records), total)
-    lines += table("Logic of the formula", collections.Counter(r["logic"] for r in records), total)
+    lines += table("Construct of another logic", collections.Counter(r["other_logic"] or "none found" for r in records), total)
     kinds = collections.Counter(p["kind"] for r in records for p in r["requirements"])
     lines += table("Kind of requirement passage", kinds, sum(kinds.values()), unit="Passages")
     lines += table("Licence tier", collections.Counter(r["license_tier"] or "none" for r in records), total)
@@ -149,7 +147,7 @@ def stats(records: list[dict], unpaired: list[dict], excluded: list[dict]) -> st
               f"{n:,} formulas from {len({r['paper_id'] for r in unpaired}):,} papers that the models agree have no "
               "requirement (`stl_formulas_unpaired.jsonl`): records with no passages.", ""]
     lines += table("Source and bounds of the formula", collections.Counter(f"{r['source_type']} · {r['bounds']}" for r in unpaired), n)
-    lines += table("Logic of the formula", collections.Counter(r["logic"] for r in unpaired), n)
+    lines += table("Construct of another logic", collections.Counter(r["other_logic"] or "none found" for r in unpaired), n)
     lines += table("Licence tier", collections.Counter(r["license_tier"] or "none" for r in unpaired), n)
     lines += table("Domain", collections.Counter(r["domain"] for r in unpaired), n)
     lines += ["## Left out", "", "Formulas with a requirement (or undecided) that are not in the dataset (`excluded.jsonl`):", ""]
