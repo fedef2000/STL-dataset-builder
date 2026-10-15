@@ -40,6 +40,10 @@ STL_dataset_builder/
 │
 ├── data/
 │   ├── corpus.json                    # Single Source of Truth (metadata, status, licenses) - tracked in git
+│   ├── dataset/                       # The dataset built by step 6 - tracked in git
+│   │   ├── stl_dataset.jsonl          # One record per formula with a requirement
+│   │   ├── excluded.jsonl             # The formulas with a requirement that were left out, and why
+│   │   └── stats.md                   # What the dataset holds
 │   ├── logs/                          # (gitignored)
 │   │   └── pipeline.log               # Timestamped log of the download step
 │   ├── raw/                           # (gitignored)
@@ -66,6 +70,8 @@ STL_dataset_builder/
 │       ├── context.py                 # Builds what the extraction model reads: paper header and regions with marked formulas
 │       ├── extractor.py               # The extraction call (OpenRouter), its prompt and the checks on the answer
 │       ├── runs.py                    # Runs many calls, stores every answer, resumes; compares requirement passages
+│       ├── pdf_context.py             # What the model reads for a PDF: one region per page, with its image
+│       ├── dataset.py                 # Turns the records of step 5 into the records of the dataset
 │       └── records.py                 # One record per formula: the answers side by side, their agreement, the tie-breaker's verdict
 │
 └── scripts/                           # Executable CLI entrypoints
@@ -74,6 +80,7 @@ STL_dataset_builder/
     ├── 03_audit_and_print_licenses.py # Step 3: Verify licenses & print statistical tables
     ├── 04_estimate_formulas.py        # Step 4: Estimate the STL formula yield per paper
     ├── 05_extract_requirements.py     # Step 5: Extract the requirements with two models, a third on their disagreements
+    ├── 06_build_dataset.py            # Step 6: Build the dataset file from the answers of step 5
     ├── inspect_extractions.py         # Prints the undecided formulas and the answers that failed a check, to read
     └── eval/
         ├── build_eval_set.py          # Checks the labels against the LaTeX sources and writes the evaluation set
@@ -335,7 +342,21 @@ python scripts/05_extract_requirements.py --report --parametric --details
 python scripts/05_extract_requirements.py --paper W3080701220
 ```
 
-Every answer is appended to `data/processed/extractions/answers.jsonl` as it arrives, so an interrupted run (Ctrl+C included) continues where it stopped. An answer stored for a region whose formulas have since changed is asked again, and so is one that left some formulas of its region unanswered. A run or a report over the whole corpus also writes `data/processed/extractions/formulas.jsonl`: one record per formula with its source, the answer of each model and the outcome of the vote.
+Every answer is appended to `answers.jsonl` as it arrives, so an interrupted run (Ctrl+C included) continues where it stopped. An answer stored for a region whose formulas have since changed is asked again, and so is one that left some formulas of its region unanswered. A run or a report over the whole corpus also writes `data/processed/extractions/formulas.jsonl`: one record per formula with its source, the answer of each model and the outcome of the vote.
+
+#### Where the answers are kept
+
+```
+data/processed/extractions/
+├── latex/
+│   ├── concrete/      answers.jsonl, formulas.jsonl
+│   └── parametric/    answers.jsonl, formulas.jsonl
+└── pdf/
+    ├── concrete/      answers.jsonl, formulas.jsonl
+    └── parametric/    answers.jsonl, formulas.jsonl
+```
+
+`answers.jsonl` holds every answer as the models gave it, one line per call; `formulas.jsonl` holds one record per formula, with every answer and the outcome of the vote. Each source and kind of formula has its own folder: an answer is stored under the number of its region, and the regions of a paper are numbered separately for each source and kind, so in one file the answers of two kinds would be taken for one another.
 
 #### The report
 
@@ -367,10 +388,9 @@ The concrete formulas (numeric time bounds) and the parametric ones (time bounds
 python scripts/05_extract_requirements.py --parametric --tie-break
 ```
 
-When the parametric formulas are extracted, only they are marked and asked about; the concrete ones stay in the text as context. Three things differ from the concrete formulas:
+When the parametric formulas are extracted, only they are marked and asked about; the concrete ones stay in the text as context. Two things differ from the concrete formulas:
 
 * The formulas are numbered `P1`, `P2`, ... instead of `F1`, `F2`, ..., so an ID stands for one formula of a paper only.
-* The answers are kept in `data/processed/extractions/parametric/` (`answers.jsonl`, `formulas.jsonl`). The regions of a paper are numbered per run, so in one file the answers of the two runs would be taken for one another.
 * The prompt tells the two kinds of requirement apart without numbers: a passage is specific when it expresses the formula, naming a parameter where a concrete formula has a number, and generic when it only says what the formula is for. The models are also asked to explain the parameters among the variables.
 
 #### Papers held as PDF
@@ -383,10 +403,10 @@ The papers held only as a PDF go through the same steps, with `--pdf` (`--latex`
 
 Two things differ from the LaTeX papers:
 
-* The formula is transcribed into LaTeX by the model, not copied. Instead of the copy check, the numbers of its time bounds must be those step 4 reads on the marked line (`bounds` among the checks), and the vote keeps a transcription only when two models give the same one (spacing, fonts and synonyms such as `\square` and `\Box` aside): `final.formula`, with `final.formula_given_by`. A displayed formula broken over two lines of the text is marked twice; the second record gets `final.same_formula_as`.
-* The requirement passages are copied from the text of the page, as for LaTeX, and checked against it; a word hyphenated at a line end and typographic characters (minus sign, quotes) are not compared.
+* The formula is transcribed into LaTeX by the model, not copied. Instead of the copy check, it must hold the numeric time bounds of at least one operator of its line, as step 4 reads them (`bounds` among the checks; one is enough, since a line can hold several formulas), and the vote keeps a transcription only when two models give the same one (spacing, fonts and synonyms such as `\square` and `\Box` aside): `final.formula`, with `final.formula_given_by`. A displayed formula broken over two lines of the text is marked twice; the second record gets `final.same_formula_as`.
+* The requirement passages are copied from the text of the page, as for LaTeX, and checked against it; a word hyphenated at a line end, typographic characters (minus sign, quotes), LaTeX commands written for the characters the text has (`\\varphi` for φ, `\\in` for ∈), fonts and the marks of sub- and superscripts are not compared.
 
-The answers are kept in `data/processed/extractions/pdf/` (and `pdf/parametric/`). A record of a PDF formula has `source_type` `pdf`, `file` the PDF and `line` the page.
+A record of a PDF formula has `source_type` `pdf`, `file` the PDF and `line` the page.
 
 #### How a formula is decided
 
@@ -401,7 +421,7 @@ First the two answers are compared. Two passages are the same when they share at
 | `one gives none` | One model gives a requirement and the other none. |
 | `not answered` | A model has no answer for the formula (failed call, formula skipped). |
 
-The three middle cases are disputed (`dispute` is `requirement` in the record), and so are the formulas with the same passages tagged specific by one model and generic by the other (`dispute` is `kind`). With `--tie-break`, the third model is asked about every region that holds a disputed formula, and the record gets a `tie_breaker` field with its answer and its verdict: `sides with the first` / `sides with the second` (the same requirement as that model, or none as it), `agrees with both`, `partly agrees` (a passage shared with one of them, but not all), `agrees with neither`. A region is sent whole, so the third model also answers its other formulas.
+The three middle cases are disputed (`dispute` is `requirement` in the record), and so are the formulas with the same passages tagged specific by one model and generic by the other (`dispute` is `kind`), and, for a PDF, those with the same passages but a different transcription of the formula (`dispute` is `formula`). With `--tie-break`, the third model is asked about every region that holds a disputed formula, and the record gets a `tie_breaker` field with its answer and its verdict: `sides with the first` / `sides with the second` (the same requirement as that model, or none as it), `agrees with both`, `partly agrees` (a passage shared with one of them, but not all), `agrees with neither`. A region is sent whole, so the third model also answers its other formulas.
 
 Then the answers are put to a vote, passage by passage. Every record has a `final` field with its result:
 
@@ -461,7 +481,7 @@ python scripts/inspect_extractions.py flags --check variable formula-copy --limi
 |---|---|
 | `variable` | variable not in the formula |
 | `formula-copy` | the formula is not a copy of the marked text |
-| `bounds` | the formula lacks a time bound of the marked line (PDF) |
+| `bounds` | the formula lacks the time bounds of its line (PDF) |
 | `no-formula` | no formula given |
 | `requirement-copy` | the requirement is not a copy of the excerpt |
 | `joined` | the requirement joins separate parts of the excerpt |
@@ -506,6 +526,46 @@ When a paper prints the same formula more than once, the entry is scored on the 
 | `--budget D` | Stops starting new calls once `D` dollars are spent in this invocation (default 15). |
 | `--entries N` | Only the first `N` entries of the evaluation set. |
 | `--report` | Scores the stored answers and prints the comparison. No model is called. |
+
+### Step 6: Build the Dataset
+
+Builds the dataset from the answers of step 5, with no model calls: one record per formula with a requirement, in `data/dataset/stl_dataset.jsonl`. It reads the four `formulas.jsonl` files of step 5, so run step 5 (or `python scripts/05_extract_requirements.py --report`) first. The dataset can be rebuilt at any time; the same answers give the same file.
+
+```bash
+python scripts/06_build_dataset.py
+
+# Also a copy with only some licence tiers: data/dataset/stl_dataset_permissive_cc.jsonl
+python scripts/06_build_dataset.py --licenses permissive_cc
+```
+
+A formula is in the dataset when the vote of step 5 gives it a requirement. It is left out (and listed in `excluded.jsonl` with the reason) when:
+
+* no two models agree on its requirement (undecided);
+* it comes from a PDF and no two models transcribe it alike, or it is the second line of a formula broken over two lines of the PDF text;
+* it is an operator alone, without what it applies to (e.g. `\square_{[0,1]}`);
+* its requirement is not in English;
+* the same paper has the same formula with the same requirement elsewhere: it is kept once, and the record lists the other places in `also_at`.
+
+A record:
+
+| Field | Content |
+|---|---|
+| `id` | `<paper_id>:<formula ID>`, e.g. `W2082084336:P5` (`F` concrete, `P` parametric formulas) |
+| `formula` | The formula in LaTeX. From a LaTeX paper: the paper's own text, trimmed to the formula by a model's copy, with labels, row breaks, alignment marks and spacing commands taken out (the authors' macros are kept). From a PDF: the transcription two models agree on. |
+| `formula_kind` | `concrete` or `parametric` |
+| `requirements` | The requirement passages, each with its `text` (on one line) and `kind` (`specific`, `generic`, or `unclear` when the models are split) |
+| `quality` | `specific` when a passage is specific, `unclear` when one is unclear, `generic` otherwise |
+| `domain`, `variables` | The application domain, and the meaning of the symbols |
+| `paper_id`, `title`, `year`, `doi`, `arxiv_id` | The paper |
+| `license_tier`, `license` | The licence tier (see *License Tiers*) and the licence (`cc-by`, `arxiv-nonexclusive`, ...) |
+| `source_type`, `location` | `latex` with the file and line, or `pdf` with the file and page |
+| `provenance` | How the formula was obtained, the models that give the requirement (and for a PDF the formula), whether the third model was asked, and `flags`: the checks failed by the answers the passages are taken from, and a formula that starts or ends with a connective (part of it may be on another row) |
+
+`stats.md` counts the records by source and kind of formula, quality, licence, domain and provenance, and the formulas left out by reason. It has no date, so a rebuild with the same answers leaves it unchanged.
+
+| Flag | What it does |
+|---|---|
+| `--licenses TIER ...` | Also writes a copy with only the records of these licence tiers (`permissive_cc`, `restricted_cc`, `custom_or_arxiv`, `unspecified`). |
 
 ---
 
