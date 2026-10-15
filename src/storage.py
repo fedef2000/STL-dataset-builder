@@ -16,7 +16,7 @@ def classify_tier(licenses: list) -> str:
     lic_set = {l.lower() for l in licenses}
     has_nc_nd = any("nc" in l or "nd" in l for l in lic_set)
     has_perm = any(
-        l in ("cc0", "cc-by", "cc-by-sa", "cc-by-4.0") for l in lic_set
+        l in ("cc0", "cc-by", "cc-by-sa", "cc-by-4.0", "public-domain") for l in lic_set
     )
     if has_perm and not has_nc_nd:
         return "permissive_cc"

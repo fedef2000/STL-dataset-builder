@@ -1,4 +1,5 @@
 import glob
+import json
 import os
 import re
 import time
@@ -14,11 +15,11 @@ LICENSE_PATTERNS = [
     ("cc0", re.compile(r"creativecommons\.org/publicdomain/zero|cc0[\s\-]1\.0|\\cczero", re.I)),
     ("cc-by-nc-nd", re.compile(r"creativecommons\.org/licenses/by-nc-nd|cc[\s\-]by[\s\-]nc[\s\-]nd|\\ccbyncnd", re.I)),
     ("cc-by-nc-sa", re.compile(r"creativecommons\.org/licenses/by-nc-sa|cc[\s\-]by[\s\-]nc[\s\-]sa|\\ccbyncsa", re.I)),
-    ("cc-by-nc", re.compile(r"creativecommons\.org/licenses/by-nc(?!/)|cc[\s\-]by[\s\-]nc(?![\s\-](?:sa|nd))|\\ccbync(?![a-z])", re.I)),
+    ("cc-by-nc", re.compile(r"creativecommons\.org/licenses/by-nc(?![-\w])|cc[\s\-]by[\s\-]nc(?![\s\-](?:sa|nd))|\\ccbync(?![a-z])", re.I)),
     ("cc-by-nd", re.compile(r"creativecommons\.org/licenses/by-nd|cc[\s\-]by[\s\-]nd|\\ccbynd", re.I)),
     ("cc-by-sa", re.compile(r"creativecommons\.org/licenses/by-sa|cc[\s\-]by[\s\-]sa|\\ccbysa", re.I)),
     ("cc-by", re.compile(
-        r"creativecommons\.org/licenses/by(?!/)|"
+        r"creativecommons\.org/licenses/by(?![-\w])|"
         r"cc[\s\-]by(?![\s\-](?:nc|sa|nd))|"
         r"\\ccby(?![a-z])|"
         r"creative\s+commons\s+attribution\s+(?:4\.0|3\.0|international)|"
@@ -98,6 +99,35 @@ def fetch_arxiv_oai_license(arxiv_id: str) -> list[str]:
     except Exception:
         pass
     return []
+
+def normalize_license(lic: str) -> str:
+    """The short name of a licence ("http://creativecommons.org/licenses/by/4.0/" -> "cc-by"), or the text as it is."""
+    matched = detect_licenses_in_text(lic)
+    return matched[0] if matched else lic
+
+
+def reclassify_paper_license(paper: dict) -> bool:
+    """
+    Re-derives the licence names, tier and conflict flag from what is already stored, without scanning any file or
+    asking arXiv: for licences stored as URLs before the patterns recognised them. True when anything changed.
+    """
+    lic_info = paper.get("license_info")
+    if not lic_info:
+        return False
+    before = json.dumps(lic_info, sort_keys=True)
+    sources = lic_info.setdefault("sources", {})
+    for name, lics in sources.items():
+        sources[name] = sorted({normalize_license(l) for l in lics or []})
+    eff_lics = sorted({normalize_license(l) for l in lic_info.get("effective_licenses_all") or []})
+    lic_info["effective_licenses_all"] = eff_lics
+    if lic_info.get("effective_license"):
+        lic_info["effective_license"] = normalize_license(lic_info["effective_license"])
+    lic_info["tier"] = classify_tier(eff_lics)
+    oa_licenses = set(sources.get("openalex_locations") or [])
+    if lic_info.get("effective_source") in ("tex_source", "pdf_metadata", "arxiv_oai"):
+        lic_info["has_conflict"] = bool(oa_licenses) and set(eff_lics) != oa_licenses
+    return json.dumps(lic_info, sort_keys=True) != before
+
 
 def resolve_paper_license(paper: dict, base_dir: Path) -> dict:
     """

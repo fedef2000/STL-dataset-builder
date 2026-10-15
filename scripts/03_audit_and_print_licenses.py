@@ -8,7 +8,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BASE_DIR))
 
 from src.storage import CorpusStore
-from src.licensing.resolver import resolve_paper_license
+from src.licensing.resolver import reclassify_paper_license, resolve_paper_license
 from src.licensing.stats import generate_license_report
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
@@ -17,11 +17,16 @@ def main():
     parser = argparse.ArgumentParser(description="Step 3: Audit exact licenses for downloaded papers and print stats.")
     parser.add_argument("--stats", action="store_true", help="Print the license report from the data already stored in corpus.json and exit, without scanning any file.")
     parser.add_argument("--limit", type=int, default=None, help="Limit number of papers audited (for testing).")
+    parser.add_argument("--reclassify", action="store_true", help="Re-derive the licence names, tiers and conflicts from the licences already stored in corpus.json, without scanning any file or asking arXiv, then print the report.")
     args = parser.parse_args()
 
     store = CorpusStore()
     
-    if not args.stats:
+    if args.reclassify:
+        changed = sum(reclassify_paper_license(p) for p in store.papers.values())
+        store.save()
+        logging.info(f"Re-derived the stored licences: {changed} paper records changed in data/corpus.json.\n")
+    elif not args.stats:
         # Gather downloaded papers that need an audit
         queue = [
             pid for pid, p in store.papers.items()

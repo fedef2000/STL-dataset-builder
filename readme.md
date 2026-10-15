@@ -262,12 +262,16 @@ python scripts/03_audit_and_print_licenses.py
 # Print the report again without re-scanning
 python scripts/03_audit_and_print_licenses.py --stats
 
+# Re-derive licence names and tiers from the licences already stored (after a change to the patterns), no scan
+python scripts/03_audit_and_print_licenses.py --reclassify
+
 ```
 
 | Flag | What it does |
 |---|---|
 | `--stats` | Skips the scan and prints the report from the licences already stored in `data/corpus.json`, then exits. |
 | `--limit N` | Audits only the first `N` downloaded papers (for testing). The report still covers the whole corpus. |
+| `--reclassify` | Skips the scan: turns the licences already stored into their short names (`cc-by`, ...), sets the tier and the conflict flag again, saves `data/corpus.json` and prints the report. For a change to the licence patterns or tiers, without asking arXiv again. |
 
 ### Step 4: Estimate STL Formula Yield
 
@@ -561,7 +565,7 @@ A record (the same in both files):
 | `domain`, `variables` | The application domain, and the meaning of the symbols |
 | `bounds` | `numeric` when a time bound at least is a number (`\Box_{[0,5]}`), `symbolic` when every one is a symbol (`\Box_{[0,T]}`). A description of the formula, not a measure of the pair: a symbolic formula whose requirement explains its parameters is as good a pair as a numeric one. |
 | `paper_id`, `title`, `year`, `doi`, `arxiv_id` | The paper |
-| `license_tier`, `license` | The licence tier (see *License Tiers*) and the licence (`cc-by`, `arxiv-nonexclusive`, ...) |
+| `license_tier`, `license` | The licence tier (see *License Tiers*) and the licence that sets it (`cc-by`, `arxiv-nonexclusive`, ...): when a paper has several, the most restrictive one |
 | `source_type`, `location` | `latex` with the file and line, or `pdf` with the file and page |
 | `provenance` | How the formula was obtained, the models that give the requirement (and for a PDF the formula), whether the third model was asked, and `flags`: the checks failed by the answers the passages are taken from, and a formula that starts or ends with a connective (part of it may be on another row) |
 
@@ -648,7 +652,7 @@ A record (the same in both files):
 
 Every paper is categorized into one of four legal tiers:
 
-1. **`permissive_cc` (`CC0`, `CC-BY`, `CC-BY-SA`):** Safe for verbatim redistribution and commercial/academic use with attribution.
+1. **`permissive_cc` (`CC0`, `CC-BY`, `CC-BY-SA`, public domain):** Safe for verbatim redistribution and commercial/academic use with attribution.
 2. **`restricted_cc` (`CC-BY-NC`, `CC-BY-ND`):** Permitted for non-commercial academic research; requires paraphrasing if used in derivative commercial datasets.
 3. **`custom_or_arxiv` (`arXiv non-exclusive`, HAL, institutional repository):** Governed by Text & Data Mining (TDM) research exceptions; mathematical formulas are non-copyrightable facts, and natural language context should be normalized/paraphrased before redistribution.
 4. **`unspecified`:** License not declared in metadata or source files.

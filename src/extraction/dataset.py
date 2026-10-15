@@ -6,6 +6,7 @@ the domain, the meaning of the variables, the paper and its licence. Used by ste
 import re
 
 from src.extraction.extractor import FORMULA_LAYOUT_PATTERN, formula_key
+from src.storage import classify_tier
 
 # ---------------------------------------------------------------- the formula of a LaTeX paper
 
@@ -77,6 +78,13 @@ def license_name(license: str | None) -> str | None:
     if m:
         return "cc0" if m.group(2) else "cc-" + m.group(1)
     return license
+
+
+def license_of(license_info: dict) -> str | None:
+    """The licence that sets a paper's tier: when the paper has several, the most restrictive one."""
+    names = [license_name(l) for l in license_info.get("effective_licenses_all") or []]
+    tier = license_info.get("tier")
+    return next((n for n in names if classify_tier([n]) == tier), license_name(license_info.get("effective_license")))
 
 
 # ---------------------------------------------------------------- the logic of a formula
@@ -196,8 +204,8 @@ def dataset_record(record: dict, bounds: str, paper: dict) -> tuple[dict | None,
         "year": record["year"],
         "doi": paper.get("doi"),
         "arxiv_id": paper.get("arxiv_id"),
-        "license_tier": record["license_tier"],
-        "license": license_name(license_info.get("effective_license")),
+        "license_tier": license_info.get("tier") or record["license_tier"],   # the corpus: step 3 may have changed it
+        "license": license_of(license_info),
         "source_type": record.get("source_type", "latex"),
         "location": {"file": record["file"], ("page" if record.get("source_type") == "pdf" else "line"): record["line"]},
         "provenance": {
