@@ -82,7 +82,10 @@ def run_benchmark_calls(args, regions: dict, answers_file: Path) -> None:
              for reasoning in (args.reasoning or MODEL_REASONING.get(model, DEFAULT_REASONING))]
     print(f"{len(pairs)} model and reasoning pairs x {args.runs} runs x {len(regions)} regions")
     tasks = [(model, reasoning, run, pid, n) for run in range(1, args.runs + 1) for model, reasoning in pairs for (pid, n) in sorted(regions)]
-    run_calls(tasks, regions, answers_file, args.workers, args.budget, retry_incomplete=False)
+    try:
+        run_calls(tasks, regions, answers_file, args.workers, args.budget, retry_incomplete=False)
+    except KeyboardInterrupt:
+        pass   # the answers received so far are scored
 
 
 # ---------------------------------------------------------------- scoring

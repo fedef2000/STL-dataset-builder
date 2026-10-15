@@ -62,7 +62,8 @@ def run_calls(tasks: list[tuple], regions: dict, answers_file: Path, workers: in
     """
     Makes the calls of `tasks` that are not stored yet. A task is (model, reasoning, run, paper_id, region number);
     `regions` maps (paper_id, region number) to (PaperContext, Region). Stops starting new calls once `budget`
-    dollars are spent in this invocation. With `retry_incomplete`, a call whose answer left formulas unanswered is
+    dollars are spent in this invocation. Ctrl+C stops it once the calls under way are over, and is raised again
+    for the caller. With `retry_incomplete`, a call whose answer left formulas unanswered is
     made again (the benchmark keeps such answers: they are part of what it measures). Returns the dollars spent.
     """
     stored = latest_answers(answers_file)
@@ -76,6 +77,9 @@ def run_calls(tasks: list[tuple], regions: dict, answers_file: Path, workers: in
           + (f" ({outdated} of them again, because their region has changed since the stored answer)" if outdated else "")
           + (f" ({again} of them again, because the stored answer left formulas unanswered)" if again else ""))
     if not todo:
+        return 0.0
+    if budget <= 0:
+        print("   The budget is spent: no call is made. Run again to continue.")
         return 0.0
 
     spent, stop = [0.0], threading.Event()
@@ -98,7 +102,7 @@ def run_calls(tasks: list[tuple], regions: dict, answers_file: Path, workers: in
                             for e in result.extractions],
         }
 
-    started, finished, failed = time.monotonic(), 0, 0
+    started, finished, failed, interrupted = time.monotonic(), 0, 0, False
     answers_file.parent.mkdir(parents=True, exist_ok=True)
     if answers_file.exists() and answers_file.stat().st_size and not answers_file.read_bytes().endswith(b"\n"):
         with open(answers_file, "a", encoding="utf-8") as out:
@@ -123,9 +127,13 @@ def run_calls(tasks: list[tuple], regions: dict, answers_file: Path, workers: in
                     print(f"   Budget of ${budget:g} reached: no new call is started. Run again with a higher --budget to continue.")
         except KeyboardInterrupt:
             stop.set()
-            print("   Interrupted: the answers received so far are stored. Run the same command again to continue.")
+            interrupted = True
+            print("   Interrupted: no new call is started. The calls under way finish, but their answers are not kept.")
     if failed:
         print(f"{failed} calls failed: run the same command again to retry them.")
+    if interrupted:
+        # The caller stops too: it must not go on to other calls (another kind of formula, the tie-break)
+        raise KeyboardInterrupt
     return spent[0]
 
 
