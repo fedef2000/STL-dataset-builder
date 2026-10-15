@@ -6,6 +6,7 @@ Prints answers of step 5 for a person to read, from the formulas.jsonl files the
     python scripts/inspect_extractions.py flags --check variable    # only this check (several can be given)
     python scripts/inspect_extractions.py undecided --limit 5       # only the first 5 (per check, for flags)
     python scripts/inspect_extractions.py flags --parametric        # only the parametric formulas (--concrete: those)
+    python scripts/inspect_extractions.py undecided --pdf           # only the papers held as PDF (--latex: as LaTeX)
 
 The checks are those of step 5 at its last run or report: after a change to them, run
 `python scripts/05_extract_requirements.py --report` to refresh the files.
@@ -21,7 +22,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BASE_DIR))
 
-from config import RAW_LATEX_DIR
+from config import BASE_DIR, RAW_LATEX_DIR
 from src.extraction.records import store_files
 
 sys.stdout.reconfigure(encoding="utf-8")
@@ -42,6 +43,7 @@ def wrapped(text: str, indent: str) -> str:
 CHECKS = {
     "variable": "variable not in the formula",
     "formula-copy": "the formula is not a copy of the marked text",
+    "bounds": "the formula lacks a time bound of the marked line",
     "no-formula": "no formula given",
     "requirement-copy": "the requirement is not a copy of the excerpt",
     "joined": "the requirement joins separate parts of the excerpt",
@@ -72,8 +74,13 @@ def print_heading(n: int, total: int, kind: str, record: dict) -> None:
     print("=" * WIDTH)
     print(f"[{n}/{total}] {kind} · {record['paper_id']} · {record['formula_id']}")
     print(wrapped(record["title"], "Paper:   "))
-    print(f"Source:  {RAW_LATEX_DIR / record['paper_id'] / record['file']}, line {record['line']}")
-    print(wrapped(record["source"], "Formula: "))
+    if record.get("source_type") == "pdf":
+        print(f"Source:  {BASE_DIR / 'data' / 'raw' / 'pdfs' / record['file']}, page {record['line']}")
+        print(wrapped(record["source"], "Line:    "))
+        print(wrapped(record["final"].get("formula") or "(no two models transcribe it alike)", "Formula: "))
+    else:
+        print(f"Source:  {RAW_LATEX_DIR / record['paper_id'] / record['file']}, line {record['line']}")
+        print(wrapped(record["source"], "Formula: "))
 
 
 def print_answer(label: str, answer: dict | None) -> None:
@@ -121,6 +128,8 @@ def what_failed(problem: str, answer: dict, record: dict) -> list[str]:
         return [wrapped(p["text"], "     passage given:    ") for p in chosen]
     if name in ("the formula is not a copy of the marked text", "no formula given"):
         return [wrapped(answer["formula"] or "(empty)", "     formula given:    "), wrapped(record["source"], "     formula in paper: ")]
+    if name == "the formula lacks a time bound of the marked line":
+        return [wrapped(answer["formula"], "     formula given:    "), wrapped(record["source"], "     marked line:      ")]
     if name == "variable not in the formula":
         symbol = problem.split(": ", 1)[1]
         return [f"     symbol:           {symbol}", wrapped(answer["variables"].get(symbol, ""), "     explained as:     "),
@@ -182,18 +191,21 @@ def main():
                         help="With flags: only these checks. " + "; ".join(f"{key}: {name}" for key, name in CHECKS.items()) + ".")
     parser.add_argument("--concrete", action="store_true", help="Only the concrete formulas.")
     parser.add_argument("--parametric", action="store_true", help="Only the parametric formulas.")
+    parser.add_argument("--latex", action="store_true", help="Only the papers held as LaTeX.")
+    parser.add_argument("--pdf", action="store_true", help="Only the papers held as PDF only.")
     args = parser.parse_args()
 
     runs = []
-    for parametric, wanted in ((False, args.concrete), (True, args.parametric)):
-        if (args.concrete or args.parametric) and not wanted:
-            continue
-        kind = "parametric" if parametric else "concrete"
-        formulas_file = store_files(parametric)[1]
-        if not formulas_file.exists():
-            print(f"No {kind} formulas yet: {formulas_file} is written by a run or report of step 5.")
-            continue
-        runs.append((kind, [json.loads(line) for line in open(formulas_file, encoding="utf-8")]))
+    kinds = [k for k, wanted in ((False, args.concrete), (True, args.parametric)) if wanted] or [False, True]
+    sources = [s for s, wanted in ((False, args.latex), (True, args.pdf)) if wanted] or [False, True]
+    for pdf in sources:
+        for parametric in kinds:
+            kind = f"{'parametric' if parametric else 'concrete'} {'PDF' if pdf else 'LaTeX'}"
+            formulas_file = store_files(parametric, pdf)[1]
+            if not formulas_file.exists():
+                print(f"No {kind} formulas yet: {formulas_file} is written by a run or report of step 5.")
+                continue
+            runs.append((kind, [json.loads(line) for line in open(formulas_file, encoding="utf-8")]))
     if not runs:
         return
     if args.what == "undecided":

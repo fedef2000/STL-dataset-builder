@@ -5,6 +5,7 @@ application domain and the meaning of the variables. Every answer is then checke
 the requirement must be copied from it, not rewritten.
 """
 import json
+import base64
 import re
 import time
 from dataclasses import dataclass, field
@@ -12,7 +13,9 @@ from dataclasses import dataclass, field
 import requests
 
 from config import OPENROUTER_API_KEY
+from src.analysis import estimator
 from src.extraction.context import MARK_CLOSE, MARK_OPEN, PaperContext, Region
+from src.extraction.pdf_context import PdfRegion
 
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 REQUEST_TIMEOUT = 300
@@ -105,6 +108,41 @@ PARAMETRIC_SYSTEM_PROMPT = (
     .replace(_CONCRETE_NONE, _PARAMETRIC_NONE).replace("F1", "P1")
 )
 
+
+# The prompts for a page of a PDF: the formula is read from the image of the page and written in LaTeX, the passages
+# are copied from the text extracted from the PDF.
+_PDF_INTRO = f"""You read pages of scientific papers that use Signal Temporal Logic (STL). Each page is given twice: \
+as an image, and as the text extracted from the PDF, which comes after the end of the previous page and before the \
+start of the next one. The extracted text garbles formulas: subscripts are flattened, symbols are replaced by other \
+characters, a displayed formula is broken into pieces. In the text some lines are marked: \
+{MARK_OPEN.format(id='F1')} opens and {MARK_CLOSE.format(id='F1')} closes a line that holds (part of) the formula \
+with ID F1. A line can hold pieces of more than one formula: the list of marked formulas at the end names, for each \
+ID, the operator as the text gives it, and the formula to report is the one that contains that operator. For every \
+marked formula you report four things."""
+_PDF_FORMULA = """1. formula: the whole formula the marked line belongs to, read from the image of the page and written \
+in LaTeX. Transcribe exactly what is printed: the same symbols (e.g. \\Box for a box, \\Diamond for a diamond, \
+\\mathbf{G} for a bold G), the same names, subscripts and time bounds. Do not complete, simplify or correct it. Leave \
+out the equation number and punctuation that belongs to the sentence. Keep a name the paper gives it (e.g. \
+"\\varphi_1 = ...").
+
+"""
+
+
+def _pdf_prompt(prompt: str) -> str:
+    intro_end = "For every marked formula you report four things."
+    for part in (intro_end, "1. formula:", "2. requirements:", "copied character for character, LaTeX commands included",
+                 "its symbol copied from the formula"):
+        assert prompt.count(part) == 1, part
+    prompt = _PDF_INTRO + prompt[prompt.index(intro_end) + len(intro_end):]
+    prompt = prompt[:prompt.index("1. formula:")] + _PDF_FORMULA + prompt[prompt.index("2. requirements:"):]
+    return (prompt.replace("copied character for character, LaTeX commands included",
+                           "copied character for character from the text of the page (not from the image)")
+            .replace("its symbol copied from the formula", "its symbol as written in your transcription of the formula"))
+
+
+PDF_SYSTEM_PROMPT = _pdf_prompt(SYSTEM_PROMPT)
+PDF_PARAMETRIC_SYSTEM_PROMPT = _pdf_prompt(PARAMETRIC_SYSTEM_PROMPT)
+
 ANSWER_SCHEMA = {
     "type": "object",
     "properties": {
@@ -177,6 +215,22 @@ class ExtractionError(Exception):
 def build_messages(paper: PaperContext, region: Region) -> list[dict]:
     """The paper header comes first and is the same for every region of a paper, so providers can cache it."""
     ids = ", ".join(f.id for f in region.formulas)
+    parametric = all(f.kind == "symbolic" for f in region.formulas)
+    if isinstance(region, PdfRegion):
+        text = (
+            f"Paper title: {paper.title or '(unknown)'}\n"
+            f"Abstract: {paper.abstract or '(not available)'}\n\n"
+            f"Text extracted from page {region.page} of the PDF"
+            + (f", after the end of page {region.page - 1}" if region.page_start else "")
+            + (f" and before the start of page {region.page + 1}" if region.page_end < len(region.text) else "")
+            + f":\n-----\n{region.marked_text()}\n-----\n\n"
+            f"The image shows page {region.page}.\n"
+            f"Marked formulas to report: {'; '.join(f'{f.id} (the formula with {f.hint})' for f in region.formulas)}"
+        )
+        image = "data:image/png;base64," + base64.b64encode(region.image_png()).decode("ascii")
+        user = [{"type": "text", "text": text}, {"type": "image_url", "image_url": {"url": image}}]
+        return [{"role": "system", "content": PDF_PARAMETRIC_SYSTEM_PROMPT if parametric else PDF_SYSTEM_PROMPT},
+                {"role": "user", "content": user}]
     user = (
         f"Paper title: {paper.title or '(unknown)'}\n"
         f"Abstract: {paper.abstract or '(not available)'}\n\n"
@@ -185,7 +239,6 @@ def build_messages(paper: PaperContext, region: Region) -> list[dict]:
         + f"\n-----\n{region.marked_text()}\n-----\n\n"
         f"Marked formulas to report: {ids}"
     )
-    parametric = all(f.kind == "symbolic" for f in region.formulas)
     return [{"role": "system", "content": PARAMETRIC_SYSTEM_PROMPT if parametric else SYSTEM_PROMPT}, {"role": "user", "content": user}]
 
 
@@ -284,8 +337,12 @@ def _formula_core(text: str) -> str:
     return FORMULA_LAYOUT_PATTERN.sub("", text)
 
 
+# Characters a model writes differently from the text of a PDF: the minus sign, dashes and typographic quotes
+SAME_CHARACTERS = str.maketrans({"−": "-", "–": "-", "—": "-", "’": "'", "‘": "'"})
+
+
 def passage_core(text: str) -> str:
-    return PASSAGE_LAYOUT_PATTERN.sub("", text)
+    return PASSAGE_LAYOUT_PATTERN.sub("", text.translate(SAME_CHARACTERS))
 
 
 # How a symbol is written rather than which symbol it is: its font, its braces (p_2 against p_{2}), a backslash
@@ -310,6 +367,29 @@ def _symbol_in_formula(symbol: str, formula_symbols: str) -> bool:
         return True
     base = re.split(r"[_^]", core, maxsplit=1)[0]
     return base != core and bool(base) and re.search(r"(?<![A-Za-z\\])" + re.escape(base) + r"(?![A-Za-z])", formula_symbols) is not None
+
+
+# Commands that print the same symbol, mapped to one of them: two transcriptions of one formula may pick either
+SAME_SYMBOLS = [(r"\\square(?![a-zA-Z])", r"\\Box"), (r"\\(?:lozenge|diamond|diamondsuit)(?![a-zA-Z])", r"\\Diamond"),
+                (r"\\land(?![a-zA-Z])", r"\\wedge"), (r"\\lor(?![a-zA-Z])", r"\\vee"), (r"\\lnot(?![a-zA-Z])", r"\\neg"),
+                (r"\\(?:to|rightarrow|implies|Rightarrow|Longrightarrow)(?![a-zA-Z])", r"\\rightarrow"),
+                (r"\\(?:iff|Leftrightarrow|Longleftrightarrow|leftrightarrow)(?![a-zA-Z])", r"\\Leftrightarrow"),
+                (r"\\(?:leq|leqslant)(?![a-zA-Z])", r"\\le"), (r"\\(?:geq|geqslant)(?![a-zA-Z])", r"\\ge"),
+                (r"\\varphi(?![a-zA-Z])", r"\\phi"), (r"\\varepsilon(?![a-zA-Z])", r"\\epsilon"),
+                (r"\\vartheta(?![a-zA-Z])", r"\\theta"), (r"\\widetilde(?![a-zA-Z])", r"\\tilde"),
+                (r"\\widehat(?![a-zA-Z])", r"\\hat"), (r"\\mid(?![a-zA-Z])", "|"), (r"\\(max|min)(?![a-zA-Z])", r"\1"),
+                (r"\\(?:mathcal|mathbf|mathsf|mathrm)\{U\}|\\until(?![a-zA-Z])", "U"),
+                (r"\\(?:left|right|big|Big|bigg|Bigg)(?![a-zA-Z])", ""), (r"\\coloneqq|:=|\\triangleq|\\equiv|\\doteq", "=")]
+
+
+def formula_key(text: str) -> str:
+    """
+    Two transcriptions of one formula are the same when their keys are: layout, fonts and synonyms aside. The
+    synonyms are mapped before the spaces go, so that "\\geq p" is still read as "\\geq" followed by "p".
+    """
+    for pattern, replacement in SAME_SYMBOLS:
+        text = re.sub(pattern, lambda m: m.expand(replacement) + " ", text)
+    return _symbol_core(text).rstrip(".,;")
 
 
 def _pieces_in_order(passage: str, source: str) -> int | None:
@@ -347,11 +427,35 @@ def check_passage(text: str, region_core: str) -> str | None:
     return "the requirement is not a copy of the excerpt"
 
 
-def check_extraction(x: Extraction, formula_source: str, region_core: str) -> list[str]:
-    """The problems of one answer, against the marked formula and the excerpt (given as passage_core of its text)."""
+NUMBER_PATTERN = re.compile(r"\d+(?:\.\d+)?")
+
+
+def missing_bounds(transcription: str, marked_line: str) -> list[str]:
+    """
+    The numeric time bounds that step 4 reads on the marked line of a PDF and that the transcription of the formula
+    lacks. The text layer garbles a formula, but its numbers come through.
+    """
+    bounds = []
+    for pattern in estimator.PDF_PATTERNS:
+        for m in pattern.finditer(marked_line):
+            groups = m.groupdict()
+            bounds += [b for b in (groups.get("lo"), groups.get("hi")) if b and NUMBER_PATTERN.fullmatch(b.strip())]
+    given = {float(n) for n in NUMBER_PATTERN.findall(transcription)}
+    return sorted({b.strip() for b in bounds if float(b) not in given}, key=float)
+
+
+def check_extraction(x: Extraction, formula_source: str, region_core: str, transcribed: bool = False) -> list[str]:
+    """
+    The problems of one answer, against the marked formula and the excerpt (given as passage_core of its text). A
+    formula `transcribed` from the image of a PDF page is not a copy of the marked line: its time bounds are checked.
+    """
     problems = []
     if not x.formula.strip():
         problems.append("no formula given")
+    elif transcribed:
+        missing = missing_bounds(x.formula, formula_source)
+        if missing:
+            problems.append(f"the formula lacks a time bound of the marked line: {', '.join(missing)}")
     elif _formula_core(x.formula) not in _formula_core(formula_source):
         problems.append("the formula is not a copy of the marked text")
     for n, passage in enumerate(x.requirements, 1):
@@ -407,7 +511,7 @@ def check_answer(region: Region, items: list[dict]) -> tuple[list[Extraction], l
                 variables[str(v["symbol"])] = str(v.get("meaning") or "")
         x = Extraction(id=fid, formula=str(item.get("formula") or ""), requirements=requirements,
                        domain=str(item.get("domain") or ""), variables=variables)
-        x.problems = check_extraction(x, marked[fid].source, region_core)
+        x.problems = check_extraction(x, marked[fid].source, region_core, isinstance(region, PdfRegion))
         extractions.append(x)
     for fid in marked:
         if fid not in seen:
@@ -426,7 +530,7 @@ def recheck_stored(extractions: list[dict], region: Region) -> None:
     for e in extractions:
         if e.get("id") in marked:
             x = Extraction(id=e["id"], formula=e["formula"], requirements=e["requirements"], domain=e["domain"], variables=e["variables"])
-            e["problems"] = check_extraction(x, marked[e["id"]].source, region_core)
+            e["problems"] = check_extraction(x, marked[e["id"]].source, region_core, isinstance(region, PdfRegion))
 
 
 def extract_region(paper: PaperContext, region: Region, model: str, reasoning: str = "off") -> RegionResult:

@@ -47,6 +47,7 @@ class Formula:
     start: int         # offsets of the formula in the text of its region
     end: int
     source: str
+    hint: str = ""    # PDF only: the operator the formula is found by, e.g. '□[0,2)', to tell it from others on its line
 
 
 @dataclass

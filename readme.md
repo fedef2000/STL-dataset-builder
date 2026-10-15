@@ -373,6 +373,21 @@ When the parametric formulas are extracted, only they are marked and asked about
 * The answers are kept in `data/processed/extractions/parametric/` (`answers.jsonl`, `formulas.jsonl`). The regions of a paper are numbered per run, so in one file the answers of the two runs would be taken for one another.
 * The prompt tells the two kinds of requirement apart without numbers: a passage is specific when it expresses the formula, naming a parameter where a concrete formula has a number, and generic when it only says what the formula is for. The models are also asked to explain the parameters among the variables.
 
+#### Papers held as PDF
+
+The papers held only as a PDF go through the same steps, with `--pdf` (`--latex` selects the papers held as LaTeX; a plain run does both). A PDF has no math markup, so its region is a page:
+
+* The text of the page, extracted from the PDF (`src/extraction/pdf_context.py`), with the end of the previous page and the start of the next (1,500 characters each): a requirement often sits just before a formula that opens a page.
+* The image of the page (150 dpi). The extracted text garbles formulas (flattened subscripts, symbols turned into other characters, a displayed formula broken into pieces), so the model reads each formula from the image.
+* A formula is a line of the text on which step 4 finds a bounded temporal operator. The line is marked, and the list of formulas names the operator of each (e.g. `F2 (the formula with ♦[1,2))`), since a line can hold pieces of two formulas.
+
+Two things differ from the LaTeX papers:
+
+* The formula is transcribed into LaTeX by the model, not copied. Instead of the copy check, the numbers of its time bounds must be those step 4 reads on the marked line (`bounds` among the checks), and the vote keeps a transcription only when two models give the same one (spacing, fonts and synonyms such as `\square` and `\Box` aside): `final.formula`, with `final.formula_given_by`. A displayed formula broken over two lines of the text is marked twice; the second record gets `final.same_formula_as`.
+* The requirement passages are copied from the text of the page, as for LaTeX, and checked against it; a word hyphenated at a line end and typographic characters (minus sign, quotes) are not compared.
+
+The answers are kept in `data/processed/extractions/pdf/` (and `pdf/parametric/`). A record of a PDF formula has `source_type` `pdf`, `file` the PDF and `line` the page.
+
 #### How a formula is decided
 
 First the two answers are compared. Two passages are the same when they share at least half of the shorter one.
@@ -408,6 +423,7 @@ Every answer is checked, and an answer that fails a check is flagged: the formul
 | `--tie-break` | Also asks the third model about the disputed formulas (requirement or kind). |
 | `--concrete` | Only the concrete formulas, with their own report instead of the summary. |
 | `--parametric` | Only the parametric formulas, with their own report instead of the summary. With `--concrete`: both, each with its own report. |
+| `--latex` / `--pdf` | Only the papers held as LaTeX / as PDF only, with their own reports instead of the summary. |
 | `--report` | Prints the summary (or the report of `--concrete` / `--parametric`) of the stored answers and writes `formulas.jsonl`. No model is called. |
 | `--details` | Prints the report of each kind of formula with its technical tables. |
 | `--dry-run` | Prints how many calls a run would make and about what they cost (at the average cost of the stored calls of each model), and exits. With `--paper`, also prints the prompts. |
@@ -439,11 +455,13 @@ python scripts/inspect_extractions.py flags --check variable formula-copy --limi
 | `--limit N` | Prints only the first `N` formulas (for `flags`: the first `N` answers of each check). |
 | `--check CHECK ...` | With `flags`: only these checks (one or more of the names below). |
 | `--concrete` / `--parametric` | Only that kind of formula. |
+| `--latex` / `--pdf` | Only the papers held in that source. |
 
 | `--check` | The check |
 |---|---|
 | `variable` | variable not in the formula |
 | `formula-copy` | the formula is not a copy of the marked text |
+| `bounds` | the formula lacks a time bound of the marked line (PDF) |
 | `no-formula` | no formula given |
 | `requirement-copy` | the requirement is not a copy of the excerpt |
 | `joined` | the requirement joins separate parts of the excerpt |

@@ -32,6 +32,7 @@ from src.extraction.runs import latest_answers, matches_region, run_calls, unans
 
 sys.stdout.reconfigure(encoding="utf-8")
 WIDTH = 78
+COLUMN = 13   # width of a column of the summary
 
 
 def short(label: str) -> str:
@@ -69,6 +70,11 @@ def print_report(title: str, contexts: dict, records: list[dict], calls: dict, l
     print(f"  {final[('none', 'none')]:>6,}  formulas without a requirement")
     undecided = sum(1 for r in records if r["final"]["outcome"] == "open")
     print(f"  {undecided:>6,}  undecided: " + ("the models disagree" if tie_asked else "the two models disagree (see below)"))
+    if records and records[0].get("source_type") == "pdf":
+        agreed = sum(1 for r in with_requirement if r["final"].get("formula") is not None)
+        twice = sum(1 for r in with_requirement if r["final"].get("same_formula_as"))
+        print(f"  Of the formulas with a requirement, {agreed:,} have a transcription two models agree on;"
+              f" {len(with_requirement) - agreed:,} do not. {twice:,} are the same formula as another marked line.")
 
     print("\nHOW EACH FORMULA WAS DECIDED")
     agreement = collections.Counter(r["requirement_agreement"] for r in records)
@@ -174,7 +180,8 @@ def print_paper(context, records: list[dict]) -> None:
     for r in (r for r in records if r["paper_id"] == context.paper_id):
         print("-" * WIDTH)
         final = r["final"]
-        print(f"{r['formula_id']} | {r['file']} line {r['line']} | result: {final['outcome']}"
+        where = f"page {r['line']}" if r.get("source_type") == "pdf" else f"line {r['line']}"
+        print(f"{r['formula_id']} | {r['file']} {where} | result: {final['outcome']}"
               + (f" ({final['kind']})" if final["outcome"] == "requirement" else ""))
         answers = dict(r["answers"])
         if r.get("tie_breaker"):
@@ -194,6 +201,8 @@ def print_paper(context, records: list[dict]) -> None:
                 print(f"        {symbol}: {meaning}")
             for problem in answer["problems"]:
                 print(f"     PROBLEM: {problem}")
+        if r.get("source_type") == "pdf":
+            print(f"  => formula: {final.get('formula') or '(no two transcriptions agree)'}")
         for passage in final["requirements"]:
             print(f"  => kept: <{passage['kind']}> {passage['text']}")
 
@@ -228,25 +237,30 @@ def print_plan(regions: dict, answers_file: Path, pairs: list[tuple[str, str]], 
 
 
 def print_summary(results: list[dict], labels: list[str], tie_label: str) -> None:
-    """The report of a plain --report: the concrete and the parametric formulas side by side, and together."""
+    """The report of a plain --report: every source and kind of formula side by side, and together."""
     records = [r for result in results for r in result["records"]]
     papers = {pid for result in results for pid in result["contexts"]}
-    names = [result["name"] for result in results]
+    names = [result["column"] for result in results]
     total_column = len(results) > 1
+    width = 44 + COLUMN * (len(results) + total_column)
 
     def row(text: str, counts: list, total=None, money: bool = False) -> None:
-        cell = (lambda v: f"{'$' + format(v, '.2f'):>11}") if money else (lambda v: f"{v:>11,}")
-        total = sum(counts) if total is None else total
+        """A row of the table; a count of None (a row that does not apply to a column) prints as a dash."""
+        def cell(v):
+            if v is None:
+                return f"{'-':>{COLUMN}}"
+            return f"{'$' + format(v, '.2f'):>{COLUMN}}" if money else f"{v:>{COLUMN},}"
+        total = sum(v for v in counts if v is not None) if total is None else total
         print(f"  {text:<42}" + "".join(cell(v) for v in counts) + (cell(total) if total_column else ""))
 
     def count(match) -> list[int]:
         return [sum(1 for r in result["records"] if match(r)) for result in results]
 
-    print("\n" + "=" * WIDTH)
-    print(f"  STEP 5 · {' AND '.join(name.upper() for name in names)} FORMULAS · LaTeX papers")
+    print("\n" + "=" * width)
+    print(f"  STEP 5 · SUMMARY · {', '.join(result['title'].lower() for result in results)}")
     print(f"  {len(papers):,} papers · {len(records):,} formulas")
-    print("=" * WIDTH)
-    header = "".join(f"{name:>11}" for name in names) + (f"{'total':>11}" if total_column else "")
+    print("=" * width)
+    header = "".join(f"{name:>{COLUMN}}" for name in names) + (f"{'total':>{COLUMN}}" if total_column else "")
     outcome = lambda r: (r["final"]["outcome"], r["final"]["kind"])
 
     print(f"{'RESULT':<44}{header}")
@@ -256,6 +270,11 @@ def print_summary(results: list[dict], labels: list[str], tie_label: str) -> Non
     row("   specific or generic: the models split", count(lambda r: outcome(r) == ("requirement", "unclear")))
     row("formulas without a requirement", count(lambda r: r["final"]["outcome"] == "none"))
     row("undecided", count(lambda r: r["final"]["outcome"] == "open"))
+    if any(result["pdf"] for result in results):
+        agreed = count(lambda r: r["final"]["outcome"] == "requirement" and r["final"].get("formula") is not None)
+        twice = count(lambda r: r["final"]["outcome"] == "requirement" and r["final"].get("same_formula_as"))
+        row("   formula transcribed alike by two models", [n if result["pdf"] else None for n, result in zip(agreed, results)])
+        row("   the same formula as another line", [n if result["pdf"] else None for n, result in zip(twice, results)])
     sources = [{r["paper_id"] for r in result["records"] if r["final"]["outcome"] == "requirement"} for result in results]
     row("papers with a requirement", [len(s) for s in sources], len(set().union(*sources)))
     if total_column:
@@ -291,28 +310,37 @@ def print_summary(results: list[dict], labels: list[str], tie_label: str) -> Non
         print("\nNOTES")
         for note in pending:
             print(f"  · {note}")
-    print("=" * WIDTH)
-    print("  --concrete or --parametric: the report of one kind of formula; --details adds its technical tables.")
+    print("=" * width)
+    print("  --concrete, --parametric, --latex or --pdf: the report of each selected kind of formula; --details adds its technical tables.")
 
 
-def process(parametric: bool, args, store: CorpusStore, pairs: list, tie_breaker: tuple, budget: float) -> dict:
-    """Reads the papers, makes the calls that are missing (unless --report) and collects the records of one kind of formula."""
+def process(parametric: bool, pdf: bool, args, store: CorpusStore, pairs: list, tie_breaker: tuple, budget: float) -> dict:
+    """
+    Reads the papers, makes the calls that are missing (unless --report) and collects the records of one kind of
+    formula of one source.
+    """
     labels = [f"{model}:{reasoning}" for model, reasoning in pairs]
     tie_label = f"{tie_breaker[0]}:{tie_breaker[1]}"
-    name = "parametric" if parametric else "concrete"
-    print(f"\nReading the LaTeX sources ({name} formulas)...")
-    answers_file, formulas_file = store_files(parametric)
-    contexts = load_contexts(store, args.paper, args.limit, parametric)
+    kind = "parametric" if parametric else "concrete"
+    source = "PDF" if pdf else "LaTeX"
+    print(f"\nReading the {'PDF pages' if pdf else 'LaTeX sources'} ({kind} formulas)...")
+    answers_file, formulas_file = store_files(parametric, pdf)
+    contexts = load_contexts(store, args.paper, args.limit, parametric, pdf)
     regions = {(pid, n): (context, region) for pid, context in contexts.items() for n, region in enumerate(context.regions, 1)}
-    print(f"{len(contexts)} papers with {name} formulas | {len(regions)} regions | {sum(len(c.formulas) for c in contexts.values())} formulas")
-    result = dict(name=name, title=f"{name.upper()} FORMULAS · LaTeX papers", contexts=contexts, formulas_file=formulas_file, spent=0.0)
+    print(f"{len(contexts)} {source} papers with {kind} formulas | {len(regions)} {'pages' if pdf else 'regions'}"
+          f" | {sum(len(c.formulas) for c in contexts.values())} formulas")
+    result = dict(name=f"{kind} ({source})", column=f"{source} {kind[:5] + '.' if parametric else kind}", pdf=pdf,
+                  title=f"{kind.upper()} FORMULAS · {source} papers", contexts=contexts, formulas_file=formulas_file, spent=0.0)
 
     if args.dry_run:
         if args.paper:
             for (pid, n), (context, region) in regions.items():
                 print("\n" + "=" * WIDTH + f"\n{pid} | REGION {n}/{len(context.regions)} | {region.file} L{region.line_start}-{region.line_end}\n" + "-" * WIDTH)
                 for message in build_messages(context, region):
-                    print(f"[{message['role']}]\n{message['content']}\n")
+                    content = message["content"]
+                    if isinstance(content, list):   # a PDF page: its text, and its image (not printed)
+                        content = "\n".join(part["text"] if part["type"] == "text" else f"[image of page {region.line_start}]" for part in content)
+                    print(f"[{message['role']}]\n{content}\n")
         records, _ = collect(store, contexts, pairs, tie_breaker, answers_file)
         print_plan(regions, answers_file, pairs, tie_breaker, records, args.tie_break)
         return result
@@ -350,7 +378,12 @@ def main():
     parser.add_argument("--parametric", action="store_true",
                         help="Only the parametric formulas (time bounds given as symbols), and print their own report instead of the summary. "
                              "Their answers are kept apart, in data/processed/extractions/parametric. With --concrete: both, each with its own report.")
-    parser.add_argument("--paper", action="append", help="Only this paper (repeatable); its answers are printed. The paper must be held as LaTeX.")
+    parser.add_argument("--latex", action="store_true",
+                        help="Only the papers held as LaTeX, and print the report of each kind of formula instead of the summary.")
+    parser.add_argument("--pdf", action="store_true",
+                        help="Only the papers held as PDF only (one region per page, sent with its image), and print the report of each kind "
+                             "of formula instead of the summary. Their answers are kept apart, in data/processed/extractions/pdf.")
+    parser.add_argument("--paper", action="append", help="Only this paper (repeatable); its answers are printed.")
     parser.add_argument("--limit", type=int, help="Only the first N papers.")
     parser.add_argument("--report", action="store_true", help="Report on the stored answers and write formulas.jsonl. No model is called.")
     parser.add_argument("--details", action="store_true",
@@ -369,9 +402,14 @@ def main():
     store = CorpusStore()
     results, budget = [], args.budget
     kinds = [kind for kind, wanted in ((False, args.concrete), (True, args.parametric)) if wanted] or [False, True]
-    for parametric in kinds:
-        results.append(process(parametric, args, store, pairs, tie_breaker, budget))
-        budget -= results[-1]["spent"]
+    sources = [pdf for pdf, wanted in ((False, args.latex), (True, args.pdf)) if wanted] or [False, True]
+    try:
+        for pdf in sources:
+            for parametric in kinds:
+                results.append(process(parametric, pdf, args, store, pairs, tie_breaker, budget))
+                budget -= results[-1]["spent"]
+    except KeyboardInterrupt:
+        sys.exit("Stopped. Every answer received is stored: run the same command again to continue where it stopped.")
     if args.dry_run:
         return
 
@@ -379,7 +417,7 @@ def main():
         for pid in args.paper or []:
             if pid in result["contexts"]:
                 print_paper(result["contexts"][pid], result["records"])
-    if args.concrete or args.parametric or args.details:
+    if args.concrete or args.parametric or args.latex or args.pdf or args.details:
         for result in results:
             print_report(result["title"], result["contexts"], result["records"], result["calls"], labels, tie_label, bool(result["calls"].get(tie_label)))
             if args.details:

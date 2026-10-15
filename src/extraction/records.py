@@ -7,10 +7,11 @@ import json
 import sys
 from pathlib import Path
 
-from config import PROCESSED_DIR, RAW_LATEX_DIR
+from config import BASE_DIR, PROCESSED_DIR, RAW_LATEX_DIR
 from src.storage import CorpusStore
 from src.extraction.context import build_paper_context
-from src.extraction.extractor import REASONING_LEVELS, check_passage, passage_core, recheck_stored
+from src.extraction.pdf_context import PdfRegion, build_pdf_context
+from src.extraction.extractor import REASONING_LEVELS, check_passage, formula_key, passage_core, recheck_stored
 from src.extraction.runs import latest_answers, matches_region, same_passage
 
 # The two models chosen with the benchmark (scripts/eval/benchmark.py), each with the reasoning level it did best at
@@ -21,14 +22,18 @@ EXTRACTIONS_DIR = PROCESSED_DIR / "extractions"
 ANSWERS_FILE = EXTRACTIONS_DIR / "answers.jsonl"
 FORMULAS_FILE = EXTRACTIONS_DIR / "formulas.jsonl"
 PARAMETRIC_DIR = EXTRACTIONS_DIR / "parametric"
+PDF_DIR = EXTRACTIONS_DIR / "pdf"
+# The status step 2 gives a paper held in each source
+SOURCE_STATUS = {"latex": "downloaded_latex", "pdf": "downloaded_pdf"}
 
 
-def store_files(parametric: bool = False) -> tuple[Path, Path]:
+def store_files(parametric: bool = False, pdf: bool = False) -> tuple[Path, Path]:
     """
-    (answers file, formulas file). The parametric formulas have files of their own: the regions of a paper are
-    numbered per kind of formula, so the answers of the two kinds would otherwise be taken for one another.
+    (answers file, formulas file). Each kind of formula of each source has files of its own: the regions of a paper
+    are numbered per kind of formula, so the answers of two kinds would otherwise be taken for one another.
     """
-    folder = PARAMETRIC_DIR if parametric else EXTRACTIONS_DIR
+    folder = PDF_DIR if pdf else EXTRACTIONS_DIR
+    folder = folder / "parametric" if parametric else folder
     return folder / "answers.jsonl", folder / "formulas.jsonl"
 
 
@@ -44,28 +49,33 @@ def parse_model(spec: str) -> tuple[str, str]:
     return model, reasoning
 
 
-def load_contexts(store: CorpusStore, paper_ids: list[str] | None = None, limit: int | None = None, parametric: bool = False) -> dict:
+def load_contexts(store: CorpusStore, paper_ids: list[str] | None = None, limit: int | None = None, parametric: bool = False,
+                  pdf: bool = False) -> dict:
     """
-    The context of every paper held as LaTeX that has concrete formulas (or of the papers asked for). With
-    `parametric`, the formulas marked are the parametric ones instead, numbered P1, P2, ...
+    The context of every paper held as LaTeX that has concrete formulas (or of the papers asked for that are held as
+    LaTeX). With `parametric`, the formulas marked are the parametric ones instead, numbered P1, P2, ... With `pdf`,
+    the papers held only as a PDF instead: one region per page.
     """
     count = "symbolic" if parametric else "concrete"
     options = dict(kinds=("symbolic",), id_prefix="P") if parametric else {}
+    status = SOURCE_STATUS["pdf" if pdf else "latex"]
     if paper_ids:
         for pid in paper_ids:
-            paper = store.papers.get(pid)
-            if not paper:
+            if pid not in store.papers:
                 sys.exit(f"{pid} is not in the corpus")
-            if paper.get("local_files", {}).get("status") != "downloaded_latex":
-                sys.exit(f"{pid} is not held as LaTeX (status: {paper.get('local_files', {}).get('status')})")
+        paper_ids = [pid for pid in paper_ids if store.papers[pid].get("local_files", {}).get("status") == status]
     else:
         paper_ids = [
             pid for pid, p in store.papers.items()
-            if p.get("local_files", {}).get("status") == "downloaded_latex" and (p.get("formula_estimates") or {}).get(count)
+            if p.get("local_files", {}).get("status") == status and (p.get("formula_estimates") or {}).get(count)
         ][:limit]
     contexts = {}
     for n, pid in enumerate(paper_ids, 1):
-        context = build_paper_context(pid, store.papers[pid].get("title"), RAW_LATEX_DIR / pid, **options)
+        paper = store.papers[pid]
+        if pdf:
+            context = build_pdf_context(pid, paper.get("title"), BASE_DIR / paper["local_files"]["path"], **options)
+        else:
+            context = build_paper_context(pid, paper.get("title"), RAW_LATEX_DIR / pid, **options)
         if context.regions:
             contexts[pid] = context
         if n % 100 == 0:
@@ -131,7 +141,22 @@ OUTCOMES = ("requirement", "none", "open")
 VOTES_NEEDED = 2
 
 
-def vote(given: dict, region_core: str, prefer: list[str] = ()) -> dict:
+def vote_formula(answers: dict, order: list[str]) -> dict:
+    """
+    For a formula transcribed from a PDF page: the transcription two models agree on (see formula_key), taken from the
+    first model of `order` that gives it, or None when no two agree.
+    """
+    groups = {}
+    for label in order:
+        if answers[label]["formula"].strip():
+            groups.setdefault(formula_key(answers[label]["formula"]), []).append(label)
+    agreed = max(groups.values(), key=len, default=[])
+    if len(agreed) < VOTES_NEEDED:
+        return {"formula": None, "formula_given_by": []}
+    return {"formula": answers[agreed[0]]["formula"], "formula_given_by": agreed}
+
+
+def vote(given: dict, region_core: str, prefer: list[str] = (), transcribed: bool = False) -> dict:
     """
     The outcome of the vote of the models on one formula. `given` maps each model to its answer (None when it was
     not asked or did not answer); `region_core` is passage_core of the excerpt.
@@ -184,6 +209,8 @@ def vote(given: dict, region_core: str, prefer: list[str] = ()) -> dict:
         "domain": max(domains, key=lambda d: (domains.count(d), -domains.index(d))) if domains else None,
         "variables": variables,
         "models": len(answers),
+        # A formula read from a PDF page is a transcription: it counts when two models agree on it
+        **(vote_formula(answers, order) if transcribed else {}),
     }
 
 
@@ -205,6 +232,7 @@ def collect(store: CorpusStore, contexts: dict, pairs: list[tuple[str, str]], ti
         paper = store.papers[pid]
         for n, region in enumerate(context.regions, 1):
             answers, region_core = {}, passage_core(region.text)
+            transcribed = isinstance(region, PdfRegion)
             for label, (model, reasoning) in zip(labels, asked):
                 row = rows.get((model, reasoning, 1, pid, n))
                 if row and not row.get("error") and matches_region(row, region):
@@ -216,7 +244,7 @@ def collect(store: CorpusStore, contexts: dict, pairs: list[tuple[str, str]], ti
                 record = {
                     "paper_id": pid, "formula_id": f.id, "title": context.title, "year": paper.get("year"),
                     "license_tier": (paper.get("license_info") or {}).get("tier"), "file": region.file, "line": f.line, "region": n,
-                    "source": f.source,
+                    "source": f.source, "source_type": "pdf" if transcribed else "latex",
                     "requirement_agreement": agreement(*[given[label] for label in labels[:2]]) if len(pairs) > 1 else None,
                     "domain_agreement": (given[labels[0]] or {}).get("domain") == (given[labels[1]] or {}).get("domain")
                                         if len(pairs) > 1 and all(given[label] for label in labels[:2]) else None,
@@ -231,7 +259,15 @@ def collect(store: CorpusStore, contexts: dict, pairs: list[tuple[str, str]], ti
                             "model": tie_label, "verdict": verdict_of(tie_answer, given[labels[0]], given[labels[1]]),
                             "kind": kind_of(tie_answer), "answer": {k: tie_answer[k] for k in fields},
                         }
-                record["final"] = vote({label: given[label] for label in labels}, region_core, prefer=[tie_label] if tie_label else [])
+                record["final"] = vote({label: given[label] for label in labels}, region_core, prefer=[tie_label] if tie_label else [],
+                                       transcribed=transcribed)
+                if transcribed and record["final"].get("formula"):
+                    # A displayed formula broken over two lines of the text is marked twice, and transcribed twice
+                    key = formula_key(record["final"]["formula"])
+                    first = next((r for r in records if r["paper_id"] == pid and r["region"] == n
+                                  and r["final"].get("formula") and formula_key(r["final"]["formula"]) == key), None)
+                    if first:
+                        record["final"]["same_formula_as"] = first["formula_id"]
                 records.append(record)
     return records, calls
 
