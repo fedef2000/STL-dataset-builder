@@ -27,20 +27,20 @@
 
 | Licence tier | Records | Share |
 |---|---|---|
-| custom_or_arxiv | 2,398 | 73.7% |
+| custom_or_arxiv | 1,712 | 52.6% |
+| permissive_cc | 982 | 30.2% |
 | unspecified | 300 | 9.2% |
-| permissive_cc | 296 | 9.1% |
 | restricted_cc | 261 | 8.0% |
 
 | Licence | Records | Share |
 |---|---|---|
 | arxiv-nonexclusive | 1,649 | 50.7% |
-| cc-by | 954 | 29.3% |
+| cc-by | 955 | 29.3% |
 | none | 300 | 9.2% |
-| cc-by-nc-nd | 138 | 4.2% |
+| cc-by-nc-nd | 141 | 4.3% |
 | cc-by-nc-sa | 117 | 3.6% |
 | other-oa | 63 | 1.9% |
-| cc-by-sa | 24 | 0.7% |
+| cc-by-sa | 20 | 0.6% |
 | cc0 | 7 | 0.2% |
 | cc-by-nc | 3 | 0.1% |
 
@@ -87,10 +87,10 @@ The records left as filters are added one after another. The last but one is the
 
 | Licence tier of the cleanest set | Records | Share |
 |---|---|---|
-| custom_or_arxiv | 794 | 73.2% |
+| custom_or_arxiv | 575 | 53.0% |
+| permissive_cc | 297 | 27.4% |
 | unspecified | 128 | 11.8% |
 | restricted_cc | 85 | 7.8% |
-| permissive_cc | 78 | 7.2% |
 
 ## Formulas without a requirement
 
@@ -114,9 +114,9 @@ The records left as filters are added one after another. The last but one is the
 
 | Licence tier | Records | Share |
 |---|---|---|
-| custom_or_arxiv | 4,824 | 73.2% |
+| custom_or_arxiv | 3,410 | 51.7% |
+| permissive_cc | 2,005 | 30.4% |
 | restricted_cc | 606 | 9.2% |
-| permissive_cc | 591 | 9.0% |
 | unspecified | 571 | 8.7% |
 
 | Domain | Records | Share |
