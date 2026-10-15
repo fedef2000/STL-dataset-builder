@@ -11,8 +11,8 @@ and the models' answers are put to a vote: a requirement passage is kept when tw
     python scripts/05_extract_requirements.py --dry-run             # how many calls a run would make, and their cost
     python scripts/05_extract_requirements.py --paper W3080701220   # only this paper, and print its answers
 
-Answers are stored in data/processed/extractions/answers.jsonl as they arrive (parametric/answers.jsonl for the
-parametric formulas), so an interrupted run continues where it stopped. A run or a report over the whole corpus also
+Answers are stored as they arrive in data/processed/extractions/<latex|pdf>/<concrete|parametric>/answers.jsonl, so
+an interrupted run continues where it stopped. A run or a report over the whole corpus also
 writes formulas.jsonl next to it: one record per formula, with the answer of every model and the outcome of the vote.
 """
 import argparse
@@ -81,13 +81,16 @@ def print_report(title: str, contexts: dict, records: list[dict], calls: dict, l
     agreed = sum(agreement[name] for name in AGREED)
     print(f"  {agreed:>6,}  the two models agree           ({agreement['same passages']:,} requirement · {agreement['both none']:,} none)")
     tie_name = parse_model(tie_label)[0].split("/")[-1]
-    for dispute, text in (("requirement", "they disagree"), ("kind", "same passage, kind disputed")):
+    for dispute, text in (("requirement", "they disagree"), ("kind", "same passage, kind disputed"),
+                          ("formula", "same passage, formula disputed")):
         disputed = [r for r in records if r.get("dispute") == dispute]
         if not disputed:
             continue
         asked = [r for r in disputed if "tie_breaker" in r]
         if dispute == "requirement":
             decided = sum(1 for r in asked if r["final"]["outcome"] != "open")
+        elif dispute == "formula":
+            decided = sum(1 for r in asked if r["final"].get("formula"))
         else:
             decided = sum(1 for r in asked if r["final"]["kind"] in ("specific", "generic"))
         line = f"  {len(disputed):>6,}  {text:<30} "
@@ -257,7 +260,7 @@ def print_summary(results: list[dict], labels: list[str], tie_label: str) -> Non
         return [sum(1 for r in result["records"] if match(r)) for result in results]
 
     print("\n" + "=" * width)
-    print(f"  STEP 5 · SUMMARY · {', '.join(result['title'].lower() for result in results)}")
+    print("  STEP 5 · SUMMARY")
     print(f"  {len(papers):,} papers · {len(records):,} formulas")
     print("=" * width)
     header = "".join(f"{name:>{COLUMN}}" for name in names) + (f"{'total':>{COLUMN}}" if total_column else "")
@@ -268,13 +271,13 @@ def print_summary(results: list[dict], labels: list[str], tie_label: str) -> Non
     row("   specific", count(lambda r: outcome(r) == ("requirement", "specific")))
     row("   generic", count(lambda r: outcome(r) == ("requirement", "generic")))
     row("   specific or generic: the models split", count(lambda r: outcome(r) == ("requirement", "unclear")))
-    row("formulas without a requirement", count(lambda r: r["final"]["outcome"] == "none"))
-    row("undecided", count(lambda r: r["final"]["outcome"] == "open"))
     if any(result["pdf"] for result in results):
         agreed = count(lambda r: r["final"]["outcome"] == "requirement" and r["final"].get("formula") is not None)
         twice = count(lambda r: r["final"]["outcome"] == "requirement" and r["final"].get("same_formula_as"))
         row("   formula transcribed alike by two models", [n if result["pdf"] else None for n, result in zip(agreed, results)])
         row("   the same formula as another line", [n if result["pdf"] else None for n, result in zip(twice, results)])
+    row("formulas without a requirement", count(lambda r: r["final"]["outcome"] == "none"))
+    row("undecided", count(lambda r: r["final"]["outcome"] == "open"))
     sources = [{r["paper_id"] for r in result["records"] if r["final"]["outcome"] == "requirement"} for result in results]
     row("papers with a requirement", [len(s) for s in sources], len(set().union(*sources)))
     if total_column:
@@ -288,6 +291,11 @@ def print_summary(results: list[dict], labels: list[str], tie_label: str) -> Non
     row("   third model not asked yet", count(lambda r: r.get("dispute") == "requirement" and "tie_breaker" not in r))
     row("same passage, kind disputed", count(lambda r: r.get("dispute") == "kind"))
     row("   third model not asked yet", count(lambda r: r.get("dispute") == "kind" and "tie_breaker" not in r))
+    if any(result["pdf"] for result in results):
+        pdf_only = lambda counts: [n if result["pdf"] else None for n, result in zip(counts, results)]
+        row("same passage, formula disputed (PDF)", pdf_only(count(lambda r: r.get("dispute") == "formula")))
+        row("   decided by the third model", pdf_only(count(lambda r: r.get("dispute") == "formula" and r["final"].get("formula"))))
+        row("   third model not asked yet", pdf_only(count(lambda r: r.get("dispute") == "formula" and "tie_breaker" not in r)))
     row("a model has no answer yet", count(lambda r: r["requirement_agreement"] == "not answered"))
 
     print(f"\n{'COST':<44}{header}")
@@ -371,18 +379,19 @@ def main():
     parser.add_argument("--models", nargs=2, default=DEFAULT_MODELS, metavar="ID[:REASONING]",
                         help=f"The two extraction models, each with an optional reasoning level ({', '.join(REASONING_LEVELS)}). Default: {' '.join(DEFAULT_MODELS)}.")
     parser.add_argument("--tie-break", action="store_true",
-                        help="Also ask the third model about the formulas the two disagree on: their requirement, or its kind (specific / generic).")
+                        help="Also ask the third model about the formulas the two disagree on: their requirement, its kind (specific / generic), "
+             "or for a PDF the transcription of the formula.")
     parser.add_argument("--tie-breaker", default=DEFAULT_TIE_BREAKER, metavar="ID[:REASONING]", help=f"The third model. Default: {DEFAULT_TIE_BREAKER}.")
     parser.add_argument("--concrete", action="store_true",
                         help="Only the concrete formulas (numeric time bounds), and print their own report instead of the summary.")
     parser.add_argument("--parametric", action="store_true",
                         help="Only the parametric formulas (time bounds given as symbols), and print their own report instead of the summary. "
-                             "Their answers are kept apart, in data/processed/extractions/parametric. With --concrete: both, each with its own report.")
+                             "With --concrete: both, each with its own report.")
     parser.add_argument("--latex", action="store_true",
                         help="Only the papers held as LaTeX, and print the report of each kind of formula instead of the summary.")
     parser.add_argument("--pdf", action="store_true",
                         help="Only the papers held as PDF only (one region per page, sent with its image), and print the report of each kind "
-                             "of formula instead of the summary. Their answers are kept apart, in data/processed/extractions/pdf.")
+                             "of formula instead of the summary.")
     parser.add_argument("--paper", action="append", help="Only this paper (repeatable); its answers are printed.")
     parser.add_argument("--limit", type=int, help="Only the first N papers.")
     parser.add_argument("--report", action="store_true", help="Report on the stored answers and write formulas.jsonl. No model is called.")

@@ -19,22 +19,21 @@ DEFAULT_MODELS = ["google/gemini-3.8-flash:off", "openai/gpt-6-luna:medium"]
 # The model asked about the formulas the two disagree on: the most stable one of the benchmark
 DEFAULT_TIE_BREAKER = "anthropic/claude-sonnet-5.5:medium"
 EXTRACTIONS_DIR = PROCESSED_DIR / "extractions"
-ANSWERS_FILE = EXTRACTIONS_DIR / "answers.jsonl"
-FORMULAS_FILE = EXTRACTIONS_DIR / "formulas.jsonl"
-PARAMETRIC_DIR = EXTRACTIONS_DIR / "parametric"
-PDF_DIR = EXTRACTIONS_DIR / "pdf"
 # The status step 2 gives a paper held in each source
 SOURCE_STATUS = {"latex": "downloaded_latex", "pdf": "downloaded_pdf"}
 
 
 def store_files(parametric: bool = False, pdf: bool = False) -> tuple[Path, Path]:
     """
-    (answers file, formulas file). Each kind of formula of each source has files of its own: the regions of a paper
-    are numbered per kind of formula, so the answers of two kinds would otherwise be taken for one another.
+    (answers file, formulas file), in extractions/<latex|pdf>/<concrete|parametric>. Each kind of formula of each
+    source has files of its own: the regions of a paper are numbered per source and kind of formula, so in one file
+    the answers of two kinds would be taken for one another.
     """
-    folder = PDF_DIR if pdf else EXTRACTIONS_DIR
-    folder = folder / "parametric" if parametric else folder
+    folder = EXTRACTIONS_DIR / ("pdf" if pdf else "latex") / ("parametric" if parametric else "concrete")
     return folder / "answers.jsonl", folder / "formulas.jsonl"
+
+
+ANSWERS_FILE, FORMULAS_FILE = store_files()
 
 
 # How far two models agree on the requirement of a formula, from full agreement down
@@ -108,12 +107,17 @@ def kind_of(answer: dict | None) -> str:
 def dispute_of(record: dict, labels: list[str]) -> str | None:
     """
     What the two models disagree on for a formula: 'requirement' (its passages), 'kind' (the same passages, tagged
-    specific by one and generic by the other), or None.
+    specific by one and generic by the other), 'formula' (for a PDF: the same passages, but the formula transcribed
+    differently, so that the pair could not be used), or None.
     """
+    first, second = record["answers"][labels[0]], record["answers"][labels[1]]
     if record["requirement_agreement"] in DISPUTED:
         return "requirement"
-    if record["requirement_agreement"] == "same passages" and kind_of(record["answers"][labels[0]]) != kind_of(record["answers"][labels[1]]):
+    if record["requirement_agreement"] == "same passages" and kind_of(first) != kind_of(second):
         return "kind"
+    if record.get("source_type") == "pdf" and record["requirement_agreement"] == "same passages" \
+            and formula_key(first["formula"]) != formula_key(second["formula"]):
+        return "formula"
     return None
 
 

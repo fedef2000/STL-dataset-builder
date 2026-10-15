@@ -43,7 +43,7 @@ def wrapped(text: str, indent: str) -> str:
 CHECKS = {
     "variable": "variable not in the formula",
     "formula-copy": "the formula is not a copy of the marked text",
-    "bounds": "the formula lacks a time bound of the marked line",
+    "bounds": "the formula lacks the time bounds of its line",
     "no-formula": "no formula given",
     "requirement-copy": "the requirement is not a copy of the excerpt",
     "joined": "the requirement joins separate parts of the excerpt",
@@ -128,7 +128,7 @@ def what_failed(problem: str, answer: dict, record: dict) -> list[str]:
         return [wrapped(p["text"], "     passage given:    ") for p in chosen]
     if name in ("the formula is not a copy of the marked text", "no formula given"):
         return [wrapped(answer["formula"] or "(empty)", "     formula given:    "), wrapped(record["source"], "     formula in paper: ")]
-    if name == "the formula lacks a time bound of the marked line":
+    if name == "the formula lacks the time bounds of its line":
         return [wrapped(answer["formula"], "     formula given:    "), wrapped(record["source"], "     marked line:      ")]
     if name == "variable not in the formula":
         symbol = problem.split(": ", 1)[1]

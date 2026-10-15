@@ -7,6 +7,7 @@ the requirement must be copied from it, not rewritten.
 import json
 import base64
 import re
+import unicodedata
 import time
 from dataclasses import dataclass, field
 
@@ -338,11 +339,37 @@ def _formula_core(text: str) -> str:
 
 
 # Characters a model writes differently from the text of a PDF: the minus sign, dashes and typographic quotes
-SAME_CHARACTERS = str.maketrans({"−": "-", "–": "-", "—": "-", "’": "'", "‘": "'"})
+SAME_CHARACTERS = str.maketrans({"−": "-", "–": "-", "—": "-", "’": "'", "‘": "'", "′": "'"})
+
+# LaTeX commands a model writes in a passage where the text of a PDF has the character they print
+LATEX_CHARACTERS = {
+    **{name: chr(code) for name, code in (
+        ("alpha", 0x3B1), ("beta", 0x3B2), ("gamma", 0x3B3), ("delta", 0x3B4), ("epsilon", 0x3B5), ("varepsilon", 0x3B5),
+        ("zeta", 0x3B6), ("eta", 0x3B7), ("theta", 0x3B8), ("vartheta", 0x3B8), ("iota", 0x3B9), ("kappa", 0x3BA),
+        ("lambda", 0x3BB), ("mu", 0x3BC), ("nu", 0x3BD), ("xi", 0x3BE), ("pi", 0x3C0), ("rho", 0x3C1), ("sigma", 0x3C3),
+        ("tau", 0x3C4), ("upsilon", 0x3C5), ("phi", 0x3C6), ("varphi", 0x3C6), ("chi", 0x3C7), ("psi", 0x3C8),
+        ("omega", 0x3C9), ("Gamma", 0x393), ("Delta", 0x394), ("Theta", 0x398), ("Lambda", 0x39B), ("Xi", 0x39E),
+        ("Pi", 0x3A0), ("Sigma", 0x3A3), ("Phi", 0x3A6), ("Psi", 0x3A8), ("Omega", 0x3A9))},
+    "in": "∈", "notin": "∉", "forall": "∀", "exists": "∃", "le": "≤", "leq": "≤", "ge": "≥", "geq": "≥", "neq": "≠",
+    "ne": "≠", "to": "→", "rightarrow": "→", "Rightarrow": "⇒", "leftarrow": "←", "wedge": "∧", "land": "∧", "vee": "∨",
+    "lor": "∨", "neg": "¬", "lnot": "¬", "infty": "∞", "cdot": "·", "times": "×", "oplus": "⊕", "sqcap": "⊓",
+    "sqcup": "⊔", "subseteq": "⊆", "sqsubseteq": "⊑", "cap": "∩", "cup": "∪", "Box": "□", "square": "□",
+}
+LATEX_CHARACTER_PATTERN = re.compile(r"\\([A-Za-z]+)(?![A-Za-z])")
+# Fonts, and the marks of sub- and superscripts, which the text of a PDF does not show
+PASSAGE_WRITING_PATTERN = re.compile(
+    r"\\(?:math(?:bf|rm|it|sf|tt|cal|bb)|text(?:bf|rm|it|sf|tt)?|emph|bm|boldsymbol|operatorname)(?![a-zA-Z])|[{}_^]")
 
 
 def passage_core(text: str) -> str:
-    return PASSAGE_LAYOUT_PATTERN.sub("", text.translate(SAME_CHARACTERS))
+    """
+    A passage as it is compared with its copy: without layout, with LaTeX symbols as the characters they print
+    (\\varphi as φ) and without fonts and sub- or superscript marks, as the text of a PDF gives them. The same is
+    done to the excerpt, so a passage copied from LaTeX source still matches its source.
+    """
+    text = unicodedata.normalize("NFKC", text).translate(SAME_CHARACTERS)
+    text = LATEX_CHARACTER_PATTERN.sub(lambda m: LATEX_CHARACTERS.get(m.group(1), m.group(0)), text)
+    return PASSAGE_LAYOUT_PATTERN.sub("", PASSAGE_WRITING_PATTERN.sub("", text))
 
 
 # How a symbol is written rather than which symbol it is: its font, its braces (p_2 against p_{2}), a backslash
@@ -430,18 +457,28 @@ def check_passage(text: str, region_core: str) -> str | None:
 NUMBER_PATTERN = re.compile(r"\d+(?:\.\d+)?")
 
 
-def missing_bounds(transcription: str, marked_line: str) -> list[str]:
+def missing_bounds(transcription: str, operators: str) -> list[str]:
     """
-    The numeric time bounds that step 4 reads on the marked line of a PDF and that the transcription of the formula
-    lacks. The text layer garbles a formula, but its numbers come through.
+    For a formula of a PDF: the numeric time bounds of the operators of its line (e.g. "F[0,10], G[0,5]", as the text
+    gives them) when the transcription holds those of none of them, otherwise nothing. The text garbles a formula, but
+    its numbers come through. One operator is enough: the line may hold other formulas, with other bounds.
     """
-    bounds = []
+    per_operator = []
     for pattern in estimator.PDF_PATTERNS:
-        for m in pattern.finditer(marked_line):
+        for m in pattern.finditer(operators):
             groups = m.groupdict()
-            bounds += [b for b in (groups.get("lo"), groups.get("hi")) if b and NUMBER_PATTERN.fullmatch(b.strip())]
+            bounds = [b.strip() for b in (groups.get("lo"), groups.get("hi")) if b and NUMBER_PATTERN.fullmatch(b.strip())]
+            if bounds:
+                per_operator.append(bounds)
     given = {float(n) for n in NUMBER_PATTERN.findall(transcription)}
-    return sorted({b.strip() for b in bounds if float(b) not in given}, key=float)
+    if not per_operator or any(all(float(b) in given for b in bounds) for bounds in per_operator):
+        return []
+    return sorted({b for bounds in per_operator for b in bounds}, key=float)
+
+
+def formula_reference(formula, region: Region) -> str:
+    """What the formula given by a model is checked against: the marked source, or for a PDF the operators it is found by."""
+    return (formula.hint or formula.source) if isinstance(region, PdfRegion) else formula.source
 
 
 def check_extraction(x: Extraction, formula_source: str, region_core: str, transcribed: bool = False) -> list[str]:
@@ -455,7 +492,7 @@ def check_extraction(x: Extraction, formula_source: str, region_core: str, trans
     elif transcribed:
         missing = missing_bounds(x.formula, formula_source)
         if missing:
-            problems.append(f"the formula lacks a time bound of the marked line: {', '.join(missing)}")
+            problems.append(f"the formula lacks the time bounds of its line: {', '.join(missing)}")
     elif _formula_core(x.formula) not in _formula_core(formula_source):
         problems.append("the formula is not a copy of the marked text")
     for n, passage in enumerate(x.requirements, 1):
@@ -511,7 +548,7 @@ def check_answer(region: Region, items: list[dict]) -> tuple[list[Extraction], l
                 variables[str(v["symbol"])] = str(v.get("meaning") or "")
         x = Extraction(id=fid, formula=str(item.get("formula") or ""), requirements=requirements,
                        domain=str(item.get("domain") or ""), variables=variables)
-        x.problems = check_extraction(x, marked[fid].source, region_core, isinstance(region, PdfRegion))
+        x.problems = check_extraction(x, formula_reference(marked[fid], region), region_core, isinstance(region, PdfRegion))
         extractions.append(x)
     for fid in marked:
         if fid not in seen:
@@ -530,7 +567,7 @@ def recheck_stored(extractions: list[dict], region: Region) -> None:
     for e in extractions:
         if e.get("id") in marked:
             x = Extraction(id=e["id"], formula=e["formula"], requirements=e["requirements"], domain=e["domain"], variables=e["variables"])
-            e["problems"] = check_extraction(x, marked[e["id"]].source, region_core, isinstance(region, PdfRegion))
+            e["problems"] = check_extraction(x, formula_reference(marked[e["id"]], region), region_core, isinstance(region, PdfRegion))
 
 
 def extract_region(paper: PaperContext, region: Region, model: str, reasoning: str = "off") -> RegionResult:
