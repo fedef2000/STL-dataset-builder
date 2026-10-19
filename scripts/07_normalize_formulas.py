@@ -10,9 +10,9 @@ Each formula goes through the rules of docs/normalization_rules.md and then thro
 Writes, in data/normalized/ (the .stl files of an earlier run are replaced):
 
     stl/f00001.stl ...            the formulas normalized and accepted by stlgen (status ok)
-    needs_review/r00001.stl ...   the formulas normalized with a choice not yet approved (also accepted by stlgen)
+    needs_review/r00001.stl ...   the formulas with a rule of status needs_review (none since 2026-10-19: not written)
     manifest.jsonl                one line per input record: status, file, reasons, rules, original and normalized text
-    report.md                     counts by status, reason and rule
+    report.md                     counts by status and reason, with examples
 """
 import argparse
 import collections
@@ -27,7 +27,7 @@ from config import DATA_DIR, RAW_LATEX_DIR, STLGEN_BIN
 from src.normalization.latex import paper_macros
 from src.normalization.normalize import normalize
 from src.normalization.rules import RULES
-from src.normalization.validate import SELECTION_LIMITS, check, over_limits
+from src.normalization.validate import check, over_limits
 
 sys.stdout.reconfigure(encoding="utf-8")
 INPUT_FILE = DATA_DIR / "dataset" / "stl_formulas_unpaired.jsonl"
@@ -74,6 +74,8 @@ def write_files(lines: list[dict]):
                 number += 1
                 line["file"] = f"{folder}/{prefix}{number:05d}.stl"
                 (OUTPUT_DIR / line["file"]).write_text(line["normalized"] + "\n", encoding="utf-8")
+        if number == 0 and not any(directory.iterdir()):
+            directory.rmdir()  # no formula with this status: no empty folder
     with open(OUTPUT_DIR / "manifest.jsonl", "w", encoding="utf-8") as f:
         for line in lines:
             f.write(json.dumps(line, ensure_ascii=False) + "\n")
@@ -142,11 +144,6 @@ def report(lines: list[dict], seed: str) -> str:
     out += ["## By status", ""]
     out += table([(s, status[s], f"{100 * status[s] / total:.1f}%") for s in ("ok", "needs_review", "rejected")],
                  ("Status", "Formulas", "Share"))
-    by_kind = collections.Counter((l["source_type"], l["bounds"], l["status"]) for l in lines)
-    out += ["## By source and bounds", ""]
-    out += table([(src, b, *(by_kind[(src, b, s)] for s in ("ok", "needs_review", "rejected")))
-                  for src in ("latex", "pdf") for b in ("numeric", "symbolic")],
-                 ("Source", "Bounds", "ok", "needs_review", "rejected"))
     rejected = collections.Counter(reason_rule(l["reasons"][0]) for l in lines if l["status"] == "rejected")
     example = examples(lines, "rejected")
     out += ["## Why formulas are rejected", "",
@@ -160,11 +157,12 @@ def report(lines: list[dict], seed: str) -> str:
                  ("Rule", "Formulas", "What it is", "Example", "What the rule found"))
     review = collections.Counter(r for l in lines if l["status"] == "needs_review"
                                  for r in {reason_rule(x) for x in l["reasons"]})
-    out += ["## Why formulas need review", "", "A formula may have several reasons: the counts add up to more than "
-            "the formulas.", ""]
-    example = examples(lines, "needs_review")
-    out += table([(r, n, RULES[r][1], code(example[r]["original"]), code(example[r]["normalized"]))
-                  for r, n in review.most_common()], ("Rule", "Formulas", "What it is", "Example", "Normalized as"))
+    if review:
+        out += ["## Why formulas need review", "", "A formula may have several reasons: the counts add up to more "
+                "than the formulas.", ""]
+        example = examples(lines, "needs_review")
+        out += table([(r, n, RULES[r][1], code(example[r]["original"]), code(example[r]["normalized"]))
+                      for r, n in review.most_common()], ("Rule", "Formulas", "What it is", "Example", "Normalized as"))
     unknown = collections.Counter(l["reasons"][0].split(": ", 1)[1] for l in lines
                                   if l["status"] == "rejected" and reason_rule(l["reasons"][0]) == "unknown_command")
     with_command = collections.defaultdict(list)
@@ -182,15 +180,6 @@ def report(lines: list[dict], seed: str) -> str:
             "Candidates for a new rule. Many come from the paper's macros: its definition of an operator uses a "
             "command to draw the symbol (\\raisebox, \\rotatebox, ...).", ""]
     out += table(rows, ("Command", "Formulas", "Written in the formula", "From a macro", "Example"))
-    kept = [l for l in lines if l["status"] != "rejected"]
-    fired = collections.Counter(r for l in kept for r in l["rules"])
-    out += ["## Rules applied to the formulas kept", "", "Formulas with status ok or needs_review.", ""]
-    out += table([(r, n) for r, n in sorted(fired.items(), key=lambda x: -x[1])], ("Rule", "Formulas"))
-    over = sum(1 for l in kept if l["over_limits"])
-    limits = ", ".join(f"{k} {v}" for k, v in SELECTION_LIMITS.items())
-    out += ["## Selection limits of stl-nl", "",
-            f"{over} of the formulas kept are over the limits ({limits}) and would be skipped when stl-nl selects "
-            "its input.", ""]
     return "\n".join(out)
 
 

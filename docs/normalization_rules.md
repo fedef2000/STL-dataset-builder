@@ -8,7 +8,7 @@ Code: `src/normalization/`, run by `scripts/07_normalize_formulas.py`. Tests: `t
 Every record ends with one status:
 
 * `ok`: normalized, accepted by `stlgen`, written to `data/normalized/stl/`.
-* `needs_review`: normalized as far as the agreed rules allow, but with a choice we haven't approved. Written to `data/normalized/needs_review/` (also checked with `stlgen`), so that approving a policy later only means moving files.
+* `needs_review`: normalized as far as the agreed rules allow, but with a choice we haven't approved. Since 2026-10-19 no rule has this status (every choice was approved), so the folder isn't written; the status stays for a future rule that may need it. Written to `data/normalized/needs_review/` (also checked with `stlgen`), so that approving a policy later only means moving files.
 * `rejected`: can't be represented. The reason says why.
 
 Each rule has a name (the list is `RULES` in `src/normalization/rules.py`). The manifest lists the rules that fired for each record, so every change can be traced. In the examples, `→` shows the result of that rule alone. A rejected formula gets the first rule that rejects it.
@@ -30,7 +30,7 @@ Each rule has a name (the list is `RULES` in `src/normalization/rules.py`). The 
 |---|---|
 | `expand_paper_macros` | the paper has `\newcommand{\glob}{\Box}`: `\glob_{[0,5]} p` → `\Box_{[0,5]} p`. With arguments: `\newcommand{\BoxOp}[1]{\Box_{#1}}`: `\BoxOp{[600,700]}` → `\Box_{[600,700]}`; with an optional argument (`\newcommand{\glob}[2][]{...}`) its default is used when the formula has no `[...]`. Read from `\newcommand`, `\renewcommand`, `\providecommand`, `\DeclareRobustCommand`, `\DeclareMathOperator`, `\def` (plain parameters `#1#2` only) and `\let`, in the same files as step 4: the `.tex` files of the document (not the old drafts an arXiv bundle may carry) and the `.sty`, `.cls`, `.def` files, without comments and `\iffalse` blocks. Repeated until no macro is left. LaTeX records only. The commands the lexer knows as standard LaTeX (`\Box`, `\wedge`, `\mathbf`, ...) are never expanded, even if a bundled package defines them; the brief's names that are not LaTeX's own (`\always`, `\eventually`, `\until`) are, as the paper's definition is more exact than the table. |
 | `fallback_operator_table` | the usual names of the temporal operators, read from a fixed table when the paper doesn't define them (`\F_{[1,4]}\,p` → `F[1,4] p`) or defines them with commands that only draw the symbol (`\newcommand{\always}{\operatorname{\text{\raisebox{-.01em}{\scalebox{1.1}{$\Square$}}}}}`: `\always_{[0,3]} p` → `G[0,3] p`), i.e. a definition that, fully expanded, still has a command the lexer doesn't know. Names: `\always` `\Always` `\alw` `\glob` `\globally` `\lglobally` `\lalways` `\LTLg` `\LTLglobally` `\LTLsquare` `\G` → `G`; `\eventually` `\Eventually` `\ev` `\even` `\event` `\levent` `\leventually` `\LTLf` `\LTLeventually` `\LTLdiamond` `\diamond` `\F` → `F`; `\until` `\Until` `\U` `\luntil` `\LTLu` → `U` (the names `scripts/eval/render.py` uses to render the evaluation set, and the LTL symbols of the mathabx package). A definition that works is kept, whatever it means. Also for PDF records. Decided on 2026-10-19: the meaning may differ from the paper's, but the pair is built from the formula we produce. |
-| `macro_conflict` | needs_review: a macro used in the formula has two different definitions in the paper. The last one (in path order) is used. |
+| `macro_conflict` | a macro used in the formula has two different definitions in the paper. The last one (in path order) is used; only recorded (needs_review until 2026-10-19). |
 | `macro_loop` | rejected: a macro still left after 10 rounds, or an expansion that grows past 20,000 tokens |
 | `unknown_command` | rejected: a command neither defined by the paper nor known, with its name (the report lists the most frequent ones). `\mathbb`, `\mathscr`, `\mathfrak` are among them: their letters are sets, not signals. |
 | `strip_layout` | removes `\left`, `\right`, `\big…`/`\Big…`, `\,` `\;` `\:` `\!` `\ ` `\>` `~` `\quad` `\qquad` `\limits` `\displaystyle` `\nonumber` `\xspace` `$` `&` `\\`, the font switches `\rm` `\sf` `\bf` `\it` `\tt` `\cal`, commands with their argument `\phantom{…}` `\label{…}` `\hspace{…}` `\color{…}`, `\kern`/`\mkern` with their dimension, an empty script `^{}` (left by a macro whose optional argument isn't given); unwraps `\ensuremath`, `\mathop`, `\mathbin`, `\mathrel`, `\mathord`, `\operatorname`, `\textcolor{c}{…}` |
@@ -97,12 +97,12 @@ Each rule has a name (the list is `RULES` in `src/normalization/rules.py`). The 
 | `nonstandard_operator` | `\widetilde{\Box}`, `\boxplus`, `\sqcup`, `\oplus`, `\boxminus`, `\diamondminus`, an operator command with a script that isn't an interval (`\Box_{\phi}`), `X` with an interval. A bare letter with a script that isn't an interval is a name (`G_R`, `R_{30,30}`). |
 | `parse_error` | anything else the parser doesn't recognise (an incomplete formula, a `\|` used as a separator, ...), with the position |
 
-### needs_review (a choice not yet approved)
+### Only recorded (needs_review until 2026-10-19, then approved)
 
 | Rule | Example |
 |---|---|
-| `symbolic_constant` | `x > c` where `variables["c"]` says threshold/constant/parameter/bound/limit/maximum/minimum/max/min: it would become a signal. Symbols the paper doesn't describe are not flagged. |
-| `indexed_signal` | `x[0]`, `x[1]` → `x_0`, `x_1`: vector component or time 0? |
+| `symbolic_constant` | `x > c` where `variables["c"]` says threshold/constant/parameter/bound/limit/maximum/minimum/max/min: `c` is kept as a signal. Symbols the paper doesn't describe are not recorded. |
+| `indexed_signal` | `x[0]`, `x[1]` → `x_0`, `x_1` (read as vector components, though they may be the signal at time 0) |
 
 ## Stage 3: parser (`parser.py`)
 
@@ -131,9 +131,9 @@ Each formula goes through `stlgen import` alone, in a temporary directory, becau
 ```
 data/normalized/
 ├── stl/f00001.stl ...            # status ok, numbered in input order
-├── needs_review/r00001.stl ...   # status needs_review
+├── needs_review/r00001.stl ...   # status needs_review (not written while no rule has it)
 ├── manifest.jsonl                # one line per input record
-└── report.md                     # counts by status, by rule, most frequent rejection reasons and unknown commands
+└── report.md                     # counts by status, the rejection reasons and the most frequent unknown commands, each with an example
 ```
 
 A manifest line: `id`, `status`, `file` (or null), `reasons`, `rules` (those that fired), `original`, `normalized`, `stl` (stlgen's canonical text), `substitutions` (e.g. `{"T": 37}`), `rounded` (e.g. `[[["0.2","0.4"],["0","1"]]]`), `over_limits`, `bounds`, `source_type`.

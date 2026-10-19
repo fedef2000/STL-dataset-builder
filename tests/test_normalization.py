@@ -128,7 +128,8 @@ def test_random_symbolic_bounds():
         assert r.normalized.endswith(f"(G[{r.substitutions['t']},{r.substitutions['t'] + 5}] q)")
 
 
-REVIEW_CASES = [
+# Rules that only record what they find (they were needs_review until 2026-10-19)
+RECORDED_CASES = [
     (r"\twice_{[0,5]} p", "F[0,5] p", "macro_conflict"),
     (r"\Box_{[0,5]} x > c", "G[0,5] (x > c)", "symbolic_constant"),
     (r"G_{[0,5]}(x[0] \ge 0)", "G[0,5] (x_0 >= 0)", "indexed_signal"),
@@ -136,11 +137,11 @@ REVIEW_CASES = [
 VARIABLES = {"c": "the speed threshold", "\\varphi_1": "a subformula", "\\varphi_2": "a subformula"}
 
 
-@pytest.mark.parametrize("formula,expected,rule", REVIEW_CASES)
-def test_needs_review(formula, expected, rule):
+@pytest.mark.parametrize("formula,expected,rule", RECORDED_CASES)
+def test_recorded(formula, expected, rule):
     result = run(formula, variables=VARIABLES)
-    assert (result.status, result.normalized) == ("needs_review", expected), result.reasons
-    assert any(r.startswith(rule) for r in result.reasons)
+    assert (result.status, result.normalized) == ("ok", expected), result.reasons
+    assert rule in result.rules
 
 
 def test_a_working_definition_wins_over_the_table():
@@ -215,7 +216,7 @@ def test_record_filters():
 
 
 def test_every_rule_is_tested():
-    tested = ({c[2] for c in OK_CASES} | {c[2] for c in REVIEW_CASES} | {c[1] for c in REJECTED_CASES}
+    tested = ({c[2] for c in OK_CASES} | {c[2] for c in RECORDED_CASES} | {c[1] for c in REJECTED_CASES}
               | {"random_symbolic_bounds", "other_logic", "connective_at_edge", "bounds_unsatisfiable",
                  "placeholder_subformula", "ambiguous_scope"})
     # stlgen_error is the check of step 7, after the normalization (test_stlgen_accepts_every_ok_case)

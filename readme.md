@@ -47,9 +47,8 @@ STL_dataset_builder/
 │   │   └── stats.md                   # What the dataset holds
 │   ├── normalized/                    # The unpaired formulas as input of stl-nl, built by step 7 - tracked in git
 │   │   ├── stl/                       # One .stl file per formula accepted (f00001.stl ...)
-│   │   ├── needs_review/              # One .stl file per formula normalized with a choice not yet approved
 │   │   ├── manifest.jsonl             # One line per input formula: status, reasons, rules, original and normalized text
-│   │   └── report.md                  # Counts by status, reason and rule
+│   │   └── report.md                  # Counts by status and rejection reason, with examples
 │   ├── logs/                          # (gitignored)
 │   │   └── pipeline.log               # Timestamped log of the download step
 │   ├── raw/                           # (gitignored)
@@ -603,7 +602,7 @@ Turns the formulas of `data/dataset/stl_formulas_unpaired.jsonl` into the input 
 * the time bounds are made closed integer intervals: open intervals are closed, real bounds rounded outward (the lower one down, the upper one up), and symbolic bounds (`[0,T]`) get random integers from 0 to 100, the same symbol the same value everywhere in the formula;
 * the result is written fully parenthesized and checked with `stlgen`, the parser of `stl-nl`.
 
-A formula is `ok`, `needs_review` (normalized, but with a choice not yet approved: a symbol the paper calls a threshold, ...) or `rejected` (definitions of the semantics or of an operator, unbounded operators, products, functions, unknown commands, ...). Nothing is guessed: a construct no rule covers is rejected with its reason.
+A formula is `ok` or `rejected` (definitions of the semantics or of an operator, unbounded operators, products, functions, unknown commands, ...). Nothing is guessed: a construct no rule covers is rejected with its reason.
 
 ```bash
 python scripts/07_normalize_formulas.py
@@ -612,7 +611,7 @@ python scripts/07_normalize_formulas.py
 python scripts/07_normalize_formulas.py --seed 1
 ```
 
-It needs the `stlgen` binary of `stl-nl`, built with `cargo build --release --locked --manifest-path rust/stlgen/Cargo.toml` in the `stl-nl` repository. By default it is looked for in a checkout of `stl-nl` next to this one (`../stl-nl/rust/stlgen/target/release/stlgen`); set `STLGEN_BIN` in `.env` or pass `--stlgen` for another place. It writes, in `data/normalized/`: `stl/` and `needs_review/` (the `.stl` files of an earlier run are replaced), `manifest.jsonl` (one line per input formula: `id`, `status`, `file`, `reasons`, `rules` that fired, `original`, `normalized`, `stl` as `stlgen` prints it back, `substitutions` of the symbolic bounds, `rounded` bounds, `over_limits` of `stl-nl`'s selection) and `report.md`. The same input and seed give the same files.
+It needs the `stlgen` binary of `stl-nl`, built with `cargo build --release --locked --manifest-path rust/stlgen/Cargo.toml` in the `stl-nl` repository. By default it is looked for in a checkout of `stl-nl` next to this one (`../stl-nl/rust/stlgen/target/release/stlgen`); set `STLGEN_BIN` in `.env` or pass `--stlgen` for another place. It writes, in `data/normalized/`: `stl/` (the `.stl` files of an earlier run are replaced; they are numbered in input order, so a file's number can change from one run to another, and `manifest.jsonl` says which record each file is), `manifest.jsonl` (one line per input formula: `id`, `status`, `file`, `reasons`, `rules` that fired, `original`, `normalized`, `stl` as `stlgen` prints it back, `substitutions` of the symbolic bounds, `rounded` bounds, `over_limits` of `stl-nl`'s selection) and `report.md`. The same input and seed give the same files.
 
 | Flag | What it does |
 |---|---|

@@ -20,7 +20,7 @@ RULES = {
     # Stage 1: tokens and macros
     "expand_paper_macros": ("ok", "a macro of the paper replaced by its definition"),
     "fallback_operator_table": ("ok", "an operator name (\\always, \\F, \\LTLdiamond, ...) the paper doesn't define, or defines with commands that only draw it, read from a fixed table"),
-    "macro_conflict": ("needs_review", "a macro the paper defines twice differently (the last definition is used)"),
+    "macro_conflict": ("ok", "a macro the paper defines twice differently: the last definition is used"),
     "macro_loop": ("rejected", "a macro still left after 10 rounds of expansion"),
     "unknown_command": ("rejected", "a command neither defined by the paper nor known"),
     "strip_layout": ("ok", "spacing, sizing and alignment commands removed"),
@@ -64,10 +64,10 @@ RULES = {
     "set_membership": ("rejected", "\\in a set that is not an interval"),
     "infinity": ("rejected", "\\infty outside of a time bound"),
     "nonstandard_operator": ("rejected", "an operator STL doesn't have, or a G/F/U/R with a script that isn't an interval"),
-    # Stage 2: needs review
+    # Stage 2: only recorded (needs_review until 2026-10-19)
     "placeholder_subformula": ("ok", "a Boolean atom the paper calls a (sub)formula: kept as an atom, as the subformula can't be rebuilt"),
-    "symbolic_constant": ("needs_review", "a symbol the paper calls a threshold, constant, parameter, ...: it becomes a signal"),
-    "indexed_signal": ("needs_review", "x[0], x[1]: written x_0, x_1, but it may be the signal at time 0"),
+    "symbolic_constant": ("ok", "a symbol the paper calls a threshold, constant, parameter, ...: kept as a signal"),
+    "indexed_signal": ("ok", "x[0], x[1] written x_0, x_1 (a component, though it may be the signal at time 0)"),
     # Stage 3: parser
     "strip_label": ("ok", "the name in front of the formula (\\psi = ..., \\phi := ..., u_4: ...) removed"),
     "strip_trailing_punct": ("ok", "a final , . ; removed"),
@@ -200,14 +200,14 @@ PLACEHOLDER_PATTERN = re.compile(r"\b(sub-?formula|formula|specification)s?\b", 
 
 def check_symbols(root, meanings: dict[str, str], trace: Trace):
     """
-    needs_review for the real-valued signals the paper calls a threshold, constant, ... (they would be read as signals).
-    The Boolean atoms it calls a (sub)formula are only recorded (placeholder_subformula): the subformula can't be
-    rebuilt, so the atom stands for it. `meanings` maps the normalized names to the meanings.
+    Records the real-valued signals the paper calls a threshold, constant, ... (symbolic_constant: they are read as
+    signals) and the Boolean atoms it calls a (sub)formula (placeholder_subformula: the subformula can't be rebuilt,
+    so the atom stands for it). `meanings` maps the normalized names to the meanings.
     """
     constants = sorted({n.value for n in _walk(root) if n.kind == "var"
                         and CONSTANT_PATTERN.search(meanings.get(n.value, ""))})
     if constants:
-        trace.review("symbolic_constant", ", ".join(constants))
+        trace.fire("symbolic_constant")
     placeholders = sorted({n.value for n in _walk(root) if n.kind == "atom"
                            and PLACEHOLDER_PATTERN.search(meanings.get(n.value, ""))})
     if placeholders:

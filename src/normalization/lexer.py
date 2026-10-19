@@ -451,7 +451,7 @@ class Lexer:
             self.trace.fire("current_time_index")
             return end + 1
         if tokens[i] == "[" and inside.isdigit():
-            self.trace.review("indexed_signal", f"{prev.value}[{inside}]")
+            self.trace.fire("indexed_signal")
             prev.value = f"{prev.value}_{inside}"
             return end + 1
         raise Rejected("function", f"{prev.value}{tokens[i]}{inside}{closing}")

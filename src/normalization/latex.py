@@ -192,7 +192,7 @@ def expand(tokens: list[str], macros: dict[str, list[Macro]], protected: set[str
                 i += 1
                 continue
             if len({d.key() for d in definitions}) > 1:
-                trace.review("macro_conflict", name)
+                trace.fire("macro_conflict")
             macro, i = definitions[-1], i + 1
             args = []
             if macro.default is not None:
