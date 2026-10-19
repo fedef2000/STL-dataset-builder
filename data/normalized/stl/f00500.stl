@@ -1,1 +1,1 @@
-G[0,30] (((gear == 1) -> (speed < 80)) && ((gear == 2) -> (speed < 90)) && ((gear == 3) -> (speed > 20)) && ((gear == 4) -> (speed > 30)))
+G[0,46] (x_air > Moderate)

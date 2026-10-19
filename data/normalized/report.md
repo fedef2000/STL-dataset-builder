@@ -6,18 +6,9 @@ From `data/dataset/stl_formulas_unpaired.jsonl` (6592 formulas), with the rules 
 
 | Status | Formulas | Share |
 |---|---|---|
-| ok | 1764 | 26.8% |
-| needs_review | 74 | 1.1% |
+| ok | 1838 | 27.9% |
+| needs_review | 0 | 0.0% |
 | rejected | 4754 | 72.1% |
-
-## By source and bounds
-
-| Source | Bounds | ok | needs_review | rejected |
-|---|---|---|---|---|
-| latex | numeric | 785 | 25 | 1434 |
-| latex | symbolic | 644 | 29 | 2801 |
-| pdf | numeric | 260 | 12 | 222 |
-| pdf | symbolic | 75 | 8 | 297 |
 
 ## Why formulas are rejected
 
@@ -43,16 +34,6 @@ The first reason of each formula. *Example* is one of these formulas as the pape
 | multiplication | 49 | a product: 2x, \cdot, \times, *, two terms side by side | `F_{[0,10]}(\cdot)` | `\cdot` |
 | division | 21 | a division other than of two integers | `\Box_{[11,40]}(\|\frac{\lambda(t) - \lambda_{ref}}{\lambda_{ref}}\| < tol)` | `\frac{\lambda(t)-\lambda_{ref}}{\lambda_{ref}}` |
 | macro_loop | 4 | a macro still left after 10 rounds of expansion | `\urule {\Gamma, F^m(T)\le X, X\le F^n(T)\vdash X:\alpha,\Delta} {\Gamma\vdash T:\Box_{[m,n]}\alpha,\Delta } {  …` *(macro)* | `the expansion grows without end` |
-
-## Why formulas need review
-
-A formula may have several reasons: the counts add up to more than the formulas.
-
-| Rule | Formulas | What it is | Example | Normalized as |
-|---|---|---|---|---|
-| symbolic_constant | 65 | a symbol the paper calls a threshold, constant, parameter, ...: it becomes a signal | `F_{\le i}(x\le v)` | `F[0,53] (x <= v)` |
-| macro_conflict | 8 | a macro the paper defines twice differently (the last definition is used) | `a ~\U_{[2,2]} b` | `a U[2,2] b` |
-| indexed_signal | 1 | x[0], x[1]: written x_0, x_1, but it may be the signal at time 0 | `\phi := G_{[0, 5]}(F_{[0, 3]}(x[0] \ge 0 \wedge x[1] \ge 0))` | `G[0,5] (F[0,3] ((x_0 >= 0) && (x_1 >= 0)))` |
 
 ## Most frequent unknown commands
 
@@ -90,42 +71,3 @@ Candidates for a new rule. Many come from the paper's macros: its definition of 
 | `\nvDash` | 4 | 4 | 0 | `\sigma \nvDash \dia_{[a,b]}\psi` |
 | `\ell` | 4 | 4 | 0 | `(\mathbf{x},H,\ell) \models \varphi_1\mathcal{U}_{[0,t_2]}\varphi_2` |
 | `\blacklozenge` | 4 | 4 | 0 | `\blacklozenge_{[0,1]} p` |
-
-## Rules applied to the formulas kept
-
-Formulas with status ok or needs_review.
-
-| Rule | Formulas |
-|---|---|
-| subscript_interval | 1832 |
-| latex_ops | 1243 |
-| greek_names | 1204 |
-| index_names | 954 |
-| unwrap_font | 825 |
-| random_symbolic_bounds | 766 |
-| strip_label | 734 |
-| placeholder_subformula | 539 |
-| expand_paper_macros | 447 |
-| strip_layout | 405 |
-| ambiguous_scope | 148 |
-| close_open_interval | 100 |
-| fallback_operator_table | 70 |
-| symbolic_constant | 65 |
-| accent_names | 51 |
-| current_time_index | 49 |
-| bound_shorthand | 46 |
-| chained_comparison | 41 |
-| round_bounds_outward | 38 |
-| relational_eq | 32 |
-| group_brackets | 28 |
-| reserved_names | 18 |
-| bool_constants | 14 |
-| macro_conflict | 8 |
-| interval_membership | 5 |
-| negation_minus | 3 |
-| indexed_signal | 1 |
-| multiword_names | 1 |
-
-## Selection limits of stl-nl
-
-0 of the formulas kept are over the limits (node_count 2000, syntax_depth 32, text_chars 20000) and would be skipped when stl-nl selects its input.

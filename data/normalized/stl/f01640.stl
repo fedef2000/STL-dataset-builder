@@ -1,1 +1,1 @@
-phi U[15,35] psi
+(G[20,31] (latency < 137)) && (G[25,60] (backlog < 55))

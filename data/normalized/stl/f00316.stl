@@ -1,1 +1,1 @@
-G[2,91] e_prop
+G[0,1] ((x >= alpha) && (x <= beta))

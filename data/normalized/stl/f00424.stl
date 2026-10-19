@@ -1,1 +1,1 @@
-G[11,50] (F[0,10] (|mu| < 0.05))
+(G[36,62] (varphi_1 && varphi_2)) && (G[32,36] (varphi_1 && (!varphi_2))) && (G[62,81] ((!varphi_1) && varphi_2))

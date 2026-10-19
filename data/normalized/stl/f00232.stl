@@ -1,1 +1,1 @@
-psi_1 U[0,11] psi_2
+G[0,30] ((gear == 3) -> (speed > rho))

@@ -1,1 +1,1 @@
-(G[0,10] (paceCount <= 15)) && (F[0,10] (paceCount >= 8))
+F[0,95] cs

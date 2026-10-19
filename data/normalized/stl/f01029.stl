@@ -1,1 +1,1 @@
-((10 <= tempe) && (tempe <= 90)) && (((0 <= cooling) && (cooling <= 1)) U[15,20] ((40 <= tempe) && (tempe <= 50)))
+(!p) && (!(F[0,8] p)) && phi_3

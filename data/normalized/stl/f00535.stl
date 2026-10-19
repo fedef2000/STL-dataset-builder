@@ -1,1 +1,1 @@
-(!hazard) U[0,6] goal
+G[0,30] ((speed < 135) && (rpm < 4780))

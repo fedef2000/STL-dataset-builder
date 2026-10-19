@@ -1,1 +1,1 @@
-G[30,35] ((87 <= pressure) && (pressure <= 87.5))
+G[87,89] (mu_parent && mu_child)

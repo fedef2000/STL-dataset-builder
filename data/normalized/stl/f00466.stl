@@ -1,1 +1,1 @@
-(theta < 8.8) && (F[0,1] (theta > 40))
+(G[6,30] ((throttle == 0) || (brake == 0))) && (G[0,6] (brake == 0))

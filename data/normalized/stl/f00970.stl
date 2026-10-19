@@ -1,1 +1,1 @@
-F[0,30] (door_yaw >= 20)
+G[0,15] (altitude > 0)

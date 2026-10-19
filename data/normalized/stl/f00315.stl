@@ -1,1 +1,1 @@
-F[0,1000] (deadlock && (global_clock >= m + 4))
+G[36,50] (x >= c)

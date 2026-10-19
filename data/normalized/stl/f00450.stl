@@ -1,1 +1,1 @@
-varphi_1 U[65,72] varphi_2
+G[0,30] ((gear == 3) -> (speed >= 19))
