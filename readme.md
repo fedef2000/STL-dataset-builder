@@ -45,6 +45,11 @@ STL_dataset_builder/
 │   │   ├── stl_formulas_unpaired.jsonl # One record per formula without a requirement
 │   │   ├── excluded.jsonl             # The formulas left out of both, and why
 │   │   └── stats.md                   # What the dataset holds
+│   ├── normalized/                    # The unpaired formulas as input of stl-nl, built by step 7 - tracked in git
+│   │   ├── stl/                       # One .stl file per formula accepted (f00001.stl ...)
+│   │   ├── needs_review/              # One .stl file per formula normalized with a choice not yet approved
+│   │   ├── manifest.jsonl             # One line per input formula: status, reasons, rules, original and normalized text
+│   │   └── report.md                  # Counts by status, reason and rule
 │   ├── logs/                          # (gitignored)
 │   │   └── pipeline.log               # Timestamped log of the download step
 │   ├── raw/                           # (gitignored)
@@ -67,13 +72,26 @@ STL_dataset_builder/
 │   │   └── stats.py                   # License tier classification & reporting tables
 │   ├── analysis/
 │   │   └── estimator.py               # Counts and locates concrete and symbolic STL formulas (macro-aware)
-│   └── extraction/
-│       ├── context.py                 # Builds what the extraction model reads: paper header and regions with marked formulas
-│       ├── extractor.py               # The extraction call (OpenRouter), its prompt and the checks on the answer
-│       ├── runs.py                    # Runs many calls, stores every answer, resumes; compares requirement passages
-│       ├── pdf_context.py             # What the model reads for a PDF: one region per page, with its image
-│       ├── dataset.py                 # Turns the records of step 5 into the records of the dataset
-│       └── records.py                 # One record per formula: the answers side by side, their agreement, the tie-breaker's verdict
+│   ├── extraction/
+│   │   ├── context.py                 # Builds what the extraction model reads: paper header and regions with marked formulas
+│   │   ├── extractor.py               # The extraction call (OpenRouter), its prompt and the checks on the answer
+│   │   ├── runs.py                    # Runs many calls, stores every answer, resumes; compares requirement passages
+│   │   ├── pdf_context.py             # What the model reads for a PDF: one region per page, with its image
+│   │   ├── dataset.py                 # Turns the records of step 5 into the records of the dataset
+│   │   └── records.py                 # One record per formula: the answers side by side, their agreement, the tie-breaker's verdict
+│   └── normalization/                 # The formulas in the STL grammar of stl-nl (rules: docs/normalization_rules.md)
+│       ├── latex.py                   # TeX tokens; the paper's macros, read from its sources and expanded
+│       ├── lexer.py                   # TeX tokens -> STL tokens: operators and intervals, names, numbers
+│       ├── parser.py                  # STL tokens -> tree (stl-nl's precedence); labels, definitions, ambiguous scope
+│       ├── rules.py                   # The named rules; time bounds (random values, closing, rounding); symbol checks
+│       ├── emit.py                    # Tree -> text in the grammar of stl-nl, fully parenthesized
+│       ├── validate.py                # The check with stlgen, the parser of stl-nl
+│       └── normalize.py               # One formula through all the stages
+│
+├── docs/
+│   └── normalization_rules.md         # Every rule of the normalization, with an example
+├── tests/
+│   └── test_normalization.py          # One or more cases per rule of the normalization (python -m pytest tests)
 │
 └── scripts/                           # Executable CLI entrypoints
     ├── 01_build_corpus.py             # Step 1: Discover papers (citations & keywords) and enrich them with missing links
@@ -82,6 +100,7 @@ STL_dataset_builder/
     ├── 04_estimate_formulas.py        # Step 4: Estimate the STL formula yield per paper
     ├── 05_extract_requirements.py     # Step 5: Extract the requirements with two models, a third on their disagreements
     ├── 06_build_dataset.py            # Step 6: Build the dataset file from the answers of step 5
+    ├── 07_normalize_formulas.py       # Step 7: Normalize the unpaired formulas into the input of stl-nl
     ├── inspect_extractions.py         # Prints the undecided formulas and the answers that failed a check, to read
     └── eval/
         ├── build_eval_set.py          # Checks the labels against the LaTeX sources and writes the evaluation set
@@ -574,6 +593,34 @@ A record (the same in both files):
 | Flag | What it does |
 |---|---|
 | `--licenses TIER ...` | Also writes copies of both files with only the records of these licence tiers (`permissive_cc`, `restricted_cc`, `custom_or_arxiv`, `unspecified`). |
+
+### Step 7: Normalize the Unpaired Formulas for stl-nl
+
+Turns the formulas of `data/dataset/stl_formulas_unpaired.jsonl` into the input of `stl-nl`, a tool that writes natural-language descriptions of STL formulas: one formula per `.stl` file, in its STL grammar (bounded discrete time, closed integer intervals, every operand parenthesized). No model is called. Each formula goes through named rules, listed with an example each in `docs/normalization_rules.md`:
+
+* the paper's own macros are expanded from its LaTeX sources (PDF formulas are already in standard notation);
+* the formula is cut into tokens (LaTeX operators to STL tokens, Greek letters and subscripts to names, intervals attached to their operators) and parsed with the precedence of `stl-nl`;
+* the time bounds are made closed integer intervals: open intervals are closed, real bounds rounded outward (the lower one down, the upper one up), and symbolic bounds (`[0,T]`) get random integers from 0 to 100, the same symbol the same value everywhere in the formula;
+* the result is written fully parenthesized and checked with `stlgen`, the parser of `stl-nl`.
+
+A formula is `ok`, `needs_review` (normalized, but with a choice not yet approved: a symbol the paper calls a threshold, ...) or `rejected` (definitions of the semantics or of an operator, unbounded operators, products, functions, unknown commands, ...). Nothing is guessed: a construct no rule covers is rejected with its reason.
+
+```bash
+python scripts/07_normalize_formulas.py
+
+# Other random values for the symbolic bounds
+python scripts/07_normalize_formulas.py --seed 1
+```
+
+It needs the `stlgen` binary of `stl-nl`, built with `cargo build --release --locked --manifest-path rust/stlgen/Cargo.toml` in the `stl-nl` repository. By default it is looked for in a checkout of `stl-nl` next to this one (`../stl-nl/rust/stlgen/target/release/stlgen`); set `STLGEN_BIN` in `.env` or pass `--stlgen` for another place. It writes, in `data/normalized/`: `stl/` and `needs_review/` (the `.stl` files of an earlier run are replaced), `manifest.jsonl` (one line per input formula: `id`, `status`, `file`, `reasons`, `rules` that fired, `original`, `normalized`, `stl` as `stlgen` prints it back, `substitutions` of the symbolic bounds, `rounded` bounds, `over_limits` of `stl-nl`'s selection) and `report.md`. The same input and seed give the same files.
+
+| Flag | What it does |
+|---|---|
+| `--input FILE` | Another file of dataset records (default `data/dataset/stl_formulas_unpaired.jsonl`). |
+| `--seed S` | The seed of the random values of the symbolic bounds (default `0`); each record's values depend only on the seed and its id. |
+| `--stlgen PATH` | The `stlgen` binary (default `STLGEN_BIN`). |
+
+The rules are tested with `python -m pytest tests` (needs `pytest`); the test that runs `stlgen` is skipped when it isn't built.
 
 ---
 

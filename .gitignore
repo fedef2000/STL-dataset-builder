@@ -5,3 +5,4 @@ data/processed/*
 !data/processed/eval_set.md
 __pycache__
 .env
+NORMALIZER_BRIEF.md

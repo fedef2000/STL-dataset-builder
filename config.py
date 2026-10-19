@@ -36,6 +36,8 @@ OPENALEX_API_KEY = os.environ.get("OPENALEX_API_KEY", "")          # Optional: h
 SEMANTIC_SCHOLAR_API_KEY = os.environ.get("SEMANTIC_SCHOLAR_API_KEY", "")
 # Needed by the extraction step only: the models are called through openrouter.ai
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY", "")
+# The parser of stl-nl, which checks the normalized formulas (step 7); by default in a checkout of stl-nl next to this one
+STLGEN_BIN = Path(os.environ.get("STLGEN_BIN") or BASE_DIR.parent / "stl-nl" / "rust" / "stlgen" / "target" / "release" / "stlgen")
 
 HEADERS = {"User-Agent": f"NL2STL-ModularBuilder/3.0 (mailto:{USER_EMAIL})"}
 # The OpenAlex key goes to OpenAlex only: every other service gets the plain HEADERS
