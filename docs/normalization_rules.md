@@ -133,7 +133,21 @@ data/normalized/
 ├── stl/f00001.stl ...            # status ok, numbered in input order
 ├── needs_review/r00001.stl ...   # status needs_review (not written while no rule has it)
 ├── manifest.jsonl                # one line per input record
-└── report.md                     # counts by status, the rejection reasons and the most frequent unknown commands, each with an example
+└── report.md                     # counts by status, the rejection reasons, the most frequent unknown commands and structures, each with an example
 ```
 
-A manifest line: `id`, `status`, `file` (or null), `reasons`, `rules` (those that fired), `original`, `normalized`, `stl` (stlgen's canonical text), `substitutions` (e.g. `{"T": 37}`), `rounded` (e.g. `[[["0.2","0.4"],["0","1"]]]`), `over_limits`, `bounds`, `source_type`.
+A manifest line: `id`, `status`, `file` (or null), `reasons`, `rules` (those that fired), `original`, `normalized`, `structure` (see below), `stl` (stlgen's canonical text), `substitutions` (e.g. `{"T": 37}`), `rounded` (e.g. `[[["0.2","0.4"],["0","1"]]]`), `over_limits`, `bounds`, `source_type`.
+
+## Structures
+
+The structure of a formula (`emit.structure`, decided on 2026-10-19) is its normalized text, written by the same writer, with every number (bounds and constants) written `#` and the names renamed `a`, `b`, ... (then `v27`, `v28`, ...) in the order they appear. A name used twice keeps its letter, and the operators and comparison directions are kept; the operands of `&&`/`||` are not sorted.
+
+| Formula | Structure |
+|---|---|
+| `G[0,30] ((gear == 4) -> (F[0,5] (rpm < 3000)))` | `G[#,#] ((a == #) -> (F[#,#] (b < #)))` |
+| `(G[0,5] (x < 3)) -> (G[0,2] (x < 4))` | `(G[#,#] (a < #)) -> (G[#,#] (a < #))` |
+| `(G[0,5] (x < 3)) -> (G[0,2] (y < 4))` | `(G[#,#] (a < #)) -> (G[#,#] (b < #))` |
+| `F[1,2] p`, `F[42,94] varphi` | `F[#,#] a` |
+
+It is only measured (manifest field `structure`, report section *Structures*): no formula is left out for it. A cap per structure for the input of stl-nl is to be decided once the counts are seen.
+

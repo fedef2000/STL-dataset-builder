@@ -227,6 +227,20 @@ def test_bounds_that_no_draw_satisfies():
     assert run(r"\Box_{[a, a-200]} p").reasons[0].startswith("bounds_unsatisfiable")
 
 
+def test_structure():
+    result = run(r"\psi = \Box_{[0,30]} (gear = 4 \rightarrow \Diamond_{[0,5]} rpm < 3000)")
+    assert result.structure == "G[#,#] ((a == #) -> (F[#,#] (b < #)))"
+    # A name used twice keeps its letter; numbers inside expressions are hidden too
+    assert run(r"(\Box_{[0,5]} x < 3) \rightarrow (\Box_{[0,2]} x < 4)").structure == \
+           "(G[#,#] (a < #)) -> (G[#,#] (a < #))"
+    assert run(r"(\Box_{[0,5]} x < 3) \rightarrow (\Box_{[0,2]} y < 4)").structure == \
+           "(G[#,#] (a < #)) -> (G[#,#] (b < #))"
+    assert run(r"\Box_{[0,5]} |x - y| > -x").structure == "G[#,#] (|a - b| > (# - a))"
+    # Formulas that differ only in numbers and names share their structure
+    assert run(r"\Diamond_{[1,2]} p").structure == run(r"\Diamond_{[0,T]} \varphi").structure == "F[#,#] a"
+    assert run(r"\Box p").structure is None
+
+
 def test_number_text():
     assert [number(Fraction(x)) for x in ("5", "1/4", "-1/2", "1/3", "4500", "0.786")] == \
            ["5", "0.25", "-0.5", "1/3", "4500", "0.786"]
