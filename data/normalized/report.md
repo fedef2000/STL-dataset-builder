@@ -71,3 +71,42 @@ Candidates for a new rule. Many come from the paper's macros: its definition of 
 | `\nvDash` | 4 | 4 | 0 | `\sigma \nvDash \dia_{[a,b]}\psi` |
 | `\ell` | 4 | 4 | 0 | `(\mathbf{x},H,\ell) \models \varphi_1\mathcal{U}_{[0,t_2]}\varphi_2` |
 | `\blacklozenge` | 4 | 4 | 0 | `\blacklozenge_{[0,1]} p` |
+
+## Structures
+
+The structure of a formula is its normalized text with every number written # and the names renamed a, b, ... in the order they appear (a name used twice keeps its letter; operators and comparisons are kept). Formulas that differ only in their numbers and names have the same structure. The manifest has the structure of each formula (`structure`); the example is the shortest formula of each structure.
+
+1838 formulas kept have 471 structures; 310 of them have one formula only. The 30 most common cover 1141 formulas (62%).
+
+| Structure | Formulas | Share | Example |
+|---|---|---|---|
+| `F[#,#] a` | 263 | 14.3% | `F[0,7] p` |
+| `G[#,#] a` | 237 | 12.9% | `G[2,6] p` |
+| `a U[#,#] b` | 167 | 9.1% | `a U[0,6] b` |
+| `G[#,#] (a > #)` | 47 | 2.6% | `G[3,4] (x > 4)` |
+| `G[#,#] (a < #)` | 46 | 2.5% | `G[0,1] (N < 4)` |
+| `F[#,#] (a > #)` | 36 | 2.0% | `F[0,2] (s > 0)` |
+| `G[#,#] (F[#,#] a)` | 33 | 1.8% | `G[0,2] (F[2,4] p)` |
+| `(G[#,#] (a < #)) -> (G[#,#] (b < #))` | 33 | 1.8% | `(G[0,30] (w < 3000)) -> (G[0,4] (v < 35))` |
+| `G[#,#] (a <= #)` | 32 | 1.7% | `G[0,1] (x <= 1)` |
+| `F[#,#] (G[#,#] a)` | 31 | 1.7% | `F[2,5] (G[3,10] p)` |
+| `G[#,#] (!a)` | 21 | 1.1% | `G[5,8] (!c)` |
+| `F[#,#] (a >= #)` | 18 | 1.0% | `F[0,1] (c >= 4)` |
+| `G[#,#] ((# <= a) && (a <= #))` | 17 | 0.9% | `G[0,10] ((2 <= y) && (y <= 4))` |
+| `F[#,#] (a < #)` | 13 | 0.7% | `F[0,3] (x < 0)` |
+| `G[#,#] (a >= #)` | 13 | 0.7% | `G[0,10] (x >= 5)` |
+| `F[#,#] (a <= #)` | 12 | 0.7% | `F[0,1] (x <= 1)` |
+| `(G[#,#] a) && (F[#,#] b)` | 12 | 0.7% | `(G[1,84] a) && (F[1,84] b)` |
+| `G[#,#] (!((a >= #) && (a <= #) && (b >= #) && (b <= #)))` | 11 | 0.6% | `G[0,10] (!((v >= -1) && (v <= 1) && (x >= 1) && (x <= 2)))` |
+| `G[#,#] (F[#,#] (a - b >= #))` | 10 | 0.5% | `G[0,70] (F[0,30] (y_5 - y_4 >= 15))` |
+| `G[#,#] (F[#,#] (G[#,#] (a - b >= #)))` | 10 | 0.5% | `G[0,65] (F[0,30] (G[0,5] (y_5 - y_4 >= 8)))` |
+| `G[#,#] (a < b)` | 9 | 0.5% | `G[0,63] (x < p)` |
+| `(F[#,#] a) && (G[#,#] b)` | 9 | 0.5% | `(F[0,2] A) && (G[4,7] B)` |
+| `G[#,#] (a - b <= #)` | 9 | 0.5% | `G[0,100] (y_5 - y_4 <= 40)` |
+| `G[#,#] (F[#,#] ((G[#,#] (a - b >= #)) -> (G[#,#] (c - d >= #))))` | 9 | 0.5% | `G[0,72] (F[0,8] ((G[0,5] (y_2 - y_1 >= 9)) -> (G[5,20] (y_5 - y_4 >= 9))))` |
+| `G[#,#] ((G[#,#] (a - b <= #)) \|\| (F[#,#] (c - d >= #)))` | 8 | 0.4% | `G[0,80] ((G[0,20] (y_2 - y_1 <= 20)) \|\| (F[0,20] (y_5 - y_4 >= 40)))` |
+| `G[#,#] (a && b)` | 8 | 0.4% | `G[0,5] (mu_1 && mu_2)` |
+| `G[#,#] (a -> (F[#,#] b))` | 7 | 0.4% | `G[0,10] (p -> (F[0,5] q))` |
+| `(F[#,#] a) && (F[#,#] b)` | 7 | 0.4% | `(F[0,2] mu_1) && (F[2,4] mu_2)` |
+| `G[#,#] (a >= b)` | 7 | 0.4% | `G[1,24] (x >= c)` |
+| `true U[#,#] a` | 6 | 0.3% | `true U[1,2] b` |
