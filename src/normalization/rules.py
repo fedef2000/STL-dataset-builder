@@ -13,7 +13,7 @@ RULES = {
     # Stage 0: the whole record
     "other_logic": ("rejected", "the formula holds a construct of another logic"),
     "semantics_definition": ("rejected", "a definition of the semantics (\\models, \\vDash)"),
-    "grammar_definition": ("rejected", "a grammar of the logic (::=, \\mid)"),
+    "grammar_definition": ("rejected", "a grammar of the logic (::=, \\mid, | between alternatives)"),
     "operator_definition": ("rejected", "a definition of an operator: the left side of = or := is not a single name"),
     "several_formulas": ("rejected", "several formulas, or a formula with text (where, and, if, ...)"),
     "connective_at_edge": ("rejected", "starts or ends with a connective: part of it is on another row"),
@@ -62,7 +62,7 @@ RULES = {
     "division": ("rejected", "a division other than of two integers"),
     "power": ("rejected", "a power or a superscript that isn't a name"),
     "function": ("rejected", "a name followed by (...) or [...] with an argument that isn't a name or an integer (rho(G_{[a,b]} phi,t), x(t+1)), or \\max, \\min, \\log, ..."),
-    "indexed_operator": ("rejected", "\\bigwedge, \\bigvee, \\sum, \\ldots, ..."),
+    "indexed_operator": ("rejected", "\\bigwedge, \\bigvee, \\land_{i}, \\sum, \\ldots, ..."),
     "quantifier": ("rejected", "\\forall, \\exists"),
     "set_membership": ("rejected", "\\in a set that is not an interval"),
     "infinity": ("rejected", "\\infty outside of a time bound"),
@@ -75,6 +75,8 @@ RULES = {
     "strip_label": ("ok", "the name in front of the formula (\\psi = ..., \\phi := ..., u_4: ...) removed"),
     "strip_trailing_punct": ("ok", "a final , . ; removed"),
     "ambiguous_scope": ("ok", "an unparenthesized temporal operand followed by a connective: read as the operator on the operand alone (the standard reading)"),
+    "close_parentheses": ("ok", "brackets still open at the end closed (a missing ), or a formula cut by the extraction: its first part)"),
+    "operator_alone": ("rejected", "a temporal operator with no operand (F_{[a,b]}, U_{[a,b]} alone, or at the end)"),
     "parse_error": ("rejected", "a construct the parser doesn't recognise"),
     # Stage 5: validation
     "stlgen_error": ("rejected", "the stlgen parser of stl-nl rejects the result"),

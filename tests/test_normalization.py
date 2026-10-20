@@ -144,6 +144,9 @@ RECORDED_CASES = [
     (r"\overline{\Diamond}_{[0,10]} p \wedge \overline{\mathsf{G}}_{[0,5]} q", "(F[0,10] p) && (G[0,5] q)",
      "overline_operator"),
     (r"\Box_{[0,5]} v \le \overline{v}", "G[0,5] (v <= v_bar)", "accent_names"),
+    (r"\Box_{[0,3]}(\mu_\text{h} \mathbf{U}_{[0,3]} \mu_\text{g})", "G[0,3] (mu_h U[0,3] mu_g)", "index_names"),
+    (r"\Box_{[0,3]} \phi_{\operatorname{Obs}_1} \wedge \phi^{\rm{path}}", "(G[0,3] phi_Obs_1) && phi_path", "index_names"),
+    (r"\Box_{[0,20]}\big((gear==4 \land throttle > 45", "G[0,20] ((gear == 4) && (throttle > 45))", "close_parentheses"),
 ]
 VARIABLES = {"c": "the speed threshold", "\\varphi_1": "a subformula", "\\varphi_2": "a subformula"}
 
@@ -187,6 +190,13 @@ REJECTED_CASES = [
     (r"(x,t) \models \varphi", "semantics_definition"),
     (r"\varphi ::= \top \mid \mu", "grammar_definition"),
     (r"\varphi ::= \top \;|\; \mu", "grammar_definition"),
+    (r"\phi := \mu \ | \ \neg \phi \ | \ \phi_1 \land \phi_2", "grammar_definition"),
+    (r"\{p, \Diamond_{[0,5]}p, \Box_{[0,5]}p\}", "several_formulas"),
+    (r"\land_{i}(\neg \mathit{Obs}_i)", "indexed_operator"),
+    (r"\Theta_1=F_{[0,5]}", "operator_alone"),
+    (r"\textbf{U}_{[0,5]}", "operator_alone"),
+    (r"\Box_{[0,5]} p \wedge \Diamond_{[0,3]}", "operator_alone"),
+    (r"\Box_{[0,5]} p)) \wedge (q", "parse_error"),
     (r"F_{[a,b]} \varphi := \top \mathcal{U}_{[a,b]} \varphi", "operator_definition"),
     (r"\Diamond_{[a,b]} \varphi = \top \mathcal{U}_{[a,b]} \varphi", "operator_definition"),
     (r"\Box_{[0,5]} p, \Diamond_{[0,5]} q", "several_formulas"),

@@ -86,6 +86,10 @@ TEXT_FONTS = {"\\text", "\\textit", "\\textbf", "\\texttt", "\\textrm", "\\texts
 ACCENTS = {"\\dot": "dot", "\\bar": "bar", "\\hat": "hat", "\\tilde": "tilde"}
 # On a name an accent (\\overline{v} -> v_bar); on an operator dropped (\\overline{\\Diamond} -> F: overline_operator)
 OVERLINES = {"\\overline": "bar", "\\underline": "under"}
+# Ignored in a name's sub- or superscript (\\mu_{\\text{inv}}, \\phi_{\\operatorname{Obs}_1}, \\phi^{\\rm{path}}), and taken
+# with their argument when the script is one of them with no braces (\\mu_\\text{inv})
+NAME_FONTS = MATH_FONTS | TEXT_FONTS | MATH_WRAPPERS | {"\\mathbb", "\\mathscr", "\\mathfrak", "\\rm", "\\it", "\\bf",
+                                                       "\\sf", "\\tt", "\\cal"}
 # A norm is read as an absolute value (its subscript and a square after it are dropped: norm_as_abs)
 NORMS = {"\\|", "\\lVert", "\\rVert", "\\Vert"}
 
@@ -119,7 +123,7 @@ def name_part(tokens: list[str]) -> str | None:
     parts, i = [], 0
     while i < len(tokens):
         t = tokens[i]
-        if t in (" ", "{", "}") or t in MATH_FONTS or t in TEXT_FONTS:
+        if t in (" ", "{", "}") or t in NAME_FONTS:
             pass
         elif len(t) == 1 and t.isascii() and t.isalnum():
             parts.append(t)
@@ -514,12 +518,17 @@ class Lexer:
     def _script(self, tokens, i, out) -> int:
         mark = tokens[i]
         content, j = argument(tokens, i + 1)
+        if len(content) == 1 and content[0] in NAME_FONTS:
+            inner, j = argument(tokens, j)  # \\mu_\\text{inv}: the script is \\text{inv}, not \\text alone
+            content = [content[0], "{"] + inner + ["}"]
         if not [t for t in content if t not in (" ", "{", "}")]:
             self.trace.fire("strip_layout")  # x^{}: an empty script, as a macro with an optional argument leaves it
             return j
         prev = out[-1] if out else None
         if prev is None:
             raise Rejected("parse_error", f"{mark} after nothing")
+        if prev.kind in ("AND", "OR"):
+            raise Rejected("indexed_operator", f"{prev.text()}{mark}{{{''.join(content)}}}")  # \\land_{i}: \\bigwedge_i
         if prev.kind == "ABS" and prev.value == "norm" and (mark == "_" or [t for t in content if t != " "] == ["2"]):
             return j  # \|x\|_2, \|x\|_\infty, \|x\|^2: the kind of norm and the square dropped (norm_as_abs)
         if prev.kind in ("OP", "BOP") or prev.candidate:

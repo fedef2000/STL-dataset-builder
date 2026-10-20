@@ -97,6 +97,28 @@ def strip_label(tokens: list[Tok], trace: Trace, formula_names: set[str] = froze
             return tokens
 
 
+CLOSING = {"(": ")", "[": "]", "{": "}"}
+
+
+def close_parentheses(tokens: list[Tok], trace: Trace) -> list[Tok]:
+    """
+    The brackets still open at the end closed (a ) missing in the paper, or a formula cut by the extraction: the result
+    is its first part). Not when a bracket closes one never opened: then the brackets don't say the structure.
+    """
+    opened = []
+    for t in tokens:
+        if t.kind == "LP":
+            opened.append(t.value)
+        elif t.kind == "RP":
+            if not opened:
+                return tokens
+            opened.pop()
+    if not opened:
+        return tokens
+    trace.fire("close_parentheses")
+    return tokens + [Tok("RP", CLOSING.get(v, ")")) for v in reversed(opened)]
+
+
 def check_shape(tokens: list[Tok]):
     """Rejects several formulas (a comma at the top level) and the definitions of an operator."""
     depths = _depths(tokens)
@@ -349,6 +371,9 @@ def parse(tokens: list[Tok], trace: Trace, formula_names: set[str] = frozenset()
     tokens = strip_label(tokens, trace, formula_names)
     if not tokens:
         raise Rejected("parse_error", "empty formula")
+    if all(t.kind in ("OP", "BOP") for t in tokens):
+        raise Rejected("operator_alone", " ".join(t.text() for t in tokens))
+    tokens = close_parentheses(tokens, trace)
     check_shape(tokens)
     parser = Parser(tokens, trace)
     try:
@@ -365,6 +390,12 @@ def parse(tokens: list[Tok], trace: Trace, formula_names: set[str] = frozenset()
                 and at.kind in ("ID", "NUM", "LP", "BOOL"):
             raise Rejected("multiplication", f"{before.text()} {at.text()} side by side")
         if at is None:
+            if tokens[-1].kind in ("OP", "BOP"):
+                raise Rejected("operator_alone", f"nothing after {tokens[-1].text()}")
             raise Rejected("parse_error", "the formula ends before it is complete")
+        if at.kind == "ABS":
+            raise Rejected("grammar_definition", "| between alternatives")  # not an absolute value: \\phi ::= \\mu | \\neg\\phi
+        if at.kind == "COMMA":
+            raise Rejected("several_formulas", "a comma between formulas")  # a set or a tuple: \\{p, F_{[a,b]} p\\}
         context = " ".join(t.text() for t in tokens[max(0, k - 3):k + 3])
         raise Rejected("parse_error", f"unexpected {at.text()} in: {context}")

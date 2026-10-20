@@ -19,9 +19,9 @@ Each rule has a name (the list is `RULES` in `src/normalization/rules.py`). The 
 |---|---|---|
 | `other_logic` | rejected | `other_logic` is not null (past-time, spatial, ...): 275 records |
 | `semantics_definition` | rejected | `(x,t) \models \varphi \mathcal{U}_{[a,b]} \psi \Leftrightarrow \exists t' ...` (contains `\models`, `\vDash`, `\vdash`, `\Vdash`) |
-| `grammar_definition` | rejected | `\varphi ::= \top \mid \mu \mid \neg\varphi ...` (contains `::=` or `\mid`) |
+| `grammar_definition` | rejected | `\varphi ::= \top \mid \mu \mid \neg\varphi ...` (contains `::=` or `\mid`); also `\phi := \mu \| \neg\phi \| ...`, a `\|` the parser can't read as an absolute value (found by the parser, since 2026-10-20) |
 | `operator_definition` | rejected | `F_{[a,b]} \varphi := \top \mathcal{U}_{[a,b]} \varphi`: a `:=`/`\equiv`/`\triangleq` at the top level whose left side is not a single name, or a `=` with an operator on its left and a formula on its right (compare `strip_label`) |
-| `several_formulas` | rejected | `\Box_{[i,j]} p, \Diamond_{[i,j]} p`: a comma (or `;`) at the top level; `\phi = ... \text{ where } ...`: a `\text{...}` that starts with where, and, or, if, iff, for, with, s.t., such that, otherwise, when, then, i.e., e.g. |
+| `several_formulas` | rejected | `\Box_{[i,j]} p, \Diamond_{[i,j]} p`: a comma (or `;`) at the top level; `\phi = ... \text{ where } ...`: a `\text{...}` that starts with where, and, or, if, iff, for, with, s.t., such that, otherwise, when, then, i.e., e.g.; also a comma inside brackets where the parser stops, a set or a tuple of formulas (`\{p, \Diamond_{[a,b]}p\}`, since 2026-10-20) |
 | `connective_at_edge` | rejected | the record's flag "starts or ends with a connective": part of the formula is on another row |
 
 ## Stage 1: TeX tokens and the paper's macros (`latex.py`, `lexer.py`)
@@ -64,7 +64,7 @@ Each rule has a name (the list is `RULES` in `src/normalization/rules.py`). The 
 | Rule | Example |
 |---|---|
 | `greek_names` | `\theta` → `theta`, `\varphi` → `varphi` (`\phi` → `phi`: kept apart, as a paper may use both) |
-| `index_names` | `x_{1}`, `x_1` → `x_1`; `v_{max}` → `v_max`; `x_{i,j}` → `x_i_j`; `\mu^{h}` → `mu_h` (a superscript of letters is part of the name; of digits it is a `power`). Consecutive letters are one name (`gear`, `rpm`), as authors mean them. |
+| `index_names` | `x_{1}`, `x_1` → `x_1`; `v_{max}` → `v_max`; `x_{i,j}` → `x_i_j`; `\mu^{h}` → `mu_h` (a superscript of letters is part of the name; of digits it is a `power`). Font commands in the script are ignored: `\mu_\text{inv}` (no braces), `\phi_{\operatorname{Obs}_1}`, `\phi^{\rm{path}}`, `\mathbb`, ... (since 2026-10-20). Consecutive letters are one name (`gear`, `rpm`), as authors mean them. |
 | `multiword_names` | `\text{Trust Increase}` → `Trust_Increase` |
 | `accent_names` | `\dot{x}` → `x_dot`; `\bar{x}`, `\overline{x}` → `x_bar`; `\underline{x}` → `x_under`; `\hat{x}` → `x_hat`; `\tilde{x}` → `x_tilde`; `x'`, `x^\prime` → `x_prime` (`\overline` and `\underline` on a name since 2026-10-20: `v \le \overline{v}` keeps two names) |
 | `overline_operator` | `\overline{\Diamond}_{[0,10]} p` → `F[0,10] p`; also on `\square`, `\mathcal{U}`, `\mathsf{G}`, ... (and `\underline`). Papers use the line for a variant of the operator: the averaged operators of AvSTL, the marked operators of a tableau. The variant is read as the plain operator: the meaning may change, the pattern stays (decided on 2026-10-20). `\overline` on anything other than a name or an operator stays `unknown_command`. |
@@ -93,7 +93,7 @@ Each rule has a name (the list is `RULES` in `src/normalization/rules.py`). The 
 | `division` | `x / y`, `1/x`, `\frac{a}{b}` (anything but an integer over an integer) |
 | `power` | `(x-1)^2`, `x^2`, `E^*`, a superscript that isn't letters |
 | `function` | `\sin x`, `\max`, `\exp`, `\sqrt`, `x(t+1)` (a signal at another time), `\rho(\Box_{[a,b]} \varphi, x, t)` (a call with an argument that isn't a name or an integer, see `function_as_name`) |
-| `indexed_operator` | `\bigwedge_{i=1}^n`, `\bigvee`, `\sum`, `\prod`, `\ldots`, `\cdots` |
+| `indexed_operator` | `\bigwedge_{i=1}^n`, `\bigvee`, `\sum`, `\prod`, `\ldots`, `\cdots`; `\land_{i}`, `\lor_{w=1}^{n}` (a connective with a subscript) |
 | `quantifier` | `\forall`, `\exists` |
 | `set_membership` | `x \in X`, `x \in \mathcal{X}` (not an interval) |
 | `infinity` | `x < \infty` (in a time bound it is `unbounded_operator`) |
@@ -115,6 +115,8 @@ A recursive-descent parser with the precedence levels of the brief (unary → U/
 |---|---|---|
 | `strip_label` | ok | `\psi_2 = \square_{[0,20]}(…)`, `\phi := …`, `u_4: …`, `\text{AT19}:\; …` → the formula after the name. Always with `:=` or `:`. With `=` only when the name is a formula name (`\phi`, `\varphi`, `\psi`, `\Phi`, `\Psi` with any subscript, or a name the paper's `variables` call a formula) or an operator follows the `=` (in `gear = 4 \wedge …` the `=` is a comparison). |
 | `strip_trailing_punct` | ok | a final `,` `.` `;` is removed |
+| `close_parentheses` | ok | brackets still open at the end are closed: `\Box_{[0,20]}\big((gear==4 \land throttle > 45` → `G[0,20] ((gear == 4) && (throttle > 45))`. Some are a `)` the paper misses; others are formulas cut by the extraction (the equation goes on in another row), and the result is their first part. Accepted, as the description is written from our formula (decided on 2026-10-20); only recorded in the manifest, so they can be found. Not applied when a bracket closes one never opened. |
+| `operator_alone` | rejected | a temporal operator with no operand: `\Theta_1 = F_{[a,b]}`, `\textbf{U}_{[t_1,t_2]}` (only operators), or an operator at the end (`G_{[0,5]} p \wedge F_{[0,3]}`) |
 | `ambiguous_scope` | ok | `\Box_{[0,10]} a \wedge b`: a temporal operator whose operand isn't parenthesized, followed by `&&`, `\|\|`, `->`, `<->`, `U` or `R`. Read with the standard reading `(G[0,10] a) && b` (decided on 2026-10-19, after seeing that most are like `\Box_{[0,40]}p_1\wedge\Box_{[0,30]}(p_4)`), and only recorded in the manifest. |
 
 ## Stage 4: emitter (`emit.py`)
