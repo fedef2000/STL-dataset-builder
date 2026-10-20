@@ -1,1 +1,1 @@
-F[50,90] ((|p_1 - p_A| <= epsilon) && (|(p_2 + p_x) - p_3| <= epsilon))
+(G[36,62] (varphi_1 && varphi_2)) && (G[32,36] (varphi_1 && (!varphi_2))) && (G[62,81] ((!varphi_1) && varphi_2))

@@ -1,1 +1,1 @@
-F[14,29] mu_l
+F[0,30] (|cloth_pos - table_pos| <= 0.25)

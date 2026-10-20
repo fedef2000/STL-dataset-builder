@@ -1,1 +1,1 @@
-G[0,5] (behind_p_s_p_uav && heading_aligned_h_s_h_uav)
+(G[0,30] (omega < 3000)) -> (G[0,4] (v < 35))

@@ -1,1 +1,1 @@
-G[0,26] ((delta_4_speed > rho) -> (delta_4_gear > 0))
+F[0,16] alpha_anc_x_eta

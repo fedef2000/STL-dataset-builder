@@ -1,1 +1,1 @@
-F[0,16] alpha_anc_x_eta
+F[0,10] ((sigma > 1) && (sigma < 3))

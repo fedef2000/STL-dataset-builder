@@ -1,1 +1,1 @@
-varphi_1 U[30,68] varphi_2
+(G[25,54] (latency < 20)) && (F[5,36] (backlog > 6))

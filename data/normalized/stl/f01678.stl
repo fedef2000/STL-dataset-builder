@@ -1,1 +1,1 @@
-G[10,45] (F[5,16] (y < 0.03))
+F[0,15] (lampOn && (F[0,10] itemOnRobot_purpleCube))

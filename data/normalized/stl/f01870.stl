@@ -1,1 +1,1 @@
-F[66,84] varphi
+(F[1,44] (latency < 17)) && (F[13,52] (backlog > 13))

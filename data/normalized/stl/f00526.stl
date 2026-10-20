@@ -1,1 +1,1 @@
-F[0,1] p_x
+G[0,27] ((Delta_3_speed > 30) -> (Delta_3_gear > 0))

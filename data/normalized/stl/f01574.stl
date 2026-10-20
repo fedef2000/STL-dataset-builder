@@ -1,1 +1,1 @@
-F[0,60] (G[0,5] (bump_right || bump_left))
+(F[0,20] Reg_i_1_j_1) || (F[0,20] Reg_i_2_j_2)

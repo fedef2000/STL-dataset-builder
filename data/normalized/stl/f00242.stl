@@ -1,1 +1,1 @@
-G[19,71] varphi
+((rise == theta) && (theta < 8.8)) && (F[0,13] (40 < theta))

@@ -1,1 +1,1 @@
-G[23,25] green
+G[0,1] ((x >= alpha) && (x <= beta))

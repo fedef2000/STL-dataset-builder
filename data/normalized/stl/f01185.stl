@@ -1,1 +1,1 @@
-G[0,83] rssViolation_SV_POV
+((G[0,1] p) || (G[1,2] p)) && (G[0,1] (!p))

@@ -1,1 +1,1 @@
-xi U[18,89] psi
+G[11,50] ((controller_mode == 0) -> (mu < rho))

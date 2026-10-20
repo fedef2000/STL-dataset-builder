@@ -1,1 +1,1 @@
-G[0,3] pi_2
+(F[0,14] REACH_i) && (F[14,21] REACH_j) && (G[0,21] AVOID_k)

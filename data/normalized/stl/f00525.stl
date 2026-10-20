@@ -1,1 +1,1 @@
-phi_1 U[18,87] phi_2
+G[0,26] ((Delta_4_speed > 40) -> (Delta_4_gear > 0))

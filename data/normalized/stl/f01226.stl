@@ -1,1 +1,1 @@
-phi_prime U[54,88] phi_prime_prime
+(G[20,30] (z >= 20)) && (G[60,70] (z <= 10))
