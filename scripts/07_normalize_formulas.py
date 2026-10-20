@@ -5,6 +5,11 @@ grammar), so that stl-nl can write natural-language descriptions of them.
     python scripts/07_normalize_formulas.py                     # data/dataset/stl_formulas_unpaired.jsonl
     python scripts/07_normalize_formulas.py --seed 1            # other random values for the symbolic bounds
     python scripts/07_normalize_formulas.py --stlgen PATH       # the stlgen binary of stl-nl (default: STLGEN_BIN)
+    python scripts/07_normalize_formulas.py --show-rejected               # the reasons of rejection, with counts
+    python scripts/07_normalize_formulas.py --show-rejected function      # 10 random formulas rejected by `function`
+    python scripts/07_normalize_formulas.py --show-rejected "unknown_command: \\overline" --limit 0   # all of them
+
+--show-rejected only reads the manifest of the last run: nothing is normalized again and no file is written.
 
 Each formula goes through the rules of docs/normalization_rules.md and then through stlgen, the parser of stl-nl.
 Writes, in data/normalized/ (the .stl files of an earlier run are replaced):
@@ -17,6 +22,7 @@ Writes, in data/normalized/ (the .stl files of an earlier run are replaced):
 import argparse
 import collections
 import json
+import random
 import sys
 from pathlib import Path
 
@@ -213,12 +219,48 @@ def structures(lines: list[dict]) -> list[str]:
     return out
 
 
+def show_rejected(prefix: str, limit: int, seed: str):
+    """
+    Prints the rejected formulas of the manifest whose reason starts with `prefix` (a rule, or a rule and what it
+    found): a random sample of `limit` (0: all), drawn with `seed`, because the manifest is ordered by paper and the
+    first ones would often all come from one paper. With an empty `prefix`, the reasons with their counts.
+    """
+    manifest = OUTPUT_DIR / "manifest.jsonl"
+    if not manifest.is_file():
+        sys.exit(f"{manifest.relative_to(BASE_DIR)} not found: run this script without --show-rejected first")
+    rejected = [line for line in map(json.loads, open(manifest, encoding="utf-8")) if line["status"] == "rejected"]
+    if not prefix:
+        count = collections.Counter(reason_rule(l["reasons"][0]) for l in rejected)
+        print(f"{len(rejected)} rejected formulas, by reason:")
+        for rule, n in count.most_common():
+            print(f"  {rule:<22} {n:>5}")
+        return
+    chosen = [l for l in rejected if l["reasons"][0].startswith(prefix)]
+    if not chosen:
+        sys.exit(f"no rejected formula has a reason starting with {prefix!r}: --show-rejected alone lists them")
+    sample = chosen if limit == 0 or limit >= len(chosen) else random.Random(seed).sample(chosen, limit)
+    print(f"{prefix}: {len(chosen)} formulas, showing {len(sample)} (seed {seed})")
+    for n, line in enumerate(sample, 1):
+        print(f"\n[{n}/{len(sample)}] {line['id']}   ({line['source_type']}, bounds: {line['bounds']})")
+        print(f"  original : {' '.join(line['original'].split())}")
+        reason = line["reasons"][0]
+        print(f"  found    : {' '.join(reason.split(': ', 1)[1].split()) if ': ' in reason else '-'}")
+        print(f"  rules    : {', '.join(line['rules'][:-1]) or '-'}")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--input", type=Path, default=INPUT_FILE)
     parser.add_argument("--seed", default="0", help="seed of the random values of the symbolic bounds")
     parser.add_argument("--stlgen", type=Path, default=STLGEN_BIN, help="the stlgen binary of stl-nl")
+    parser.add_argument("--show-rejected", nargs="?", const="", metavar="REASON",
+                        help="print rejected formulas whose reason starts with REASON (alone: list the reasons), "
+                             "from the manifest of the last run")
+    parser.add_argument("--limit", type=int, default=10, help="with --show-rejected: how many formulas (0: all)")
     args = parser.parse_args()
+    if args.show_rejected is not None:
+        show_rejected(args.show_rejected, args.limit, args.seed)
+        return
     if not args.stlgen.is_file():
         sys.exit(f"stlgen not found at {args.stlgen}: build it in stl-nl (cargo build --release --locked "
                  f"--manifest-path rust/stlgen/Cargo.toml) or pass --stlgen")

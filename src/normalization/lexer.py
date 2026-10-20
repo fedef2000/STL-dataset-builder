@@ -84,11 +84,15 @@ MATH_WRAPPERS = {"\\ensuremath", "\\mathop", "\\mathbin", "\\mathrel", "\\mathor
 TEXT_FONTS = {"\\text", "\\textit", "\\textbf", "\\texttt", "\\textrm", "\\textsf", "\\textup", "\\textnormal",
               "\\textsl", "\\emph", "\\mbox", "\\hbox"}
 ACCENTS = {"\\dot": "dot", "\\bar": "bar", "\\hat": "hat", "\\tilde": "tilde"}
+# On a name an accent (\\overline{v} -> v_bar); on an operator dropped (\\overline{\\Diamond} -> F: overline_operator)
+OVERLINES = {"\\overline": "bar", "\\underline": "under"}
+# A norm is read as an absolute value (its subscript and a square after it are dropped: norm_as_abs)
+NORMS = {"\\|", "\\lVert", "\\rVert", "\\Vert"}
 
 REJECTED = {
     **dict.fromkeys(["\\cdot", "\\times", "\\ast"], "multiplication"),
     **dict.fromkeys(["\\sin", "\\cos", "\\tan", "\\exp", "\\log", "\\ln", "\\max", "\\min", "\\sup", "\\inf",
-                     "\\sqrt", "\\lVert", "\\rVert", "\\|", "\\det", "\\arg", "\\lim", "\\Vert"], "function"),
+                     "\\sqrt", "\\det", "\\arg", "\\lim"], "function"),
     **dict.fromkeys(["\\bigwedge", "\\bigvee", "\\sum", "\\prod", "\\ldots", "\\dots", "\\cdots", "\\vdots",
                      "\\bigcup", "\\bigcap"], "indexed_operator"),
     **dict.fromkeys(["\\forall", "\\exists", "\\nexists"], "quantifier"),
@@ -104,7 +108,7 @@ WORD_TOKEN = re.compile(r"[A-Za-z0-9]")
 # Every command the lexer knows: never expanded from a paper's definitions (except PAPER_OVERRIDABLE)
 KNOWN_COMMANDS = ({f"\\{g}" for g in GREEK} | set(OPERATORS) | set(CONNECTIVES) | set(RELATIONS) | DEFINITIONS
                   | LAYOUT | LAYOUT_WITH_ARGUMENT | LAYOUT_WITH_DIMENSION | MATH_FONTS | MATH_WRAPPERS | TEXT_FONTS
-                  | set(ACCENTS) | set(REJECTED)
+                  | set(ACCENTS) | set(OVERLINES) | set(REJECTED) | NORMS
                   | {"\\top", "\\bot", "\\in", "\\infty", "\\frac", "\\prime", "\\lvert", "\\rvert", "\\vert", "\\{",
                      "\\}", "\\_", "\\textcolor", "\\mathbb", "\\mathscr", "\\mathfrak"})
 PROTECTED_COMMANDS = KNOWN_COMMANDS - PAPER_OVERRIDABLE
@@ -291,6 +295,10 @@ class Lexer:
             self.trace.fire("latex_ops")
             self._emit(out, Tok("ABS"), spaced)
             return i + 1
+        if t in NORMS:
+            self.trace.fire("norm_as_abs")
+            self._emit(out, Tok("ABS", "norm"), spaced)
+            return i + 1
         if t in ("\\{", "\\}"):
             self._emit(out, Tok("LP" if t == "\\{" else "RP", t[1]), spaced)
             return i + 1
@@ -317,6 +325,18 @@ class Lexer:
             self.trace.fire("accent_names")
             self._emit(out, Tok("ID", f"{inner[0].value}_{ACCENTS[t]}"), spaced)
             return j
+        if t in OVERLINES:
+            content, j = argument(tokens, i + 1)
+            inner = self.read(content)
+            if len(inner) == 1 and (inner[0].kind in ("OP", "BOP") or inner[0].candidate):
+                self.trace.fire("overline_operator")
+                self._splice(inner, out, spaced)
+                return j
+            if len(inner) == 1 and inner[0].kind == "ID":
+                self.trace.fire("accent_names")
+                self._emit(out, Tok("ID", f"{inner[0].value}_{OVERLINES[t]}"), spaced)
+                return j
+            raise Rejected("unknown_command", t)
         if t == "\\_":
             raise Rejected("parse_error", "\\_ outside a name")
         if t in REJECTED:
@@ -441,7 +461,10 @@ class Lexer:
     # ------------------------------------------------------------ names followed by ( or [
 
     def _after_name(self, tokens, i, prev: Tok) -> int:
-        """x(t), x[t] -> x; x[0] -> x_0 (needs review); anything else in ( ) or [ ] after a name is a function."""
+        """
+        x(t), x[t] -> x; x[0] -> x_0; f(a, 1), f[a] -> f_a_1 (function_as_name: arguments that are names and integers
+        only); anything else in ( ) or [ ] after a name is a function.
+        """
         closing = ")" if tokens[i] == "(" else "]"
         end = group_end(tokens, i, tokens[i], closing)
         if end < 0:
@@ -454,7 +477,37 @@ class Lexer:
             self.trace.fire("indexed_signal")
             prev.value = f"{prev.value}_{inside}"
             return end + 1
-        raise Rejected("function", f"{prev.value}{tokens[i]}{inside}{closing}")
+        parts = self._arguments(tokens[i + 1:end])
+        if parts is None:
+            raise Rejected("function", f"{prev.value}{tokens[i]}{inside}{closing}")
+        self.trace.fire("function_as_name")
+        prev.value = "_".join([prev.value] + parts)
+        return end + 1
+
+    def _arguments(self, content: list[str]) -> list[str] | None:
+        """
+        The names and integers of a call's arguments, read as the formula is (f(\\beta_2(x)) -> beta_2_x), or None if
+        an argument is anything else: an operator, a formula, an expression (rho(G_{[a,b]} phi, t), x(t+1)).
+        """
+        trace = Trace()  # the rules the arguments fire count only if the call becomes a name
+        try:
+            inner = Lexer(trace).read(content)
+        except Rejected:
+            return None
+        values = [x for x in inner if x.kind != "COMMA"]
+        if not values or len(inner) != 2 * len(values) - 1 or any(x.kind == "COMMA" for x in inner[::2]):
+            return None  # empty, or not name, name, ... (f(,x), f(x y))
+        parts = []
+        for x in values:
+            if x.kind == "ID" and not x.candidate:
+                parts.append(x.value)
+            elif x.kind == "NUM" and x.value.denominator == 1 and x.value >= 0:
+                parts.append(str(x.value))
+            else:
+                return None  # a bare G, F, X, U, R (an operator), a real number, anything else
+        for rule in trace.rules:
+            self.trace.fire(rule)
+        return parts
 
     # ------------------------------------------------------------ subscripts, superscripts, intervals
 
@@ -467,6 +520,8 @@ class Lexer:
         prev = out[-1] if out else None
         if prev is None:
             raise Rejected("parse_error", f"{mark} after nothing")
+        if prev.kind == "ABS" and prev.value == "norm" and (mark == "_" or [t for t in content if t != " "] == ["2"]):
+            return j  # \|x\|_2, \|x\|_\infty, \|x\|^2: the kind of norm and the square dropped (norm_as_abs)
         if prev.kind in ("OP", "BOP") or prev.candidate:
             interval = self._script_interval(content)
             if interval is not None:
@@ -540,11 +595,13 @@ class Lexer:
         """The interval a sub- or superscript of an operator gives ([a,b], (a,b], <= c, < c), or None if it isn't one."""
         try:
             return self._script_interval_of(content)
-        except Rejected:
+        except Rejected as rejected:
+            if rejected.rule == "unbounded_operator":
+                raise  # G_{\\ge 0}: an operator without an upper bound, also on a bare letter
             return None  # not an interval (X_{1i}: a name)
 
     def _script_interval_of(self, content: list[str]) -> Interval | None:
-        stripped = [t for t in content if t != " "]
+        stripped = [t for t in content if t != " " and t not in LAYOUT]  # \\left[a,b\\right] is [a,b]
         if not stripped:
             return None
         if stripped[0] in ("[", "(") and stripped[-1] in ("]", ")"):

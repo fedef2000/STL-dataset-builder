@@ -66,12 +66,15 @@ Each rule has a name (the list is `RULES` in `src/normalization/rules.py`). The 
 | `greek_names` | `\theta` → `theta`, `\varphi` → `varphi` (`\phi` → `phi`: kept apart, as a paper may use both) |
 | `index_names` | `x_{1}`, `x_1` → `x_1`; `v_{max}` → `v_max`; `x_{i,j}` → `x_i_j`; `\mu^{h}` → `mu_h` (a superscript of letters is part of the name; of digits it is a `power`). Consecutive letters are one name (`gear`, `rpm`), as authors mean them. |
 | `multiword_names` | `\text{Trust Increase}` → `Trust_Increase` |
-| `accent_names` | `\dot{x}` → `x_dot`; `\bar{x}` → `x_bar`; `\hat{x}` → `x_hat`; `\tilde{x}` → `x_tilde`; `x'`, `x^\prime` → `x_prime` |
+| `accent_names` | `\dot{x}` → `x_dot`; `\bar{x}`, `\overline{x}` → `x_bar`; `\underline{x}` → `x_under`; `\hat{x}` → `x_hat`; `\tilde{x}` → `x_tilde`; `x'`, `x^\prime` → `x_prime` (`\overline` and `\underline` on a name since 2026-10-20: `v \le \overline{v}` keeps two names) |
+| `overline_operator` | `\overline{\Diamond}_{[0,10]} p` → `F[0,10] p`; also on `\square`, `\mathcal{U}`, `\mathsf{G}`, ... (and `\underline`). Papers use the line for a variant of the operator: the averaged operators of AvSTL, the marked operators of a tableau. The variant is read as the plain operator: the meaning may change, the pattern stays (decided on 2026-10-20). `\overline` on anything other than a name or an operator stays `unknown_command`. |
 | `current_time_index` | `x(t)`, `x[t]`, `x_t` → `x` (only the letter `t`, the evaluation time) |
 | `reserved_names` | a signal named `G`, `F`, `X`, `U` or `R` → `G_sig`, ...: `F > 3` → `F_sig > 3`; `X(t)` → `X_sig` |
 | `frac_numbers` | `\frac{1}{3}` → `1/3` (integer literals only; otherwise rejected `division`) |
 | `number_forms` | `.5` → `0.5`; `5.` → `5`; `1e-3` → `0.001` (exact) |
 | `negation_minus` | `-x > 0` → `(0 - x) > 0`; `-3` stays a literal |
+| `norm_as_abs` | `\|x - y\|`, `\lVert x \rVert`, `\Vert x \Vert` → `\|x - y\|`. The norm's subscript (`\|x\|_2`, `\|x\|_\infty`, `\Vert x\Vert_{P_1}`) and a square after it (`\|x\|^2`) are dropped. The meaning changes, the pattern (a size compared with a number) stays: decided on 2026-10-20, as the description is written from our formula. Other powers of a norm stay `power`. |
+| `function_as_name` | a name followed by `(...)` or `[...]` whose arguments are only names and non-negative integers becomes one name, the function and its arguments joined with `_`: `\mathrm{Reg}(4,4)` → `Reg_4_4`; `behind(p_s, p_{uas})` → `behind_p_s_p_uas`; `h_4(\beta_2(\mathbf{x}))` → `h_4_beta_2_x` (the inner call first); `\phi[\theta]` → `phi_theta`. It can be a proposition (`F[0,10] Reg_4_4`) or a signal (`tau_p_P_A <= 24.5`). The arguments stay in the name so that different calls stay different atoms (`Reg(4,4) && Reg(3,3)` is not `a && a`). Decided on 2026-10-20. Anything else in the brackets (an operator, a formula, an expression, a real number) is `function`. |
 | `placeholder_subformula` | `\varphi_1 \mathcal{U}_{[a,b]} \varphi_2` where `variables` calls `\varphi_1` a "(sub)formula" or "specification": kept as the atom `varphi_1` with no flag (decided on 2026-10-19: the subformula can't be rebuilt). The rule is only recorded in the manifest, so these formulas can be found. |
 
 ### Comparisons
@@ -89,7 +92,7 @@ Each rule has a name (the list is `RULES` in `src/normalization/rules.py`). The 
 | `multiplication` | `2x`, `2\pi`, `a \cdot x`, `\times`, `\ast`, `x * y`, and two terms side by side (`k x`, `p q`: a product or a missing operator) |
 | `division` | `x / y`, `1/x`, `\frac{a}{b}` (anything but an integer over an integer) |
 | `power` | `(x-1)^2`, `x^2`, `E^*`, a superscript that isn't letters |
-| `function` | `\sin x`, `f(x)`, `\max`, `\exp`, `\|x\|`, `\lVert x \rVert`, `\sqrt`, `x(t+1)` (a signal at another time) |
+| `function` | `\sin x`, `\max`, `\exp`, `\sqrt`, `x(t+1)` (a signal at another time), `\rho(\Box_{[a,b]} \varphi, x, t)` (a call with an argument that isn't a name or an integer, see `function_as_name`) |
 | `indexed_operator` | `\bigwedge_{i=1}^n`, `\bigvee`, `\sum`, `\prod`, `\ldots`, `\cdots` |
 | `quantifier` | `\forall`, `\exists` |
 | `set_membership` | `x \in X`, `x \in \mathcal{X}` (not an interval) |

@@ -60,6 +60,7 @@ OK_CASES = [
     (r"G_{[0,5]} p", "G[0,5] p", "subscript_interval"),
     (r"\mathbf{G}^{[0,5]} p", "G[0,5] p", "subscript_interval"),
     (r"p \mathcal{U}_{[1,2]} q", "p U[1,2] q", "subscript_interval"),
+    (r"\textbf{F}_{\left[0,5\right]} p", "F[0,5] p", "subscript_interval"),
     (r"\mathbf{G}_{\le 100}(q \rightarrow \mathbf{F}_{< 5}p)", "G[0,100] (q -> (F[0,5] p))", "bound_shorthand"),
     (r"\Diamond_{(1,2)} p", "F[1,2] p", "close_open_interval"),
     (r"\Diamond_{[0,10)} p", "F[0,10] p", "close_open_interval"),
@@ -133,6 +134,16 @@ RECORDED_CASES = [
     (r"\twice_{[0,5]} p", "F[0,5] p", "macro_conflict"),
     (r"\Box_{[0,5]} x > c", "G[0,5] (x > c)", "symbolic_constant"),
     (r"G_{[0,5]}(x[0] \ge 0)", "G[0,5] (x_0 >= 0)", "indexed_signal"),
+    (r"\Box_{[0,5]} \|x - y\| < 1", "G[0,5] (|x - y| < 1)", "norm_as_abs"),
+    (r"\Box_{[0,5]} \lVert x \rVert_\infty < 1", "G[0,5] (|x| < 1)", "norm_as_abs"),
+    (r"\Box_{[0,5]} \Vert x \Vert_{2}^2 \le 1", "G[0,5] (|x| <= 1)", "norm_as_abs"),
+    (r"\mathbf{F}_{[0,10]} \mathrm{Reg}\,(4,4) \wedge \mathbf{F}_{[0,10]} \mathrm{Reg}\,(3,3)",
+     "(F[0,10] Reg_4_4) && (F[0,10] Reg_3_3)", "function_as_name"),
+    (r"\Box_{[0,5]} h_4(\beta_2(\mathbf{x})) \ge 0", "G[0,5] (h_4_beta_2_x >= 0)", "function_as_name"),
+    (r"\Box_{[0,5]} \phi[\theta]", "G[0,5] phi_theta", "function_as_name"),
+    (r"\overline{\Diamond}_{[0,10]} p \wedge \overline{\mathsf{G}}_{[0,5]} q", "(F[0,10] p) && (G[0,5] q)",
+     "overline_operator"),
+    (r"\Box_{[0,5]} v \le \overline{v}", "G[0,5] (v <= v_bar)", "accent_names"),
 ]
 VARIABLES = {"c": "the speed threshold", "\\varphi_1": "a subformula", "\\varphi_2": "a subformula"}
 
@@ -142,6 +153,11 @@ def test_recorded(formula, expected, rule):
     result = run(formula, variables=VARIABLES)
     assert (result.status, result.normalized) == ("ok", expected), result.reasons
     assert rule in result.rules
+
+
+def test_bounds_under_and_over_a_line_are_two_symbols():
+    r = run(r"F_{[\underline{t}, \overline{t}]} p")
+    assert r.status == "ok" and set(r.substitutions) == {"t_under", "t_bar"}
 
 
 def test_a_working_definition_wins_over_the_table():
@@ -179,6 +195,7 @@ REJECTED_CASES = [
     (r"\Box_{[0,5]} \frobnicate p", "unknown_command"),
     (r"G (p \rightarrow F q)", "unbounded_operator"),
     (r"\Box p", "unbounded_operator"),
+    (r"F_{\ge 0} p", "unbounded_operator"),
     (r"\mathbf{F}_{[0,\infty)} p", "unbounded_operator"),
     (r"p \mathcal{U} q", "unbounded_operator"),
     (r"\Box_{[3,1]} p", "empty_interval"),
@@ -190,8 +207,9 @@ REJECTED_CASES = [
     (r"\Box_{[0,5]} x / y > 1", "division"),
     (r"\Box_{[0,5]} (x-1)^2 < 1", "power"),
     (r"\Box_{[0,5]} \sin x < 1", "function"),
-    (r"\Box_{[0,5]} f(x) < 1", "function"),
-    (r"\Box_{[0,5]} \|x\| < 1", "function"),
+    (r"\Box_{[0,5]} \|x\|^3 < 1", "power"),
+    (r"\Box_{[0,5]} f(x, 0.5) < 1", "function"),
+    (r"\Box_{[0,5]} \rho(\Box_{[0,1]} p, x, t) > 0", "function"),
     (r"\Box_{[0,5]} x(t+1) < 1", "function"),
     (r"\bigwedge_{i=1}^n \Box_{[0,5]} p_i", "indexed_operator"),
     (r"\forall i \; \Box_{[0,5]} p_i", "quantifier"),
