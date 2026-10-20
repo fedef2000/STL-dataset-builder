@@ -1,1 +1,1 @@
-G[0,1000] (diagonalBehind_p_s_p_uas && heading_aligned_h_s_h_uas && velocity_aligned_v_s_v_uas)
+G[0,65] (F[0,30] (G[0,20] (y_5 - y_4 >= 8)))

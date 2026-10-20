@@ -1,1 +1,1 @@
-psi_1 U[9,57] psi_2
+F[50,90] ((|p_1 - p_A| <= epsilon) && (|(p_2 + p_x) - p_3| <= epsilon))

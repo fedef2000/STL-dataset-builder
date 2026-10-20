@@ -1,1 +1,1 @@
-F[0,30] (gear != 1)
+G[0,50] ((G[0,30] phi_nu_prime) && (G[0,22] phi_nu_prime_prime))

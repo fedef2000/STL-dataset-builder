@@ -1,1 +1,1 @@
-varphi_1 U[46,93] varphi_2
+G[5,20] (|ball_pos - tray_pos| <= 0.25)

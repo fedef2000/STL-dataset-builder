@@ -1,1 +1,1 @@
-F[0,5] mu_3
+G[0,63] ((70 < BG_varepsilon) && (BG_varepsilon < 180))

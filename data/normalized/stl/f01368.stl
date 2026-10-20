@@ -1,1 +1,1 @@
-G[0,25] ((gear == 2) -> (F[0,5] (RPM < 3630)))
+G[0,9] (phi_nu_prime && phi_nu_prime_prime)

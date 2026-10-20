@@ -1,1 +1,1 @@
-G[0,1000] (behind_p_s_p_uas && heading_aligned_h_s_h_uas && velocity_aligned_v_s_v_uas)
+G[0,70] (F[0,30] (y_5 - y_4 >= 15))

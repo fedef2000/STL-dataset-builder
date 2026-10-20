@@ -1,1 +1,1 @@
-(G[15,70] psi_1) && (F[51,97] psi_2) && (psi_3 U[71,90] psi_4)
+same U[0,86] ((!same) && (X (same U[0,30] ((!same) && (X ((q && (!gap)) || (X (same U[0,73] (q && same)))))))))

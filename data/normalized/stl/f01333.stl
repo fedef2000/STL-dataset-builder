@@ -1,1 +1,1 @@
-G[3,76] pi_tilde
+G[25,30] (|obj_pos - hole_pos| <= 0.37)

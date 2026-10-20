@@ -1,1 +1,1 @@
-G[0,30] ((speed < rho) && (RPM < 4780))
+G[0,89] varphi_1

@@ -1,1 +1,1 @@
-G[45,55] mu_parent
+G[11,50] ((rise || fall) -> (G[1,5] (|mu| < beta)))

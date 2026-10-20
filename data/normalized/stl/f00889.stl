@@ -1,1 +1,1 @@
-F[5,10] varphi
+G[0,39] ((currentADCSMode == SM) -> (P U[0,10799] (!P)))

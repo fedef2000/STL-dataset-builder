@@ -1,1 +1,1 @@
-(G[0,44] varphi) && (varphi U[45,91] psi)
+G[0,28] (F[0,25] (!((v_under <= v) && (v <= v_bar))))

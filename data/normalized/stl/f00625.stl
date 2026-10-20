@@ -1,1 +1,1 @@
-F[0,5] varphi_1
+G[0,26] ((Delta_4_speed > 40) -> (Delta_4_gear > 0))

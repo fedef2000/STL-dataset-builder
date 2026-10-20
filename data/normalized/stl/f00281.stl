@@ -1,1 +1,1 @@
-G[11,50] ((controller_mode == 1) -> (mu < rho))
+F[0,4] ((v > 120) && (G[0,74] (omega < 4500)))

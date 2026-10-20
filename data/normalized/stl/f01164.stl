@@ -1,1 +1,1 @@
-G[0,30] (|finger_pos - point_pos| <= 0.3)
+G[80,100] (F[40,77] phi)

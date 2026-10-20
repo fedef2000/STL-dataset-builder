@@ -1,1 +1,1 @@
-(F[5,18] (G[0,5] G_bar_T)) && (F[24,39] Y_bar_T)
+G[11,50] ((controller_mode == 0) -> (mu < rho))

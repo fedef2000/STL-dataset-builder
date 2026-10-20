@@ -1,1 +1,1 @@
-F[59,95] green
+F[0,80] (lane_change && (F[0,50] (x - x_ref > a)))

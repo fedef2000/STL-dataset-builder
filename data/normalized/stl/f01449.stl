@@ -1,1 +1,1 @@
-(G[1,26] (phi && psi)) <-> ((G[1,26] phi) && (G[1,26] psi))
+varphi_1 U[2,4] varphi_2

@@ -1,1 +1,1 @@
-G[35,69] (x > a)
+G[11,50] ((controller_mode == 1) -> (mu < rho))

@@ -1,1 +1,1 @@
-(G[36,62] (varphi_1 && varphi_2)) && (G[32,36] (varphi_1 && (!varphi_2))) && (G[62,81] ((!varphi_1) && varphi_2))
+F[0,34] (x <= 9)

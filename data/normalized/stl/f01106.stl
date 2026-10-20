@@ -1,1 +1,1 @@
-G[0,100] (y_5 - y_4 <= 40)
+G[0,1] ((distance_to_boundary <= 20) -> (F[0,1] (distance_to_boundary > 2)))

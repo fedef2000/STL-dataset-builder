@@ -1,1 +1,1 @@
-G[0,10] (!((p >= -0.5) && (p <= -0.45029) && (q >= 0.1) && (q <= 0.1968)))
+G[0,69] ((cycle_starting && (F[0,18] cycle_ending)) -> ((request -> ((!cycle_ending) && (F[0,3] pulse_reply) && (!cycle_ending) && (F[0,3] glucose_reply))) U[0,18] cycle_ending))

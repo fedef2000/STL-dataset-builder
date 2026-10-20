@@ -1,1 +1,1 @@
-G[5,20] (|ball_pos - tray_pos| <= 0.2)
+G[13,89] varphi
