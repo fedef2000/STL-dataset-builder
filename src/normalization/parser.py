@@ -2,8 +2,9 @@
 The parser of the normalization: the STL tokens of a formula (lexer.py) parsed into a tree, by recursive descent with
 the precedence levels of stl-nl (tightest first): unary (G, F, X, !), U/R, &&, ||, -> and <->. Before parsing, the
 label in front of the formula and a final punctuation mark are taken out; a formula that is a definition, or several
-formulas, is rejected. An unparenthesized temporal operand followed by a connective is read as the operator on the
-operand alone, as stl-nl reads it (the standard reading), and recorded as ambiguous_scope.
+formulas, is rejected. A temporal operator with no interval or an infinite upper bound gets a random horizon. An
+unparenthesized temporal operand followed by a connective is read as the operator on the operand alone, as stl-nl
+reads it (the standard reading), and recorded as ambiguous_scope.
 """
 from dataclasses import dataclass, field
 from fractions import Fraction
@@ -141,6 +142,7 @@ class Parser:
         self.pos = 0
         self.furthest = 0
         self.paren_end = -1  # where the last parenthesized formula ended
+        self.horizons = 0  # the operators given a random horizon so far
 
     # ------------------------------------------------------------ helpers
 
@@ -195,13 +197,9 @@ class Parser:
         left = self.unary()
         while True:
             t = self.peek()
-            if t is not None and t.kind == "ID" and t.candidate and t.value in ("U", "R"):
-                raise Rejected("unbounded_operator", t.value)
-            if t is None or t.kind != "BOP":
+            if t is None or not (t.kind == "BOP" or (t.kind == "ID" and t.candidate and t.value in ("U", "R"))):
                 return left
-            self.take()
-            if t.interval is None:
-                raise Rejected("unbounded_operator", t.value)
+            self.take()  # a bare U or R between two formulas is the operator, with no interval
             right = self.unary()
             left = Node(t.value, [left, right], interval=self.bounds(t.interval))
 
@@ -213,17 +211,13 @@ class Parser:
                               and self.peek_kind(1) in TERM_START):
             self.take()
             if t.kind == "ID":
-                if t.value != "X":
-                    raise Rejected("unbounded_operator", t.value)
                 self.trace.fire("latex_ops")
-            elif t.interval is None and t.value != "X":
-                raise Rejected("unbounded_operator", t.value)
             start = self.pos
             operand = self.unary()
             wrapped = self.tokens[start].kind == "LP" and self.paren_end == self.pos
             if not wrapped and self.peek_kind() in CONNECTIVE_KINDS:
                 self.trace.fire("ambiguous_scope")
-            interval = self.bounds(t.interval) if t.interval is not None else None
+            interval = self.bounds(t.interval) if t.value != "X" else None
             return Node(t.value, [operand], interval=interval)
         if t.kind == "NOT":
             self.take()
@@ -350,10 +344,26 @@ class Parser:
 
     # ------------------------------------------------------------ intervals
 
-    def bounds(self, interval: Interval) -> Bounds:
-        if any(t.kind == "INF" for t in interval.lo + interval.hi):
+    def bounds(self, interval: Interval | None) -> Bounds:
+        """
+        The interval of an operator. With no interval, [0, h]; with an infinite upper bound, [a, a + h]: h is a symbol
+        of its own (horizon#1, horizon#2, ...: no name of the formula has a #), drawn as the symbolic bounds are.
+        """
+        if interval is None:
+            return Bounds(Node("num", value=Fraction(0)), self.horizon(), False, False)
+        if any(t.kind == "INF" for t in interval.lo):
+            raise Rejected("unbounded_operator", "\\infty in the lower bound")
+        if [t.kind for t in interval.hi if t.kind != "PLUS"] == ["INF"]:  # \\infty, +\\infty
+            return Bounds(self.bound(interval.lo), Node("add", [self.bound(interval.lo), self.horizon()]),
+                          interval.lo_open, False)
+        if any(t.kind == "INF" for t in interval.hi):
             raise Rejected("unbounded_operator", "\\infty")
         return Bounds(self.bound(interval.lo), self.bound(interval.hi), interval.lo_open, interval.hi_open)
+
+    def horizon(self) -> Node:
+        self.trace.fire("random_horizon")
+        self.horizons += 1
+        return Node("var", value=f"horizon#{self.horizons}")
 
     def bound(self, tokens: list[Tok]) -> Node:
         sub = Parser(tokens, self.trace)

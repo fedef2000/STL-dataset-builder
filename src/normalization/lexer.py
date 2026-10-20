@@ -604,9 +604,7 @@ class Lexer:
         """The interval a sub- or superscript of an operator gives ([a,b], (a,b], <= c, < c), or None if it isn't one."""
         try:
             return self._script_interval_of(content)
-        except Rejected as rejected:
-            if rejected.rule == "unbounded_operator":
-                raise  # G_{\\ge 0}: an operator without an upper bound, also on a bare letter
+        except Rejected:
             return None  # not an interval (X_{1i}: a name)
 
     def _script_interval_of(self, content: list[str]) -> Interval | None:
@@ -632,8 +630,9 @@ class Lexer:
         if inner and inner[0].kind == "REL" and inner[0].value in ("<", "<=") and len(inner) > 1:
             self.trace.fire("bound_shorthand")
             return Interval([Tok("NUM", Fraction(0))], inner[1:], False, inner[0].value == "<")
-        if inner and inner[0].kind == "REL" and inner[0].value in (">", ">="):
-            raise Rejected("unbounded_operator", f"_{{{''.join(content)}}}")
+        if inner and inner[0].kind == "REL" and inner[0].value in (">", ">=") and len(inner) > 1:
+            self.trace.fire("bound_shorthand")  # G_{>= c} is [c, \infty): the parser gives it a horizon
+            return Interval(inner[1:], [Tok("INF")], inner[0].value == ">", False)
         return None
 
 

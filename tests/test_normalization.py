@@ -2,6 +2,7 @@
 Tests of the normalization (src/normalization): one or more cases per rule of docs/normalization_rules.md, each with
 the formula, what it must become, and the rule that must fire. Run with: python -m pytest tests
 """
+import re
 import sys
 from fractions import Fraction
 from pathlib import Path
@@ -163,6 +164,28 @@ def test_bounds_under_and_over_a_line_are_two_symbols():
     assert r.status == "ok" and set(r.substitutions) == {"t_under", "t_bar"}
 
 
+@pytest.mark.parametrize("formula,pattern", [
+    (r"G (p \rightarrow F q)", r"G\[0,(\d+)\] \(p -> \(F\[0,(\d+)\] q\)\)"),
+    (r"\Box p", r"G\[0,(\d+)\] p"),
+    (r"p \mathcal{U} q", r"p U\[0,(\d+)\] q"),
+    (r"\mathbf{F}_{[5,\infty)} p", r"F\[5,(\d+)\] p"),
+    (r"F_{\ge 3} p", r"F\[3,(\d+)\] p"),
+    (r"\bigcirc p", r"X p"),
+])
+def test_random_horizon(formula, pattern):
+    r = run(formula)
+    assert r.status == "ok" and re.fullmatch(pattern, r.normalized), (r.normalized, r.reasons)
+    assert ("random_horizon" in r.rules) == ("X" not in r.normalized)
+    if "\\infty" in formula or "ge" in formula:
+        lower = int(re.search(r"\[(\d+),", r.normalized).group(1))
+        assert int(re.fullmatch(pattern, r.normalized).group(1)) >= lower
+
+
+def test_each_operator_has_its_own_horizon():
+    r = run(r"G (p \rightarrow F q)")
+    assert set(r.substitutions) == {"horizon#1", "horizon#2"}
+
+
 def test_a_working_definition_wins_over_the_table():
     # The paper's \ev is \mathbf{E}, not eventually: kept, so E_{[0,5]} is a name and p beside it a product
     result = run(r"\ev_{[0,5]} p")
@@ -203,11 +226,7 @@ REJECTED_CASES = [
     (r"\phi = \Box_{[0,5]} p \text{ where } p = x > 0", "several_formulas"),
     (r"\loop_{[0,5]} p", "macro_loop"),
     (r"\Box_{[0,5]} \frobnicate p", "unknown_command"),
-    (r"G (p \rightarrow F q)", "unbounded_operator"),
-    (r"\Box p", "unbounded_operator"),
-    (r"F_{\ge 0} p", "unbounded_operator"),
-    (r"\mathbf{F}_{[0,\infty)} p", "unbounded_operator"),
-    (r"p \mathcal{U} q", "unbounded_operator"),
+    (r"\mathbf{F}_{(-\infty,0]} p", "unbounded_operator"),
     (r"\Box_{[3,1]} p", "empty_interval"),
     (r"\Box_{[-1,0]} p", "negative_bound"),
     (r"\Box_{[0,3000000000]} p", "bound_too_large"),
@@ -246,7 +265,7 @@ def test_record_filters():
 def test_every_rule_is_tested():
     tested = ({c[2] for c in OK_CASES} | {c[2] for c in RECORDED_CASES} | {c[1] for c in REJECTED_CASES}
               | {"random_symbolic_bounds", "other_logic", "connective_at_edge", "bounds_unsatisfiable",
-                 "placeholder_subformula", "ambiguous_scope"})
+                 "placeholder_subformula", "ambiguous_scope", "random_horizon"})
     # stlgen_error is the check of step 7, after the normalization (test_stlgen_accepts_every_ok_case)
     assert set(RULES) - tested == {"stlgen_error"}
 
@@ -266,7 +285,7 @@ def test_structure():
     assert run(r"\Box_{[0,5]} |x - y| > -x").structure == "G[#,#] (|a - b| > (# - a))"
     # Formulas that differ only in numbers and names share their structure
     assert run(r"\Diamond_{[1,2]} p").structure == run(r"\Diamond_{[0,T]} \varphi").structure == "F[#,#] a"
-    assert run(r"\Box p").structure is None
+    assert run(r"\Box p \wedge \forall i").structure is None
 
 
 def test_number_text():
