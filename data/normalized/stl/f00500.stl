@@ -1,1 +1,1 @@
-G[0,46] (x_air > Moderate)
+(G[0,29] (speed < 100)) || (G[29,30] (speed > 70))

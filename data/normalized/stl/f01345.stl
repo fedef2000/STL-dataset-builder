@@ -1,1 +1,1 @@
-varphi_1 U[3,41] varphi_2
+G[0,25] ((gear == 4) -> (G[0,5] (gear != 1)))

@@ -1,1 +1,1 @@
-F[0,45] phi
+(G[30,45] gamma_S) && (F[30,32] gamma_T) && (G[30,35] (F[0,5] gamma_T)) && (F[30,32] gamma_H) && (G[30,40] (F[0,5] gamma_H))

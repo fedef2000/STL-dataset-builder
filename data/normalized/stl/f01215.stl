@@ -1,1 +1,1 @@
-(G[0,30] (RPM < 3000)) -> (G[0,8] (speed < 50))
+((10 <= tempe) && (tempe <= 90)) && (((0 <= cooling) && (cooling <= 1)) U[15,20] ((40 <= tempe) && (tempe <= 50)))

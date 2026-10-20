@@ -1,1 +1,1 @@
-G[0,30] (((gear == 1) -> (speed < 80)) && ((gear == 2) -> (speed < 90)) && ((gear == 3) -> (speed > 20)) && ((gear == 4) -> (speed > 30)))
+varphi_1 U[65,72] varphi_2

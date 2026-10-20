@@ -1,1 +1,1 @@
-G[11,50] ((controller_mode == 0) -> (mu < rho))
+(F[5,15] (psi_1 && psi_2)) && (G[20,30] psi_3)

@@ -1,1 +1,1 @@
-G[30,630] (theta <= 14.2)
+F[0,30] (|cloth_pos - table_pos| <= 0.25)

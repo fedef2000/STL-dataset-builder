@@ -1,1 +1,1 @@
-(G[20,31] (latency < 137)) && (G[25,60] (backlog < 55))
+F[0,15] (lampOn && (F[0,10] itemOnRobot_purpleCube))

@@ -1,1 +1,1 @@
-G[600,700] (glucose < 200)
+G[0,5] (behind_p_s_p_uav && heading_aligned_h_s_h_uav)

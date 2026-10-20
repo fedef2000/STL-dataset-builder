@@ -1,1 +1,1 @@
-F[0,1000] (deadlock && (global_clock >= m + 4))
+(F[1,15] (G[0,4] G_bar_S)) && (F[21,39] Y_bar_S)

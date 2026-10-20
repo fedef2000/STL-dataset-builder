@@ -1,1 +1,1 @@
-G[30,35] ((87 <= pressure) && (pressure <= 87.5))
+F[59,60] psi_i_prime

@@ -1,0 +1,1 @@
+(G[16,17] (varphi_1 || varphi_2)) -> ((G[16,17] varphi_1) || (G[16,17] varphi_2))
