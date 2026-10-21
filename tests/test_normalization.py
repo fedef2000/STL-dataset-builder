@@ -16,6 +16,7 @@ from src.normalization.emit import number
 from src.normalization.latex import source_macros
 from src.normalization.normalize import normalize
 from src.normalization.rules import RULES
+from src.normalization.select import select
 from src.normalization.validate import check
 
 MACROS = source_macros(r"""
@@ -286,6 +287,35 @@ def test_pattern():
     # Formulas that differ only in numbers and names share their pattern
     assert run(r"\Diamond_{[1,2]} p").pattern == run(r"\Diamond_{[0,T]} \varphi").pattern == "F[#,#] a"
     assert run(r"\Box p \wedge \forall i").pattern is None
+
+
+def selection_line(record_id, normalized, pattern, status="ok"):
+    return {"id": record_id, "status": status, "normalized": normalized, "pattern": pattern}
+
+
+def test_selection_leaves_out_duplicates():
+    lines = [selection_line("W1:P1", "G[0,5] p", "G[#,#] a"), selection_line("W2:P1", "G[0,5] p", "G[#,#] a"),
+             selection_line("W2:P2", "G[0,6] p", "G[#,#] a"), selection_line("W3:P1", None, None, "rejected")]
+    select(lines, 10, "0")
+    assert [(l["selection"], l["duplicate_of"]) for l in lines] == \
+           [("kept", None), ("duplicate", "W1:P1"), ("kept", None), (None, None)]
+
+
+def test_selection_caps_each_pattern_over_papers():
+    # Paper W1 has 5 formulas of the pattern, W2 and W3 one each: a cap of 3 takes one from each paper
+    lines = [selection_line(f"W1:P{i}", f"F[0,{i}] p", "F[#,#] a") for i in range(5)]
+    lines += [selection_line("W2:P1", "F[0,9] q", "F[#,#] a"), selection_line("W3:P1", "F[0,8] r", "F[#,#] a"),
+              selection_line("W4:P1", "G[0,1] p", "G[#,#] a")]
+    select(lines, 3, "0")
+    kept = [l["id"] for l in lines if l["selection"] == "kept"]
+    assert len(kept) == 4 and {"W2:P1", "W3:P1", "W4:P1"} <= set(kept)
+    assert sum(1 for l in lines if l["selection"] == "pattern_cap") == 4
+    # The same seed picks the same; no cap keeps all
+    again = [dict(l) for l in lines]
+    select(again, 3, "0")
+    assert [l["selection"] for l in again] == [l["selection"] for l in lines]
+    select(lines, 0, "0")
+    assert all(l["selection"] == "kept" for l in lines)
 
 
 def test_number_text():

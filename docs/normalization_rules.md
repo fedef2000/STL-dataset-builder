@@ -136,13 +136,13 @@ Each formula goes through `stlgen import` alone, in a temporary directory, becau
 
 ```
 data/normalized/
-├── stl/f00001.stl ...            # status ok, numbered in input order
+├── stl/f00001.stl ...            # status ok and selection kept (the input of stl-nl), numbered in input order
 ├── needs_review/r00001.stl ...   # status needs_review (not written while no rule has it)
 ├── manifest.jsonl                # one line per input record
-└── report.md                     # counts by status, the rejection reasons, the most frequent unknown commands and patterns, each with an example
+└── report.md                     # counts by status, the rejection reasons, the most frequent unknown commands and patterns, each with an example, and the selection
 ```
 
-A manifest line: `id`, `status`, `file` (or null), `reasons`, `rules` (those that fired), `original`, `normalized`, `pattern` (see below), `stl` (stlgen's canonical text), `substitutions` (e.g. `{"T": 37}`), `rounded` (e.g. `[[["0.2","0.4"],["0","1"]]]`), `over_limits`, `bounds`, `source_type`.
+A manifest line: `id`, `status`, `file` (or null), `reasons`, `rules` (those that fired), `original`, `normalized`, `pattern` (see below), `stl` (stlgen's canonical text), `substitutions` (e.g. `{"T": 37}`), `rounded` (e.g. `[[["0.2","0.4"],["0","1"]]]`), `over_limits`, `bounds`, `source_type`, `selection` and `duplicate_of` (see *Selection for stl-nl*).
 
 ## Patterns
 
@@ -155,5 +155,17 @@ The pattern of a formula (`emit.pattern`, decided on 2026-10-19) is its normaliz
 | `(G[0,5] (x < 3)) -> (G[0,2] (y < 4))` | `(G[#,#] (a < #)) -> (G[#,#] (b < #))` |
 | `F[1,2] p`, `F[42,94] varphi` | `F[#,#] a` |
 
-It is only measured (manifest field `pattern`, report section *Patterns*): no formula is left out for it. A cap per pattern for the input of stl-nl is to be decided once the counts are seen.
+The manifest has it in `pattern`, and the report counts the formulas of each (section *Patterns*).
+
+## Selection for stl-nl
+
+Not every formula ok goes to stl-nl (decided on 2026-10-21; `src/normalization/select.py`). The manifest field `selection` says, for each formula ok, which it is (null for the other statuses):
+
+| `selection` | What it means |
+|---|---|
+| `kept` | written in `stl/`: the input of stl-nl |
+| `duplicate` | the same normalized text as an earlier formula (in manifest order), whose id is in `duplicate_of`. Only the text counts: the same original with other random bounds is a different formula and stays, as stl-nl describes it differently. |
+| `pattern_cap` | its pattern already has `--max-per-pattern` formulas (default 10; `0`: no cap), so that the most frequent patterns don't fill the dataset |
+
+The duplicates are left out first, then the cap is applied to the rest. When a pattern has more formulas than the cap, they are taken from its papers in turn (one from each paper, then a second, ...), with the papers and the formulas of each in random order, so that the names and contexts vary. The seed of a pattern is `<--seed>:<pattern>`: a rerun picks the same, and a change to one pattern doesn't change the others. A duplicate's `duplicate_of` may be a formula left out by the cap. The report section *Selection for stl-nl* counts each and lists the patterns that are cut.
 

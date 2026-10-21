@@ -5,6 +5,7 @@ grammar), so that stl-nl can write natural-language descriptions of them.
     python scripts/07_normalize_formulas.py                     # data/dataset/stl_formulas_unpaired.jsonl
     python scripts/07_normalize_formulas.py --seed 1            # other random values for the symbolic bounds
     python scripts/07_normalize_formulas.py --stlgen PATH       # the stlgen binary of stl-nl (default: STLGEN_BIN)
+    python scripts/07_normalize_formulas.py --max-per-pattern 0 # every formula ok to stl-nl (default: 10 per pattern)
     python scripts/07_normalize_formulas.py --show-rejected               # the reasons of rejection, with counts
     python scripts/07_normalize_formulas.py --show-rejected function      # 10 random formulas rejected by `function`
     python scripts/07_normalize_formulas.py --show-rejected "unknown_command: \\overline" --limit 0   # all of them
@@ -12,9 +13,11 @@ grammar), so that stl-nl can write natural-language descriptions of them.
 --show-rejected only reads the manifest of the last run: nothing is normalized again and no file is written.
 
 Each formula goes through the rules of docs/normalization_rules.md and then through stlgen, the parser of stl-nl.
+Of the formulas ok, those with the same normalized text as an earlier one are left out, and at most --max-per-pattern
+of each pattern are kept (taken from the papers in turn): the manifest says which (`selection`).
 Writes, in data/normalized/ (the .stl files of an earlier run are replaced):
 
-    stl/f00001.stl ...            the formulas normalized and accepted by stlgen (status ok)
+    stl/f00001.stl ...            the formulas kept for stl-nl (status ok, selection kept)
     needs_review/r00001.stl ...   the formulas with a rule of status needs_review (none since 2026-10-19: not written)
     manifest.jsonl                one line per input record: status, file, reasons, rules, original and normalized text
     report.md                     counts by status, reason and pattern, with examples
@@ -33,6 +36,7 @@ from config import DATA_DIR, RAW_LATEX_DIR, STLGEN_BIN
 from src.normalization.latex import paper_macros
 from src.normalization.normalize import normalize
 from src.normalization.rules import RULES
+from src.normalization.select import select
 from src.normalization.validate import check, over_limits
 
 sys.stdout.reconfigure(encoding="utf-8")
@@ -78,7 +82,7 @@ def write_files(lines: list[dict]):
             old.unlink()
         number = 0
         for line in lines:
-            if line["status"] == status:
+            if line["status"] == status and line["selection"] in ("kept", None):
                 number += 1
                 line["file"] = f"{folder}/{prefix}{number:05d}.stl"
                 (OUTPUT_DIR / line["file"]).write_text(line["normalized"] + "\n", encoding="utf-8")
@@ -143,7 +147,7 @@ def found(line: dict, rule: str) -> str:
     return code(reason.split(": ", 1)[1]) if ": " in reason else ""
 
 
-def report(lines: list[dict], seed: str) -> str:
+def report(lines: list[dict], seed: str, max_per_pattern: int) -> str:
     total = len(lines)
     status = collections.Counter(l["status"] for l in lines)
     out = ["# Normalized formulas for stl-nl", "",
@@ -189,6 +193,7 @@ def report(lines: list[dict], seed: str) -> str:
             "command to draw the symbol (\\raisebox, \\rotatebox, ...).", ""]
     out += table(rows, ("Command", "Formulas", "Written in the formula", "From a macro", "Example"))
     out += patterns(lines)
+    out += selection(lines, max_per_pattern)
     return "\n".join(out)
 
 
@@ -216,6 +221,28 @@ def patterns(lines: list[dict]) -> list[str]:
            f"{len(shown)} most common cover {covered} formulas ({100 * covered / len(kept):.0f}%).", ""]
     out += table([(code(s), n, f"{100 * n / len(kept):.1f}%", code(example[s]["normalized"])) for s, n in shown],
                  ("Pattern", "Formulas", "Share", "Example"))
+    return out
+
+
+def selection(lines: list[dict], max_per_pattern: int) -> list[str]:
+    """How many formulas ok go to stl-nl, and the patterns the cap cuts."""
+    ok = [l for l in lines if l["status"] == "ok"]
+    count = collections.Counter(l["selection"] for l in ok)
+    cap = f"at most {max_per_pattern} formulas of each pattern" if max_per_pattern else "no cap per pattern"
+    out = ["## Selection for stl-nl", "",
+           "Of the formulas ok, one with the same normalized text as an earlier one is left out (`duplicate`; the "
+           f"manifest gives the id of the first in `duplicate_of`), and {cap} are kept, taken from the papers in "
+           "turn, at random with the seed (`pattern_cap`). Only the formulas kept are written in `stl/`.", ""]
+    out += table([(s, count[s], f"{100 * count[s] / len(ok):.1f}%") for s in ("kept", "duplicate", "pattern_cap")],
+                 ("Selection", "Formulas", "Share of ok"))
+    by_pattern = collections.defaultdict(collections.Counter)
+    for l in ok:
+        by_pattern[l["pattern"]][l["selection"]] += 1
+    cut = sorted(((p, c) for p, c in by_pattern.items() if c["pattern_cap"]), key=lambda pc: -pc[1]["pattern_cap"])
+    if cut:
+        out += [f"{len(cut)} patterns are cut:", ""]
+        out += table([(code(p), sum(c.values()) - c["duplicate"], c["kept"]) for p, c in cut],
+                     ("Pattern", "Formulas (no duplicates)", "Kept"))
     return out
 
 
@@ -253,6 +280,8 @@ def main():
     parser.add_argument("--input", type=Path, default=INPUT_FILE)
     parser.add_argument("--seed", default="0", help="seed of the random values of the symbolic bounds")
     parser.add_argument("--stlgen", type=Path, default=STLGEN_BIN, help="the stlgen binary of stl-nl")
+    parser.add_argument("--max-per-pattern", type=int, default=10,
+                        help="at most this many formulas of each pattern go to stl-nl (0: no cap)")
     parser.add_argument("--show-rejected", nargs="?", const="", metavar="REASON",
                         help="print rejected formulas whose reason starts with REASON (alone: list the reasons), "
                              "from the manifest of the last run")
@@ -267,10 +296,12 @@ def main():
     records = [json.loads(line) for line in open(args.input, encoding="utf-8")]
     print(f"Normalizing {len(records)} formulas from {args.input}")
     lines = normalize_records(records, args.seed, args.stlgen)
+    select(lines, args.max_per_pattern, args.seed)
     write_files(lines)
-    (OUTPUT_DIR / "report.md").write_text(report(lines, args.seed), encoding="utf-8")
+    (OUTPUT_DIR / "report.md").write_text(report(lines, args.seed, args.max_per_pattern), encoding="utf-8")
     status = collections.Counter(l["status"] for l in lines)
-    print(f"ok {status['ok']}, needs_review {status['needs_review']}, rejected {status['rejected']}: "
+    kept = sum(1 for l in lines if l["selection"] == "kept")
+    print(f"ok {status['ok']} (kept for stl-nl {kept}), needs_review {status['needs_review']}, rejected {status['rejected']}: "
           f"see {(OUTPUT_DIR / 'report.md').relative_to(BASE_DIR)}")
 
 

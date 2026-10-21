@@ -46,9 +46,9 @@ STL_dataset_builder/
 │   │   ├── excluded.jsonl             # The formulas left out of both, and why
 │   │   └── stats.md                   # What the dataset holds
 │   ├── normalized/                    # The unpaired formulas as input of stl-nl, built by step 7 - tracked in git
-│   │   ├── stl/                       # One .stl file per formula accepted (f00001.stl ...)
-│   │   ├── manifest.jsonl             # One line per input formula: status, reasons, rules, original and normalized text
-│   │   └── report.md                  # Counts by status, rejection reason and pattern, with examples
+│   │   ├── stl/                       # One .stl file per formula kept for stl-nl (f00001.stl ...)
+│   │   ├── manifest.jsonl             # One line per input formula: status, reasons, rules, original and normalized text, selection
+│   │   └── report.md                  # Counts by status, rejection reason, pattern and selection, with examples
 │   ├── logs/                          # (gitignored)
 │   │   └── pipeline.log               # Timestamped log of the download step
 │   ├── raw/                           # (gitignored)
@@ -602,7 +602,7 @@ Turns the formulas of `data/dataset/stl_formulas_unpaired.jsonl` into the input 
 * the time bounds are made closed integer intervals: open intervals are closed, real bounds rounded outward (the lower one down, the upper one up), and symbolic bounds (`[0,T]`) get random integers from 0 to 100, the same symbol the same value everywhere in the formula;
 * the result is written fully parenthesized and checked with `stlgen`, the parser of `stl-nl`.
 
-A formula is `ok` or `rejected` (definitions of the semantics or of an operator, unbounded operators, products, functions, unknown commands, ...). Nothing is guessed: a construct no rule covers is rejected with its reason.
+A formula is `ok` or `rejected` (definitions of the semantics or of an operator, unbounded operators, products, functions, unknown commands, ...). Nothing is guessed: a construct no rule covers is rejected with its reason. Of the formulas `ok`, those with the same normalized text as an earlier one are left out, and at most 10 of each pattern go to `stl-nl`, taken from the papers in turn.
 
 ```bash
 python scripts/07_normalize_formulas.py
@@ -610,19 +610,23 @@ python scripts/07_normalize_formulas.py
 # Other random values for the symbolic bounds
 python scripts/07_normalize_formulas.py --seed 1
 
+# Every formula ok to stl-nl (no cap per pattern; duplicates are still left out)
+python scripts/07_normalize_formulas.py --max-per-pattern 0
+
 # Read the rejected formulas of the last run: the reasons with counts, then a sample of one reason
 python scripts/07_normalize_formulas.py --show-rejected
 python scripts/07_normalize_formulas.py --show-rejected function
 python scripts/07_normalize_formulas.py --show-rejected "unknown_command: \overline" --limit 0
 ```
 
-It needs the `stlgen` binary of `stl-nl`, built with `cargo build --release --locked --manifest-path rust/stlgen/Cargo.toml` in the `stl-nl` repository. By default it is looked for in a checkout of `stl-nl` next to this one (`../stl-nl/rust/stlgen/target/release/stlgen`); set `STLGEN_BIN` in `.env` or pass `--stlgen` for another place. It writes, in `data/normalized/`: `stl/` (the `.stl` files of an earlier run are replaced; they are numbered in input order, so a file's number can change from one run to another, and `manifest.jsonl` says which record each file is), `manifest.jsonl` (one line per input formula: `id`, `status`, `file`, `reasons`, `rules` that fired, `original`, `normalized`, `pattern` (the normalized text with the numbers written `#` and the names renamed `a`, `b`, ... in order, so that formulas differing only in numbers and names share it), `stl` as `stlgen` prints it back, `substitutions` of the symbolic bounds, `rounded` bounds, `over_limits` of `stl-nl`'s selection) and `report.md`. The same input and seed give the same files.
+It needs the `stlgen` binary of `stl-nl`, built with `cargo build --release --locked --manifest-path rust/stlgen/Cargo.toml` in the `stl-nl` repository. By default it is looked for in a checkout of `stl-nl` next to this one (`../stl-nl/rust/stlgen/target/release/stlgen`); set `STLGEN_BIN` in `.env` or pass `--stlgen` for another place. It writes, in `data/normalized/`: `stl/` (the formulas kept for `stl-nl`; the `.stl` files of an earlier run are replaced; they are numbered in input order, so a file's number can change from one run to another, and `manifest.jsonl` says which record each file is), `manifest.jsonl` (one line per input formula: `id`, `status`, `file`, `reasons`, `rules` that fired, `original`, `normalized`, `pattern` (the normalized text with the numbers written `#` and the names renamed `a`, `b`, ... in order, so that formulas differing only in numbers and names share it), `stl` as `stlgen` prints it back, `substitutions` of the symbolic bounds, `rounded` bounds, `over_limits` of `stl-nl`'s selection, `selection`: `kept`, `duplicate` (with the first one's id in `duplicate_of`) or `pattern_cap` for the formulas ok) and `report.md`. The same input and seed give the same files.
 
 | Flag | What it does |
 |---|---|
 | `--input FILE` | Another file of dataset records (default `data/dataset/stl_formulas_unpaired.jsonl`). |
 | `--seed S` | The seed of the random values of the symbolic bounds (default `0`); each record's values depend only on the seed and its id. |
 | `--stlgen PATH` | The `stlgen` binary (default `STLGEN_BIN`). |
+| `--max-per-pattern K` | At most `K` formulas of each pattern go to `stl-nl` (default `10`, `0` for no cap), taken from the papers in turn, at random with `--seed`. |
 | `--show-rejected [REASON]` | Doesn't normalize: reads `manifest.jsonl` of the last run and prints the rejected formulas whose reason starts with `REASON` (a rule, as `function`, or a rule and what it found, as `"unknown_command: \overline"`), each with its id, original, the part the rule found and the rules applied before. A random sample drawn with `--seed`, since the manifest is ordered by paper. Without `REASON`, the reasons with their counts. |
 | `--limit N` | With `--show-rejected`: how many formulas to print (default `10`, `0` for all). |
 
