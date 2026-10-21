@@ -187,6 +187,12 @@ def test_each_operator_has_its_own_horizon():
     assert set(r.substitutions) == {"horizon#1", "horizon#2"}
 
 
+def test_a_horizon_is_never_zero():
+    # With 0-100 about 1 draw in 101 would be 0 (G[0,0]): such a draw is made again
+    horizons = [run(r"\Box p", record_id=f"W{n}:P1").substitutions["horizon#1"] for n in range(1000)]
+    assert min(horizons) == 1 and max(horizons) == 100
+
+
 def test_a_working_definition_wins_over_the_table():
     # The paper's \ev is \mathbf{E}, not eventually: kept, so E_{[0,5]} is a name and p beside it a product
     result = run(r"\ev_{[0,5]} p")

@@ -176,7 +176,9 @@ def resolve_bounds(root, trace: Trace, rng):
         trace.fire("random_symbolic_bounds")
         for _ in range(RANDOM_BOUND_TRIES):
             values = {s: rng.randint(*RANDOM_BOUND_RANGE) for s in symbols}
-            if all(_resolved(i, values)[2] is None for i in intervals):
+            # A horizon of 0 would give G[0,0]: drawn again, so a horizon is 1-100 (and other records draw as before)
+            if all(_resolved(i, values)[2] is None for i in intervals) and \
+                    all(v > 0 for s, v in values.items() if s.startswith("horizon#")):
                 break
         else:
             raise Rejected("bounds_unsatisfiable", ", ".join(symbols))
