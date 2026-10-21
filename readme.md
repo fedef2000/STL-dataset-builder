@@ -1,32 +1,18 @@
 # NL-to-STL Dataset Builder
 
-A modular, resumable pipeline that discovers academic papers on Signal Temporal Logic (STL), downloads their LaTeX sources or PDFs, audits their licences, and estimates how many STL formulas each one contains. It prepares the corpus for building a dataset of **(Natural Language Requirement, Signal Temporal Logic Formula)** pairs from Cyber-Physical Systems (CPS) and formal verification literature.
+A modular, resumable pipeline that builds a dataset of **(Natural Language Requirement, Signal Temporal Logic Formula)** pairs from the Cyber-Physical Systems (CPS) and formal verification literature. It discovers academic papers on Signal Temporal Logic (STL), downloads their LaTeX sources or PDFs, audits their licences, finds the STL formulas in them, has language models extract the requirement each formula states, and builds the dataset from their answers. The formulas without a requirement are normalized into the input of `stl-nl`, a tool that writes natural-language descriptions of STL formulas.
 
-**Current state:** steps 1 to 4 (discovery, download, licence audit, formula estimation) are implemented. The extraction of the (requirement, formula) pairs themselves is not implemented yet.
+| Step | Script | What it does | Writes |
+|---|---|---|---|
+| 1 | `01_build_corpus.py` | Discovers papers (citations of the foundational STL papers, keyword searches) and finds their arXiv IDs and PDF links | `data/corpus.json` |
+| 2 | `02_download_papers.py` | Downloads the LaTeX source of each paper, or its open-access PDF | `data/raw/` |
+| 3 | `03_audit_and_print_licenses.py` | Finds the licence of each downloaded paper | `data/corpus.json` |
+| 4 | `04_estimate_formulas.py` | Counts and locates the STL formulas of each paper | `data/corpus.json` |
+| 5 | `05_extract_requirements.py` | Two models (a third on their disagreements) give the requirement of each formula | `data/processed/extractions/` |
+| 6 | `06_build_dataset.py` | Builds the dataset from the answers of step 5: the formulas with a requirement, and those without | `data/dataset/` |
+| 7 | `07_normalize_formulas.py` | Normalizes the formulas without a requirement into the STL grammar of `stl-nl` | `data/normalized/` |
 
----
-
-## Key Features
-
-* **Multi-Source & Multi-Hop Paper Discovery:**
-  * **1-Hop & 2-Hop Citation Graph Crawling:** Discovers papers citing the foundational STL literature (Maler & Nickovic 2004, Donzé & Maler 2010, Fainekos & Pappas 2009, Breach 2010) via OpenAlex, with batching and local relevance filtering to save API credits. Each paper records which papers of the previous hop it cites (`parent_ids`).
-  * **Direct Keyword Harvesting:** Queries both the arXiv API and OpenAlex by keyword (`"Signal Temporal Logic"`, `"Metric Temporal Logic"`, `"STL specification"`, `"STL formulas"`). OpenAlex results are kept only if their title or abstract matches the STL relevance terms.
-  * **Automatic Deduplication:** Deduplicates works across OpenAlex IDs, arXiv IDs, DOIs, and normalized titles inside a single source of truth (`data/corpus.json`).
-  * **Enrichment:** Asks Semantic Scholar, the arXiv title search and HAL for the arXiv IDs and open PDF links that OpenAlex does not list. Each answer is recorded per paper, so no service is asked twice about the same paper, and a lookup that got no answer (rate limit, network problem) is repeated on the next run.
-* **Resumable Harvester:**
-  * **Tier 1 (LaTeX Sources):** Prioritizes source bundles from `export.arxiv.org` to preserve exact mathematical macros ($\square_{[a,b]}$, $\lozenge_{[a,b]}$, $\mathcal{U}_{[a,b]}$) without OCR corruption. Keeps the `.tex`, `.sty`, `.cls` and `.def` files with their folder structure, so author macros defined outside the main file are not lost.
-  * **Tier 2 (Open-Access PDFs):** Falls back to Open Access PDF mirrors (HAL, Inria, Dagstuhl, institutional repositories) and verifies the `%PDF` magic bytes.
-  * **Descriptive Failure Reasons & Stats:** Every paper that could not be downloaded stores why, and `--stats` prints the breakdown for the whole corpus.
-* **Strict Multi-Source License Auditing:**
-  * Resolves the exact license for every downloaded paper by inspecting `.tex` headers, PDF metadata, arXiv OAI-PMH records, and OpenAlex locations.
-  * Tracks license provenance and flags conflicts between publisher metadata and preprint source files.
-* **Formula Yield Estimation:**
-  * Counts temporal operators that carry a time bound (e.g. `\Box_{[0,5]}`, `\mathcal{G}_{[0,200]}`, `\always{0}{200}`, `\Diamond_{\le 3}`), split into **concrete** (numeric bounds, including infinity) and **symbolic** (parametric bounds), and groups them into **formulas**: one per inline math span or display row.
-  * Accepts closed, open, half-open and unbounded intervals (`[0,5]`, `(0,5)`, `[0,5)`, `[5,\infty)`), `\left[ \right]`, LaTeX spacing commands and time units (`[0.2s, 0.8s]`).
-  * Covers future and past-time operators: box and diamond symbols and their variants (`\boxminus`, `\diamondminus`, ...), `G`/`F`/`U` letters, and named operators (`\always`, `\eventually`, `\until`, `\once`, `\since`, `\historically`, `\LTL...`).
-  * Recognises each paper's own operator macros (`\newcommand`, `\def`, `\DeclareMathOperator`, `\NewDocumentCommand`), including macros defined in terms of other macros.
-  * Ignores commented-out lines, `comment` environments, `\iffalse ... \fi` blocks, and `.tex` files that the main document does not `\input` (old drafts, unused files).
-  * For PDF-only papers, falls back to the text layer of the PDF, where a formula is one text line. It recognises box and diamond glyphs (`□[0,5]`, `♦(0,∞)`, the past-time `⊟[1,2]`), the letters and words (`G[0,5]`, `U[0,∞)`, `Always[0,10]`), single bounds (`♦≤10`, `F≤100(x > 1)`), symbolic bounds (`□[a,b]`, `G[0,T]`), mathematical letters (`𝑭[0,20]`) and the digits `2` and `3` that the AMS symbol font leaves in place of a box and a diamond (`2[0,10](x ≤ 1.2)`). A bare `G`, `F` or `U` needs a square bracket, `x ∼ U[0,1]` is read as a uniform distribution, and an interval after a space that looks like a citation (`at once [28, 36]`) is not counted. Operators whose glyph is lost in the text layer are missed, so PDF counts stay lower than LaTeX counts.
+**Current state:** all seven steps are implemented. The corpus, the dataset and the normalized formulas are tracked in git (`data/corpus.json`, `data/dataset/`, `data/normalized/`); the downloaded papers and the answers of step 5 are not (`data/raw/`, `data/processed/`).
 
 ---
 
@@ -36,6 +22,7 @@ A modular, resumable pipeline that discovers academic papers on Signal Temporal 
 STL_dataset_builder/
 ├── config.py                          # Central settings: paths, .env loading, seed DOIs, default keywords
 ├── .env.example                       # Template for the local .env file (email and API keys)
+├── requirements.txt                   # Python packages, with their versions
 ├── readme.md
 │
 ├── data/
@@ -48,13 +35,16 @@ STL_dataset_builder/
 │   ├── normalized/                    # The unpaired formulas as input of stl-nl, built by step 7 - tracked in git
 │   │   ├── stl/                       # One .stl file per formula kept for stl-nl (f00001.stl ...)
 │   │   ├── manifest.jsonl             # One line per input formula: status, reasons, rules, original and normalized text, selection
-│   │   └── report.md                  # Counts by status, rejection reason, pattern and selection, with examples
+│   │   ├── report.md                  # Counts by status, rejection reason, pattern and selection, with examples
+│   │   └── translations.csv           # The formulas kept, original next to normalized (inspect_normalization.py; not tracked)
 │   ├── logs/                          # (gitignored)
 │   │   └── pipeline.log               # Timestamped log of the download step
 │   ├── raw/                           # (gitignored)
 │   │   ├── latex/                     # Extracted source folders: data/raw/latex/{paper_id}/
 │   │   └── pdfs/                      # Downloaded PDFs:          data/raw/pdfs/{paper_id}.pdf
 │   └── processed/                     # Derived files (gitignored, except the evaluation set)
+│       ├── extractions/               # The answers of step 5 (see Step 5)
+│       ├── benchmark/                 # The answers and reports of the model benchmark
 │       ├── eval_set.json              # Hand-labelled (requirement, formula) pairs, with domain and variable meanings, for evaluating the extraction
 │       └── eval_set.md                # The same set, readable, with rendered formulas
 │
@@ -83,9 +73,10 @@ STL_dataset_builder/
 │       ├── lexer.py                   # TeX tokens -> STL tokens: operators and intervals, names, numbers
 │       ├── parser.py                  # STL tokens -> tree (stl-nl's precedence); labels, definitions, ambiguous scope
 │       ├── rules.py                   # The named rules; time bounds (random values, closing, rounding); symbol checks
-│       ├── emit.py                    # Tree -> text in the grammar of stl-nl, fully parenthesized
+│       ├── emit.py                    # Tree -> text in the grammar of stl-nl, fully parenthesized; its pattern
 │       ├── validate.py                # The check with stlgen, the parser of stl-nl
-│       └── normalize.py               # One formula through all the stages
+│       ├── normalize.py               # One formula through all the stages
+│       └── select.py                  # The formulas for stl-nl: duplicates and the cap per pattern left out
 │
 ├── docs/
 │   └── normalization_rules.md         # Every rule of the normalization, with an example
@@ -101,6 +92,8 @@ STL_dataset_builder/
     ├── 06_build_dataset.py            # Step 6: Build the dataset file from the answers of step 5
     ├── 07_normalize_formulas.py       # Step 7: Normalize the unpaired formulas into the input of stl-nl
     ├── inspect_extractions.py         # Prints the undecided formulas and the answers that failed a check, to read
+    ├── inspect_normalization.py       # Writes the formulas kept by step 7 as a CSV, to check the translation by eye
+    ├── migrate_corpus_lookups.py      # One-off: rebuilt the enrichment lookups of the corpus from the log (already run)
     └── eval/
         ├── build_eval_set.py          # Checks the labels against the LaTeX sources and writes the evaluation set
         ├── benchmark.py               # Runs several models over the evaluation set and compares accuracy, time and cost
@@ -125,7 +118,10 @@ python -m venv .venv
 # Linux / macOS
 source .venv/bin/activate
 
-pip install requests pymupdf truststore
+pip install -r requirements.txt
+
+# Only to run the tests of step 7
+pip install pytest
 
 ```
 
@@ -151,11 +147,11 @@ Without a Semantic Scholar key, the enrichment lookups of step 1 are likely to b
 
 ## Pipeline Usage
 
-All steps read from and update **`data/corpus.json`** incrementally. You can interrupt (`Ctrl+C`) and resume any script at any time without losing progress.
+Steps 1 to 4 read from and update **`data/corpus.json`** incrementally; steps 5 to 7 read the outputs of the step before (see each step). You can interrupt (`Ctrl+C`) and resume any script at any time without losing progress: step 5 keeps every answer as it arrives, and steps 6 and 7 are rebuilt whole in a few seconds or minutes.
 
 Every script also accepts `-h` / `--help`, which prints its flags and exits.
 
-Each step can print its statistics from `data/corpus.json` without redoing the work: `--stats` on any of the four scripts.
+Steps 1 to 4 can print their statistics from `data/corpus.json` without redoing the work: `--stats` on any of the four scripts. Step 5 has `--report` for the same.
 
 ### Step 1: Build & Expand the Paper Corpus
 
@@ -599,10 +595,10 @@ Turns the formulas of `data/dataset/stl_formulas_unpaired.jsonl` into the input 
 
 * the paper's own macros are expanded from its LaTeX sources (PDF formulas are already in standard notation);
 * the formula is cut into tokens (LaTeX operators to STL tokens, Greek letters and subscripts to names, intervals attached to their operators) and parsed with the precedence of `stl-nl`;
-* the time bounds are made closed integer intervals: open intervals are closed, real bounds rounded outward (the lower one down, the upper one up), and symbolic bounds (`[0,T]`) get random integers from 0 to 100, the same symbol the same value everywhere in the formula;
+* the time bounds are made closed integer intervals: open intervals are closed, real bounds rounded outward (the lower one down, the upper one up), symbolic bounds (`[0,T]`) get random integers from 0 to 100, the same symbol the same value everywhere in the formula, and an operator without an interval or with an infinite upper bound gets a random horizon (`G p` → `G[0,h] p`, `F_{[a,\infty)} p` → `F[a,a+h] p`, `h` from 1 to 100);
 * the result is written fully parenthesized and checked with `stlgen`, the parser of `stl-nl`.
 
-A formula is `ok` or `rejected` (definitions of the semantics or of an operator, unbounded operators, products, functions, unknown commands, ...). Nothing is guessed: a construct no rule covers is rejected with its reason. Of the formulas `ok`, those with the same normalized text as an earlier one are left out, and at most 10 of each pattern go to `stl-nl`, taken from the papers in turn.
+A formula is `ok` or `rejected` (definitions of the semantics, of a grammar or of an operator, products, powers, functions, quantifiers, unknown commands, ...): a construct no rule covers is rejected with its reason. Some rules change the paper's meaning to keep a valid formula (random bounds and horizons, a norm read as an absolute value, a call such as `Reg(4,4)` read as the name `Reg_4_4`, ...): the description `stl-nl` writes is of our formula, not the paper's. `docs/normalization_rules.md` says which, and when each was decided. Of the formulas `ok`, those with the same normalized text as an earlier one are left out, and at most 10 of each pattern go to `stl-nl`, taken from the papers in turn.
 
 ```bash
 python scripts/07_normalize_formulas.py
@@ -617,14 +613,17 @@ python scripts/07_normalize_formulas.py --max-per-pattern 0
 python scripts/07_normalize_formulas.py --show-rejected
 python scripts/07_normalize_formulas.py --show-rejected function
 python scripts/07_normalize_formulas.py --show-rejected "unknown_command: \overline" --limit 0
+
+# The formulas kept, original next to normalized and pattern, to check them by eye: data/normalized/translations.csv
+python scripts/inspect_normalization.py
 ```
 
-It needs the `stlgen` binary of `stl-nl`, built with `cargo build --release --locked --manifest-path rust/stlgen/Cargo.toml` in the `stl-nl` repository. By default it is looked for in a checkout of `stl-nl` next to this one (`../stl-nl/rust/stlgen/target/release/stlgen`); set `STLGEN_BIN` in `.env` or pass `--stlgen` for another place. It writes, in `data/normalized/`: `stl/` (the formulas kept for `stl-nl`; the `.stl` files of an earlier run are replaced; they are numbered in input order, so a file's number can change from one run to another, and `manifest.jsonl` says which record each file is), `manifest.jsonl` (one line per input formula: `id`, `status`, `file`, `reasons`, `rules` that fired, `original`, `normalized`, `pattern` (the normalized text with the numbers written `#` and the names renamed `a`, `b`, ... in order, so that formulas differing only in numbers and names share it), `stl` as `stlgen` prints it back, `substitutions` of the symbolic bounds, `rounded` bounds, `over_limits` of `stl-nl`'s selection, `selection`: `kept`, `duplicate` (with the first one's id in `duplicate_of`) or `pattern_cap` for the formulas ok) and `report.md`. The same input and seed give the same files.
+It needs the `stlgen` binary of `stl-nl`, built with `cargo build --release --locked --manifest-path rust/stlgen/Cargo.toml` in the `stl-nl` repository. By default it is looked for in a checkout of `stl-nl` next to this one (`../stl-nl/rust/stlgen/target/release/stlgen`); set `STLGEN_BIN` in `.env` or pass `--stlgen` for another place. It writes, in `data/normalized/`: `stl/` (the formulas kept for `stl-nl`; the `.stl` files of an earlier run are replaced; they are numbered in input order, so a file's number can change from one run to another, and `manifest.jsonl` says which record each file is), `manifest.jsonl` (one line per input formula: `id`, `status`, `file`, `reasons`, `rules` that fired, `original`, `normalized`, `pattern` (the normalized text with the numbers written `#` and the names renamed `a`, `b`, ... in order, so that formulas differing only in numbers and names share it), `stl` as `stlgen` prints it back, `substitutions` of the symbolic bounds and horizons, `rounded` bounds, `over_limits` of `stl-nl`'s selection, `selection`: `kept`, `duplicate` (with the first one's id in `duplicate_of`) or `pattern_cap` for the formulas ok) and `report.md`. The same input and seed give the same files.
 
 | Flag | What it does |
 |---|---|
 | `--input FILE` | Another file of dataset records (default `data/dataset/stl_formulas_unpaired.jsonl`). |
-| `--seed S` | The seed of the random values of the symbolic bounds (default `0`); each record's values depend only on the seed and its id. |
+| `--seed S` | The seed of the random values of the symbolic bounds and horizons, and of the choice per pattern (default `0`); each record's values depend only on the seed and its id. |
 | `--stlgen PATH` | The `stlgen` binary (default `STLGEN_BIN`). |
 | `--max-per-pattern K` | At most `K` formulas of each pattern go to `stl-nl` (default `10`, `0` for no cap), taken from the papers in turn, at random with `--seed`. |
 | `--show-rejected [REASON]` | Doesn't normalize: reads `manifest.jsonl` of the last run and prints the rejected formulas whose reason starts with `REASON` (a rule, as `function`, or a rule and what it found, as `"unknown_command: \overline"`), each with its id, original, the part the rule found and the rules applied before. A random sample drawn with `--seed`, since the manifest is ordered by paper. Without `REASON`, the reasons with their counts. |
