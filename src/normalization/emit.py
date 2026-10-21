@@ -1,8 +1,8 @@
 """
 The tree of a normalized formula written in the grammar of stl-nl, with explicit parentheses around every temporal
 operand and every binary subformula, so that stl-nl's precedence can't change its reading. The same writer gives the
-structure of the formula: the same text with every number written # and the names renamed a, b, ... in the order they
-appear, so that formulas that differ only in their numbers and names have the same structure.
+pattern of the formula: the same text with every number written # and the names renamed a, b, ... in the order they
+appear, so that formulas that differ only in their numbers and names have the same pattern.
 """
 import re
 from fractions import Fraction
@@ -38,7 +38,7 @@ def identifier(name: str) -> str:
 
 
 class Names:
-    """How the writer writes names and numbers: as they are (the formula), or hidden (its structure)."""
+    """How the writer writes names and numbers: as they are (the formula), or hidden (its pattern)."""
 
     def __init__(self, hidden: bool = False):
         self.hidden = hidden
@@ -111,10 +111,10 @@ def formula(node: Node) -> str:
     return _formula(node, Names())
 
 
-def structure(node: Node) -> str:
+def pattern(node: Node) -> str:
     """
-    The structure of the formula: its text with every number (bound or constant) written # and the names renamed a,
+    The pattern of the formula: its text with every number (bound or constant) written # and the names renamed a,
     b, ... in the order they appear. A name used twice keeps one letter, so (G (x < 3)) -> (G (x < 4)) and
-    (G (x < 3)) -> (G (y < 4)) have different structures; the comparison operators are kept.
+    (G (x < 3)) -> (G (y < 4)) have different patterns; the comparison operators are kept.
     """
     return _formula(node, Names(hidden=True))

@@ -55,7 +55,7 @@ class Result:
     reasons: list[str]               # why it is rejected or needs review
     substitutions: dict = field(default_factory=dict)
     rounded: list = field(default_factory=list)
-    structure: str | None = None     # the formula with numbers and names hidden (emit.structure)
+    pattern: str | None = None     # the formula with numbers and names hidden (emit.pattern)
 
 
 def symbol_names(variables: dict[str, str], macros: dict[str, list[Macro]]) -> dict[str, str]:
@@ -91,10 +91,10 @@ def normalize(formula: str, *, record_id: str = "", seed: str = "0", macros: dic
         root = parse(tokens, trace, formula_names)
         resolve_bounds(root, trace, random.Random(f"{seed}:{record_id}"))
         check_symbols(root, meanings, trace)
-        text, structure = emit.formula(root), emit.structure(root)
+        text, pattern = emit.formula(root), emit.pattern(root)
     except Rejected as rejected:
         reason = f"{rejected.rule}: {rejected.detail}" if rejected.detail else rejected.rule
         trace.rules.append(rejected.rule)
         return Result("rejected", None, trace.rules, [reason], trace.substitutions, trace.rounded)
     status = "needs_review" if trace.reviews else "ok"
-    return Result(status, text, trace.rules, trace.reviews, trace.substitutions, trace.rounded, structure)
+    return Result(status, text, trace.rules, trace.reviews, trace.substitutions, trace.rounded, pattern)

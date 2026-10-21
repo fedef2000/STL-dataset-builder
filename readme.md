@@ -48,7 +48,7 @@ STL_dataset_builder/
 │   ├── normalized/                    # The unpaired formulas as input of stl-nl, built by step 7 - tracked in git
 │   │   ├── stl/                       # One .stl file per formula accepted (f00001.stl ...)
 │   │   ├── manifest.jsonl             # One line per input formula: status, reasons, rules, original and normalized text
-│   │   └── report.md                  # Counts by status, rejection reason and structure, with examples
+│   │   └── report.md                  # Counts by status, rejection reason and pattern, with examples
 │   ├── logs/                          # (gitignored)
 │   │   └── pipeline.log               # Timestamped log of the download step
 │   ├── raw/                           # (gitignored)
@@ -616,7 +616,7 @@ python scripts/07_normalize_formulas.py --show-rejected function
 python scripts/07_normalize_formulas.py --show-rejected "unknown_command: \overline" --limit 0
 ```
 
-It needs the `stlgen` binary of `stl-nl`, built with `cargo build --release --locked --manifest-path rust/stlgen/Cargo.toml` in the `stl-nl` repository. By default it is looked for in a checkout of `stl-nl` next to this one (`../stl-nl/rust/stlgen/target/release/stlgen`); set `STLGEN_BIN` in `.env` or pass `--stlgen` for another place. It writes, in `data/normalized/`: `stl/` (the `.stl` files of an earlier run are replaced; they are numbered in input order, so a file's number can change from one run to another, and `manifest.jsonl` says which record each file is), `manifest.jsonl` (one line per input formula: `id`, `status`, `file`, `reasons`, `rules` that fired, `original`, `normalized`, `structure` (the normalized text with the numbers written `#` and the names renamed `a`, `b`, ... in order, so that formulas differing only in numbers and names share it), `stl` as `stlgen` prints it back, `substitutions` of the symbolic bounds, `rounded` bounds, `over_limits` of `stl-nl`'s selection) and `report.md`. The same input and seed give the same files.
+It needs the `stlgen` binary of `stl-nl`, built with `cargo build --release --locked --manifest-path rust/stlgen/Cargo.toml` in the `stl-nl` repository. By default it is looked for in a checkout of `stl-nl` next to this one (`../stl-nl/rust/stlgen/target/release/stlgen`); set `STLGEN_BIN` in `.env` or pass `--stlgen` for another place. It writes, in `data/normalized/`: `stl/` (the `.stl` files of an earlier run are replaced; they are numbered in input order, so a file's number can change from one run to another, and `manifest.jsonl` says which record each file is), `manifest.jsonl` (one line per input formula: `id`, `status`, `file`, `reasons`, `rules` that fired, `original`, `normalized`, `pattern` (the normalized text with the numbers written `#` and the names renamed `a`, `b`, ... in order, so that formulas differing only in numbers and names share it), `stl` as `stlgen` prints it back, `substitutions` of the symbolic bounds, `rounded` bounds, `over_limits` of `stl-nl`'s selection) and `report.md`. The same input and seed give the same files.
 
 | Flag | What it does |
 |---|---|

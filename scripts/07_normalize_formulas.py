@@ -17,7 +17,7 @@ Writes, in data/normalized/ (the .stl files of an earlier run are replaced):
     stl/f00001.stl ...            the formulas normalized and accepted by stlgen (status ok)
     needs_review/r00001.stl ...   the formulas with a rule of status needs_review (none since 2026-10-19: not written)
     manifest.jsonl                one line per input record: status, file, reasons, rules, original and normalized text
-    report.md                     counts by status, reason and structure, with examples
+    report.md                     counts by status, reason and pattern, with examples
 """
 import argparse
 import collections
@@ -54,14 +54,14 @@ def normalize_records(records: list[dict], seed: str, stlgen: Path) -> list[dict
                            flags=record["provenance"].get("flags", []))
         line = {"id": record["id"], "status": result.status, "file": None, "reasons": result.reasons,
                 "rules": result.rules, "original": record["formula"], "normalized": result.normalized,
-                "structure": result.structure,
+                "pattern": result.pattern,
                 "stl": None, "substitutions": result.substitutions, "rounded": result.rounded, "over_limits": [],
                 "bounds": record["bounds"], "source_type": record["source_type"]}
         if result.normalized is not None:
             parsed, error = check(result.normalized, stlgen)
             if parsed is None:
                 line.update(status="rejected", reasons=[f"stlgen_error: {error}"], rules=result.rules + ["stlgen_error"],
-                            normalized=None, structure=None)
+                            normalized=None, pattern=None)
             else:
                 line.update(stl=parsed["stl"], over_limits=over_limits(parsed))
         lines.append(line)
@@ -188,34 +188,34 @@ def report(lines: list[dict], seed: str) -> str:
             "Candidates for a new rule. Many come from the paper's macros: its definition of an operator uses a "
             "command to draw the symbol (\\raisebox, \\rotatebox, ...).", ""]
     out += table(rows, ("Command", "Formulas", "Written in the formula", "From a macro", "Example"))
-    out += structures(lines)
+    out += patterns(lines)
     return "\n".join(out)
 
 
-STRUCTURES_SHOWN = 30
+PATTERNS_SHOWN = 30
 
 
-def structures(lines: list[dict]) -> list[str]:
-    """The structures of the formulas kept: how many there are, and the most common ones with an example each."""
+def patterns(lines: list[dict]) -> list[str]:
+    """The patterns of the formulas kept: how many there are, and the most common ones with an example each."""
     kept = [l for l in lines if l["status"] != "rejected"]
-    count = collections.Counter(l["structure"] for l in kept)
+    count = collections.Counter(l["pattern"] for l in kept)
     once = sum(1 for n in count.values() if n == 1)
-    shown = count.most_common(STRUCTURES_SHOWN)
+    shown = count.most_common(PATTERNS_SHOWN)
     covered = sum(n for _, n in shown)
     example = {}
     for l in kept:
-        best = example.get(l["structure"])
+        best = example.get(l["pattern"])
         if best is None or len(l["normalized"]) < len(best["normalized"]):
-            example[l["structure"]] = l
-    out = ["## Structures", "",
-           "The structure of a formula is its normalized text with every number written # and the names renamed a, "
+            example[l["pattern"]] = l
+    out = ["## Patterns", "",
+           "The pattern of a formula is its normalized text with every number written # and the names renamed a, "
            "b, ... in the order they appear (a name used twice keeps its letter; operators and comparisons are kept). "
-           "Formulas that differ only in their numbers and names have the same structure. The manifest has the "
-           f"structure of each formula (`structure`); the example is the shortest formula of each structure.", "",
-           f"{len(kept)} formulas kept have {len(count)} structures; {once} of them have one formula only. The "
+           "Formulas that differ only in their numbers and names have the same pattern. The manifest has the "
+           f"pattern of each formula (`pattern`); the example is the shortest formula of each pattern.", "",
+           f"{len(kept)} formulas kept have {len(count)} patterns; {once} of them have one formula only. The "
            f"{len(shown)} most common cover {covered} formulas ({100 * covered / len(kept):.0f}%).", ""]
     out += table([(code(s), n, f"{100 * n / len(kept):.1f}%", code(example[s]["normalized"])) for s, n in shown],
-                 ("Structure", "Formulas", "Share", "Example"))
+                 ("Pattern", "Formulas", "Share", "Example"))
     return out
 
 

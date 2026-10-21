@@ -274,18 +274,18 @@ def test_bounds_that_no_draw_satisfies():
     assert run(r"\Box_{[a, a-200]} p").reasons[0].startswith("bounds_unsatisfiable")
 
 
-def test_structure():
+def test_pattern():
     result = run(r"\psi = \Box_{[0,30]} (gear = 4 \rightarrow \Diamond_{[0,5]} rpm < 3000)")
-    assert result.structure == "G[#,#] ((a == #) -> (F[#,#] (b < #)))"
+    assert result.pattern == "G[#,#] ((a == #) -> (F[#,#] (b < #)))"
     # A name used twice keeps its letter; numbers inside expressions are hidden too
-    assert run(r"(\Box_{[0,5]} x < 3) \rightarrow (\Box_{[0,2]} x < 4)").structure == \
+    assert run(r"(\Box_{[0,5]} x < 3) \rightarrow (\Box_{[0,2]} x < 4)").pattern == \
            "(G[#,#] (a < #)) -> (G[#,#] (a < #))"
-    assert run(r"(\Box_{[0,5]} x < 3) \rightarrow (\Box_{[0,2]} y < 4)").structure == \
+    assert run(r"(\Box_{[0,5]} x < 3) \rightarrow (\Box_{[0,2]} y < 4)").pattern == \
            "(G[#,#] (a < #)) -> (G[#,#] (b < #))"
-    assert run(r"\Box_{[0,5]} |x - y| > -x").structure == "G[#,#] (|a - b| > (# - a))"
-    # Formulas that differ only in numbers and names share their structure
-    assert run(r"\Diamond_{[1,2]} p").structure == run(r"\Diamond_{[0,T]} \varphi").structure == "F[#,#] a"
-    assert run(r"\Box p \wedge \forall i").structure is None
+    assert run(r"\Box_{[0,5]} |x - y| > -x").pattern == "G[#,#] (|a - b| > (# - a))"
+    # Formulas that differ only in numbers and names share their pattern
+    assert run(r"\Diamond_{[1,2]} p").pattern == run(r"\Diamond_{[0,T]} \varphi").pattern == "F[#,#] a"
+    assert run(r"\Box p \wedge \forall i").pattern is None
 
 
 def test_number_text():
