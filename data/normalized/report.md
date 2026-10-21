@@ -42,7 +42,7 @@ Candidates for a new rule. Many come from the paper's macros: its definition of 
 | Command | Formulas | Written in the formula | From a macro | Example |
 |---|---|---|---|---|
 | `\mathbb` | 48 | 32 | 16 | `\mathbb{S}_{\mathsf{F}_{[a, b]}\mu_1}` |
-| `\begin` | 33 | 29 | 4 | `\phi_2:=F_{[5,15]}(\\|\boldsymbol{x}_2-\begin{bmatrix} 90 90 \end{bmatrix}\\|\le 5)` |
+| `\begin` | 33 | 29 | 4 | `\phi_2:=F_{[5,15]}(\|\boldsymbol{x}_2-\begin{bmatrix} 90 90 \end{bmatrix}\|\le 5)` |
 | `\llbracket` | 31 | 7 | 24 | `\llbracket\Diamond_{[S,T]}\phi\rrbracket_\omega` |
 | `\not` | 30 | 30 | 0 | `N'\not\models\Diamond_{[a,b]}\mu` |
 | `\langle` | 30 | 20 | 10 | `\langle \Box_{[a,b]} \psi \rangle_i = 1` |
@@ -72,13 +72,13 @@ Candidates for a new rule. Many come from the paper's macros: its definition of 
 | `\nvDash` | 4 | 4 | 0 | `\sigma \nvDash \dia_{[a,b]}\psi` |
 | `\ell` | 4 | 4 | 0 | `(\mathbf{x},H,\ell) \models \varphi_1\mathcal{U}_{[0,t_2]}\varphi_2` |
 
-## Structures
+## Patterns
 
-The structure of a formula is its normalized text with every number written # and the names renamed a, b, ... in the order they appear (a name used twice keeps its letter; operators and comparisons are kept). Formulas that differ only in their numbers and names have the same structure. The manifest has the structure of each formula (`structure`); the example is the shortest formula of each structure.
+The pattern of a formula is its normalized text with every number written # and the names renamed a, b, ... in the order they appear (a name used twice keeps its letter; operators and comparisons are kept). Formulas that differ only in their numbers and names have the same pattern. The manifest has the pattern of each formula (`pattern`); the example is the shortest formula of each pattern.
 
-2304 formulas kept have 635 structures; 427 of them have one formula only. The 30 most common cover 1329 formulas (58%).
+2304 formulas kept have 635 patterns; 427 of them have one formula only. The 30 most common cover 1329 formulas (58%).
 
-| Structure | Formulas | Share | Example |
+| Pattern | Formulas | Share | Example |
 |---|---|---|---|
 | `F[#,#] a` | 303 | 13.2% | `F[0,7] p` |
 | `G[#,#] a` | 260 | 11.3% | `G[2,6] p` |
