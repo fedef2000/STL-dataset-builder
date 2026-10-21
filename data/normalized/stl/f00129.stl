@@ -1,1 +1,1 @@
-G[0,738] ((n_phi_S_s1 > 0) -> (F[1,50] (G[0,1] (n_phi_S_s2 > 1))))
+((G[0,55] transaction) && suspicious) -> ((G[0,3] transaction) -> (!suspicious))

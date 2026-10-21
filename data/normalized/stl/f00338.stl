@@ -1,1 +1,1 @@
-F[0,16] alpha_anc_x_eta
+F[50,90] ((|p_1 - p_A| <= epsilon) && (|(p_2 + p_x) - p_3| <= epsilon))

@@ -1,1 +1,1 @@
-G[0,27] ((cycle_starting && (F[0,58] cycle_ending)) -> ((s_request -> ((!cycle_ending) U[0,3] pulse_reply)) U[0,43] cycle_ending))
+((!mu_4) U[0,20] mu_1) && ((!mu_5) U[20,40] mu_2) && (F[0,60] mu_3)

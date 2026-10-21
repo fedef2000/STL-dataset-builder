@@ -1,1 +1,1 @@
-G[11,50] ((controller_mode == 1) -> (mu < rho))
+G[11,50] (mu < 0.22)

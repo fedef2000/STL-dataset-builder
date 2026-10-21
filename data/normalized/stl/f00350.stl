@@ -1,1 +1,1 @@
-G[0,26] ((delta_4_speed > rho) -> (delta_4_gear > 0))
+G[0,26] ((Delta_4_speed > 40) -> (Delta_4_gear > 0))

@@ -1,1 +1,1 @@
-G[0,20] ((gear == 4) && (throttle > 45))
+psi_1 U[0,25] psi_2

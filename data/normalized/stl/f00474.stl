@@ -1,1 +1,1 @@
-F[0,1000] (deadlock && (global_clock >= m + 4))
+(G[2,5] p_1) R[0,10] p_2

@@ -1,1 +1,1 @@
-G[0,10] (q > 1.2)
+(varphi U[32,98] psi) <-> ((G[0,32] varphi) && (G[32,32] (varphi U[0,35] psi)) && (F[32,98] psi))

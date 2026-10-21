@@ -1,1 +1,1 @@
-G[0,59] ((F[0,75] r) -> ((!p) U[0,13] r))
+F[0,66] (|Plane_Pose - Wire_Pose| <= varepsilon)

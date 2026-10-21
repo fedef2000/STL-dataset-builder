@@ -1,1 +1,1 @@
-(theta < 8.8) && (F[0,1] (theta > 40))
+F[0,30] (|ball_pos - hole_pos| <= 0.5)

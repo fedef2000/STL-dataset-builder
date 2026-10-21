@@ -42,7 +42,7 @@ Candidates for a new rule. Many come from the paper's macros: its definition of 
 | Command | Formulas | Written in the formula | From a macro | Example |
 |---|---|---|---|---|
 | `\mathbb` | 48 | 32 | 16 | `\mathbb{S}_{\mathsf{F}_{[a, b]}\mu_1}` |
-| `\begin` | 33 | 29 | 4 | `\phi_2:=F_{[5,15]}(\|\boldsymbol{x}_2-\begin{bmatrix} 90 90 \end{bmatrix}\|\le 5)` |
+| `\begin` | 33 | 29 | 4 | `\phi_2:=F_{[5,15]}(\\|\boldsymbol{x}_2-\begin{bmatrix} 90 90 \end{bmatrix}\\|\le 5)` |
 | `\llbracket` | 31 | 7 | 24 | `\llbracket\Diamond_{[S,T]}\phi\rrbracket_\omega` |
 | `\not` | 30 | 30 | 0 | `N'\not\models\Diamond_{[a,b]}\mu` |
 | `\langle` | 30 | 20 | 10 | `\langle \Box_{[a,b]} \psi \rangle_i = 1` |
@@ -110,3 +110,40 @@ The pattern of a formula is its normalized text with every number written # and 
 | `G[#,#] (a >= b)` | 10 | 0.4% | `G[0,24] (x >= p)` |
 | `G[#,#] (\|a - b\| <= #)` | 10 | 0.4% | `G[5,10] (\|x_1 - x_2\| <= 2)` |
 | `G[#,#] (a < b)` | 9 | 0.4% | `G[0,63] (x < p)` |
+
+## Selection for stl-nl
+
+Of the formulas ok, one with the same normalized text as an earlier one is left out (`duplicate`; the manifest gives the id of the first in `duplicate_of`), and at most 10 formulas of each pattern are kept, taken from the papers in turn, at random with the seed (`pattern_cap`). Only the formulas kept are written in `stl/`.
+
+| Selection | Formulas | Share of ok |
+|---|---|---|
+| kept | 1169 | 50.7% |
+| duplicate | 225 | 9.8% |
+| pattern_cap | 910 | 39.5% |
+
+22 patterns are cut:
+
+| Pattern | Formulas (no duplicates) | Kept |
+|---|---|---|
+| `F[#,#] a` | 289 | 10 |
+| `G[#,#] a` | 249 | 10 |
+| `a U[#,#] b` | 179 | 10 |
+| `G[#,#] (a > #)` | 42 | 10 |
+| `F[#,#] (G[#,#] a)` | 40 | 10 |
+| `G[#,#] (F[#,#] a)` | 38 | 10 |
+| `G[#,#] (a < #)` | 32 | 10 |
+| `F[#,#] (a > #)` | 31 | 10 |
+| `G[#,#] (a <= #)` | 26 | 10 |
+| `G[#,#] (a -> (F[#,#] b))` | 25 | 10 |
+| `F[#,#] (a >= #)` | 23 | 10 |
+| `G[#,#] (a >= #)` | 22 | 10 |
+| `G[#,#] (!a)` | 20 | 10 |
+| `(F[#,#] a) && (F[#,#] b)` | 17 | 10 |
+| `F[#,#] (a < #)` | 13 | 10 |
+| `F[#,#] (a && (F[#,#] b))` | 13 | 10 |
+| `(G[#,#] a) && (F[#,#] b)` | 13 | 10 |
+| `G[#,#] (a && b)` | 12 | 10 |
+| `(G[#,#] (a < #)) -> (G[#,#] (b < #))` | 12 | 10 |
+| `F[#,#] (a <= #)` | 12 | 10 |
+| `G[#,#] ((# <= a) && (a <= #))` | 11 | 10 |
+| `G[#,#] (!((a >= #) && (a <= #) && (b >= #) && (b <= #)))` | 11 | 10 |

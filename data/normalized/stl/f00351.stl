@@ -1,1 +1,1 @@
-G[11,50] ((controller_mode == 0) -> (mu < rho))
+G[0,27] ((Delta_3_speed > 30) -> (Delta_3_gear > 0))

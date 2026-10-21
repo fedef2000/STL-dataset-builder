@@ -1,1 +1,1 @@
-A U[0,86] B
+G[11,50] ((controller_mode == 0) -> (mu < rho))

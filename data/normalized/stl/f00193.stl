@@ -1,1 +1,1 @@
-psi U[13,92] phi
+G[0,26] ((delta_4_speed > rho) -> (delta_4_gear > 0))

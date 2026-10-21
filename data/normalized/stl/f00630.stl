@@ -1,1 +1,1 @@
-F[0,2] (G[0,1] close_ref)
+(G[15,30] gamma_S) && (G[15,30] (F[0,5] gamma_T)) && (G[15,30] (F[0,5] gamma_H))

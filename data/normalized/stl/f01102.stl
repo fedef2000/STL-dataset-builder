@@ -1,1 +1,1 @@
-G[0,69] ((cycle_starting && (F[0,18] cycle_ending)) -> ((request -> ((!cycle_ending) && (F[0,3] pulse_reply) && (!cycle_ending) && (F[0,3] glucose_reply))) U[0,18] cycle_ending))
+(G[0,10] (F[0,10] (mu_1 && mu_2))) && (G[0,20] (!mu_4))

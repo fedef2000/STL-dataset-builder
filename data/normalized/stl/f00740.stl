@@ -1,1 +1,1 @@
-varphi_1 U[20,44] varphi_2
+((10 <= tempe) && (tempe <= 90)) && (((0 <= cooling) && (cooling <= 1)) U[15,20] ((40 <= tempe) && (tempe <= 50)))

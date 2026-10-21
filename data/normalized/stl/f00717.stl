@@ -1,1 +1,1 @@
-psi_1 U[9,57] psi_2
+(!sameLane_POV_SV_L) && (F[0,39] (danger_SV_POV && (F[0,68] (sameLane_SV_POV_L && aheadOf_SV_POV))))

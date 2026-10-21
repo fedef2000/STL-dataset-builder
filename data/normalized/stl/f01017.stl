@@ -1,1 +1,1 @@
-F[0,6] r
+F[0,65] (diagonalBehind_s && (X (stayPos && (F[6,82] (alignedHeading_s && aboveTouchdown_s && (F[0,25] descended_s))))))

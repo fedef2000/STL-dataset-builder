@@ -1,1 +1,1 @@
-G[11,50] ((rise || fall) -> (G[1,5] (|mu| < beta)))
+G[5,30] (|ball_pos - tool_pos| <= 0.2)

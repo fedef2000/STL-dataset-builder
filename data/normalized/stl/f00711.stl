@@ -1,1 +1,1 @@
-varphi_1 U[4,24] varphi_2
+G[0,50] ((G[0,30] phi_nu_prime) && (G[0,22] phi_nu_prime_prime))

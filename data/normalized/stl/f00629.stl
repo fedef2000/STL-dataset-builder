@@ -1,1 +1,1 @@
-G[0,16] ((!close_ref) -> reach_ref_in_tau)
+(G[0,15] gamma_S) && (G[0,15] (F[0,5] gamma_T))

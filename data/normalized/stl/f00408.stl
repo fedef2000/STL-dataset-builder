@@ -1,1 +1,1 @@
-(theta < 8.8) && (F[0,1] (theta > 40))
+(G[0,0] mu_inv_x) && (G[0,24] mu_reach_x) && (G[0,24] mu_ws_x)

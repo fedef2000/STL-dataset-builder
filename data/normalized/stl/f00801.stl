@@ -1,1 +1,1 @@
-G[87,89] (mu_parent && mu_child)
+(G[0,15] (speed < 20)) -> (G[15,30] (speed < 100))

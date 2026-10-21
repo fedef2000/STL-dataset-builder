@@ -1,1 +1,1 @@
-(G[0,30] (omega < 3000)) -> (G[0,4] (v < 35))
+(G[0,130] ((S_tilde -> (F[30,40] T_tilde_1)) && (T_tilde_1 -> (F[30,40] T_tilde_2)) && (T_tilde_2 -> (F[30,40] T_tilde_1)))) && (F[170,180] (G[0,30] G_tilde)) && (G[0,200] (!(O_tilde_1 || O_tilde_2)))

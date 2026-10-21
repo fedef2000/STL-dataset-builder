@@ -1,1 +1,1 @@
-(F[0,5] mu_R1_det) && (G[0,63] (mu_O1_det && mu_O2_det && ((F[0,1] mu_uc) -> (F[0,3] mu_R2_det))))
+F[0,3] (x > 0)

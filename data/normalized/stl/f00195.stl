@@ -1,1 +1,1 @@
-G[0,94] (z_1 U[72,100] z_2)
+G[11,50] ((controller_mode == 1) -> (mu < rho))
