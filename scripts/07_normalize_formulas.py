@@ -26,6 +26,7 @@ import argparse
 import collections
 import json
 import random
+import re
 import sys
 from pathlib import Path
 
@@ -116,12 +117,19 @@ def code(text: str) -> str:
     return f"`{text}`".replace("|", "\\|")
 
 
-def shortest(candidates: list[dict], preferred=lambda line: True) -> dict:
+def cell(text: str) -> str:
+    """Plain text in a table cell (| escaped)."""
+    return text.replace("|", "\\|")
+
+
+def shortest(candidates: list[dict], *preferred) -> dict:
     """
-    The example among `candidates`: the shortest original of at least EXAMPLE_MIN_CHARS characters among the
-    `preferred` ones, else among all (the first on a tie, so a rerun picks the same).
+    The example among `candidates`: the shortest original of at least EXAMPLE_MIN_CHARS characters among those that
+    meet all the `preferred` conditions, else all but the last condition, ..., else among all (the first on a tie, so
+    a rerun picks the same).
     """
-    for pool in ([c for c in candidates if preferred(c)], candidates):
+    for k in range(len(preferred), -1, -1):
+        pool = [c for c in candidates if all(p(c) for p in preferred[:k])]
         long_enough = [c for c in pool if len(c["original"]) >= EXAMPLE_MIN_CHARS]
         if long_enough or pool:
             return min(long_enough or pool, key=lambda c: len(c["original"]))
@@ -132,19 +140,148 @@ def examples(lines: list[dict], status: str) -> dict[str, dict]:
     by_rule = collections.defaultdict(list)
     for line in lines:
         if line["status"] == status:
-            for rule in {reason_rule(r) for r in (line["reasons"][:1] if status == "rejected" else line["reasons"])}:
+            for rule in {reason_rule(r) for r in line["reasons"]}:
                 by_rule[rule].append(line)
-    return {rule: shortest(candidates, lambda line: "expand_paper_macros" not in line["rules"])
-            for rule, candidates in by_rule.items()}
+    return {rule: shortest(candidates, without_macros) for rule, candidates in by_rule.items()}
+
+
+def without_macros(line: dict) -> bool:
+    return "expand_paper_macros" not in line["rules"]
 
 
 def macro_mark(line: dict) -> str:
     return " *(macro)*" if "expand_paper_macros" in line["rules"] else ""
 
 
-def found(line: dict, rule: str) -> str:
-    reason = next(r for r in line["reasons"] if reason_rule(r) == rule)
-    return code(reason.split(": ", 1)[1]) if ": " in reason else ""
+def found(line: dict) -> str:
+    """What the first rule that rejects the formula found in it (the text after "rule: " in the reason)."""
+    reason = line["reasons"][0]
+    return reason.split(": ", 1)[1] if ": " in reason else ""
+
+
+def bare(text: str) -> str:
+    return re.sub(r"[\\{}\s]", "", text)
+
+
+def found_visible(line: dict) -> bool:
+    """
+    What the rule found can be seen in the formula as the paper writes it. Backslashes, braces and spaces aside: the
+    found part is written after the macros are expanded and the names normalized (\\mu^1 is found as mu^1).
+    """
+    part = bare(found(line))
+    return bool(part) and part in bare(line["original"])
+
+
+EXAMPLES_PER_RULE = 3
+
+
+def rejected_examples(lines: list[dict], rule: str) -> list[dict]:
+    """
+    Up to EXAMPLES_PER_RULE formulas rejected first by `rule`, to show its different cases. The formulas are grouped
+    by the first word of what the rule found (\\models and \\vDash; subscript, unexpected and character for
+    parse_error; rho, x and \\min for function), the largest groups first, and each example comes from another
+    paper. In a group the example is the shortest formula without the paper's macros whose found part can be seen in
+    it (see shortest). With fewer groups than examples, the other examples come from the rest of the formulas.
+    """
+    candidates = [l for l in lines if l["status"] == "rejected" and reason_rule(l["reasons"][0]) == rule]
+    groups = collections.defaultdict(list)
+    for line in candidates:
+        first_word = re.match(r"\\?[A-Za-z]+|\S*", found(line)).group()
+        groups[first_word].append(line)
+
+    def rank(group):  # the largest group first; on a tie, the one with the clearer and then the shorter example
+        best = shortest(group, without_macros, found_visible)
+        return -len(group), not without_macros(best), not found_visible(best), len(best["original"])
+
+    chosen, papers = [], set()
+    for group in sorted(groups.values(), key=rank) + [candidates]:
+        while len(chosen) < EXAMPLES_PER_RULE:
+            pool = [l for l in group if l["id"].split(":")[0] not in papers]
+            if not pool:
+                break
+            chosen.append(shortest(pool, without_macros, found_visible))
+            papers.add(chosen[-1]["id"].split(":")[0])
+            if group is not candidates:
+                break  # one example per group, until the groups run out
+    return chosen
+
+
+LOGICS = {
+    "past-time": "past-time logic: its operators (once, since, historically, ...) look back in time, STL's only forward",
+    "spatial-or-description": "a spatial or description logic: its operators are about places or objects",
+    "probabilistic": "a probabilistic logic: its operators are about probabilities",
+    "strategic": "a strategic logic: its operators are about what agents can enforce",
+}
+
+
+def why(line: dict) -> str:
+    """Why this formula is rejected, in a sentence built from its rule and what the rule found."""
+    rule, part = reason_rule(line["reasons"][0]), found(line)
+    if rule == "other_logic":
+        return f"the extraction classed it as {LOGICS.get(part, part)}"
+    if rule == "semantics_definition":
+        return f"{code(part)} says when a signal satisfies a formula: this defines the meaning of an operator"
+    if rule == "grammar_definition":
+        if part.startswith("|"):
+            return "a `\\|` separates the alternatives of a grammar (it can't be read as an absolute value)"
+        return f"{code(part)} introduces the forms a formula can take: a grammar"
+    if rule == "operator_definition":
+        if part == "an operator on the left of =":
+            return "a temporal operator is on the left of =: the formula defines that operator"
+        return "the left side of := (or \\equiv) is an expression, not a name: the formula defines it"
+    if rule == "several_formulas":
+        if part.startswith("text "):
+            return f"the word {part[5:]} joins the formula to text or to another formula"
+        if part == "a comma at the top level":
+            return "a comma at the top level separates two formulas"
+        return "a comma inside brackets separates formulas (a set or a tuple)"
+    if rule == "connective_at_edge":
+        return "it starts or ends with a connective: the rest of the formula is on another row of the paper"
+    if rule == "macro_loop":
+        return "a macro of the paper keeps expanding without end"
+    if rule == "unknown_command":
+        return f"{code(part)} isn't defined by the paper and the normalizer doesn't know it"
+    if rule == "multiplication":
+        if part.endswith(" side by side"):
+            return f"{code(part[:-len(' side by side')])}: two terms side by side are a product"
+        return f"{code(part)} is a product"
+    if rule == "division":
+        return f"{code(part)} is a division"
+    if rule == "power":
+        return f"{code(part)} is a power or a superscript that isn't a name"
+    if rule == "function":
+        if part.startswith("\\"):
+            return f"{code(part)} is a function"
+        return f"{code(part)} applies a function to something that isn't a name or an integer"
+    if rule == "indexed_operator":
+        return f"{code(part)} stands for a number of terms that isn't known"
+    if rule == "quantifier":
+        return f"{code(part)} is a quantifier"
+    if rule == "set_membership":
+        return "\\in says that a signal belongs to a set: STL can only compare it with numbers"
+    if rule == "nonstandard_operator":
+        if part == "X with an interval":
+            return "X (next) with an interval: stl-nl has no such operator"
+        if part == "two intervals on one operator":
+            return "an operator with two intervals"
+        return f"{code(part)} isn't an STL operator"
+    if rule == "operator_alone":
+        if part.startswith("nothing after "):
+            return f"the formula ends right after the operator {code(part[len('nothing after '):])}"
+        return f"the operator {code(part)} has no operand"
+    if rule == "parse_error":
+        if part.startswith("subscript after "):
+            return f"a subscript after {code(part[len('subscript after '):])}, where none can go"
+        if part.startswith("subscript "):
+            return (f"the subscript {code(part[len('subscript '):])} is on a name, but it is neither an interval "
+                    "nor part of the name")
+        if part.startswith("unexpected "):
+            symbol, _, context = part[len("unexpected "):].partition(" in: ")
+            return f"the parser didn't expect {code(symbol)} here: {code(context)}"
+        if part.startswith("character "):
+            return f"the character {code(part[len('character '):].strip(chr(39)))} isn't part of the grammar"
+        return f"the parser can't read it: {code(part)}"
+    return code(part) if part else ""
 
 
 def report(lines: list[dict], seed: str, max_per_pattern: int) -> str:
@@ -157,16 +294,21 @@ def report(lines: list[dict], seed: str, max_per_pattern: int) -> str:
     out += table([(s, status[s], f"{100 * status[s] / total:.1f}%") for s in ("ok", "needs_review", "rejected")],
                  ("Status", "Formulas", "Share"))
     rejected = collections.Counter(reason_rule(l["reasons"][0]) for l in lines if l["status"] == "rejected")
-    example = examples(lines, "rejected")
     out += ["## Why formulas are rejected", "",
-            "The first reason of each formula. *Example* is one of these formulas as the paper writes it; *What the "
-            "rule found* is the part of that same formula that made the rule reject it, written after the paper's "
-            "macros are expanded and with the names already normalized (\\varphi_{1} is varphi_1). The example is "
-            "a formula without the paper's macros when there is one, so that the part can be seen in it; *(macro)* "
-            "marks one where it comes from a macro of the paper.", ""]
-    out += table([(r, n, RULES[r][1], code(example[r]["original"]) + macro_mark(example[r]), found(example[r], r))
-                  for r, n in rejected.most_common()],
-                 ("Rule", "Formulas", "What it is", "Example", "What the rule found"))
+            "Each formula is counted under the first rule that rejects it: a single construct the rule can't accept "
+            "rejects the whole formula, even when the rest is valid STL.", ""]
+    out += table([(r, n, cell(RULES[r][1])) for r, n in rejected.most_common()],
+                 ("Rule", "Formulas", "Why it is rejected"))
+    out += ["### Examples of each rule", "",
+            f"Up to {EXAMPLES_PER_RULE} formulas per rule, from different papers and showing different cases of the "
+            "rule. *Example* is the formula as the paper writes it. *Why* names the part that made the rule reject "
+            "it, written after the paper's macros are expanded and with the names normalized (\\varphi_{1} is "
+            "varphi_1); *(macro)* marks an example where that part comes from a macro of the paper, so it can't be "
+            "seen in the formula as written.", ""]
+    for r, n in rejected.most_common():
+        out += [f"**{r}** ({n} formulas): {cell(RULES[r][1])}.", ""]
+        out += table([(code(l["original"]) + macro_mark(l), why(l)) for l in rejected_examples(lines, r)],
+                     ("Example", "Why"))
     review = collections.Counter(r for l in lines if l["status"] == "needs_review"
                                  for r in {reason_rule(x) for x in l["reasons"]})
     if review:

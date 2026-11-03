@@ -11,18 +11,18 @@ from fractions import Fraction
 # the record becomes when the rule fires. See docs/normalization_rules.md.
 RULES = {
     # Stage 0: the whole record
-    "other_logic": ("rejected", "the formula holds a construct of another logic"),
-    "semantics_definition": ("rejected", "a definition of the semantics (\\models, \\vDash)"),
-    "grammar_definition": ("rejected", "a grammar of the logic (::=, \\mid, | between alternatives)"),
-    "operator_definition": ("rejected", "a definition of an operator: the left side of = or := is not a single name"),
-    "several_formulas": ("rejected", "several formulas, or a formula with text (where, and, if, ...)"),
-    "connective_at_edge": ("rejected", "starts or ends with a connective: part of it is on another row"),
+    "other_logic": ("rejected", "the paper writes it in another logic (past-time, spatial, probabilistic, strategic): its operators have no STL equivalent"),
+    "semantics_definition": ("rejected", "a definition of the semantics (\\models, \\vDash): it says when a signal satisfies a formula, it is not a formula itself"),
+    "grammar_definition": ("rejected", "a grammar of the logic (::=, \\mid, | between alternatives): it lists the forms a formula can take, it is not a formula itself"),
+    "operator_definition": ("rejected", "a definition of an operator in terms of others (F_{[a,b]} phi := true U_{[a,b]} phi): the left side of = or := is not a single name"),
+    "several_formulas": ("rejected", "several formulas, or a formula with text (where, and, if, ...): stl-nl takes exactly one formula"),
+    "connective_at_edge": ("rejected", "starts or ends with a connective (\\land, \\lor, ...): the extraction found that the rest of the formula is on another row"),
     # Stage 1: tokens and macros
     "expand_paper_macros": ("ok", "a macro of the paper replaced by its definition"),
     "fallback_operator_table": ("ok", "an operator name (\\always, \\F, \\LTLdiamond, ...) the paper doesn't define, or defines with commands that only draw it, read from a fixed table"),
     "macro_conflict": ("ok", "a macro the paper defines twice differently: the last definition is used"),
-    "macro_loop": ("rejected", "a macro still left after 10 rounds of expansion"),
-    "unknown_command": ("rejected", "a command neither defined by the paper nor known"),
+    "macro_loop": ("rejected", "a macro of the paper still left after 10 rounds of expansion: it never turns into a formula"),
+    "unknown_command": ("rejected", "a LaTeX command the paper doesn't define and the normalizer has no translation for (it is not an STL operator, connective, comparison, font or spacing command): its meaning is unknown, so the whole formula is rejected even if the rest is valid STL"),
     "strip_layout": ("ok", "spacing, sizing and alignment commands removed"),
     "unwrap_font": ("ok", "a font command replaced by its content"),
     # Stage 2: operators and constants
@@ -59,15 +59,15 @@ RULES = {
     "chained_comparison": ("ok", "a < x < b written as (a < x) && (x < b)"),
     "interval_membership": ("ok", "x \\in [a,b] written as two comparisons"),
     # Stage 2: what can't be represented
-    "multiplication": ("rejected", "a product: 2x, \\cdot, \\times, *, two terms side by side"),
-    "division": ("rejected", "a division other than of two integers"),
-    "power": ("rejected", "a power or a superscript that isn't a name"),
-    "function": ("rejected", "a name followed by (...) or [...] with an argument that isn't a name or an integer (rho(G_{[a,b]} phi,t), x(t+1)), or \\max, \\min, \\log, ..."),
-    "indexed_operator": ("rejected", "\\bigwedge, \\bigvee, \\land_{i}, \\sum, \\ldots, ..."),
-    "quantifier": ("rejected", "\\forall, \\exists"),
-    "set_membership": ("rejected", "\\in a set that is not an interval"),
-    "infinity": ("rejected", "\\infty outside of a time bound"),
-    "nonstandard_operator": ("rejected", "an operator STL doesn't have, or a G/F/U/R with a script that isn't an interval"),
+    "multiplication": ("rejected", "a product (2x, \\cdot, \\times, *, two terms side by side): stl-nl has no multiplication"),
+    "division": ("rejected", "a division other than of two integers: stl-nl has no division"),
+    "power": ("rejected", "a power or a superscript that isn't a name (x^2, \\rho^{\\varphi}): stl-nl has no powers"),
+    "function": ("rejected", "a function applied to something (rho(G_{[a,b]} phi,t), x(t+1), \\max, \\min, \\log, ...): stl-nl has no functions (a call on names and integers only, Reg(4,4), is kept as one name)"),
+    "indexed_operator": ("rejected", "an operator over an index (\\bigwedge, \\bigvee, \\land_{i}, \\sum, \\ldots, ...): the number of terms isn't known, so it can't be written out"),
+    "quantifier": ("rejected", "a quantifier (\\forall, \\exists): STL has none"),
+    "set_membership": ("rejected", "\\in a set that is not an interval: STL can only compare a signal with numbers"),
+    "infinity": ("rejected", "\\infty outside of a time bound: not a number stl-nl can write"),
+    "nonstandard_operator": ("rejected", "an operator STL doesn't have (\\boxplus, \\sqcup, ...), or a G/F/U/R with a script that isn't an interval"),
     # Stage 2: only recorded (needs_review until 2026-10-19)
     "placeholder_subformula": ("ok", "a Boolean atom the paper calls a (sub)formula: kept as an atom, as the subformula can't be rebuilt"),
     "symbolic_constant": ("ok", "a symbol the paper calls a threshold, constant, parameter, ...: kept as a signal"),
@@ -77,8 +77,8 @@ RULES = {
     "strip_trailing_punct": ("ok", "a final , . ; removed"),
     "ambiguous_scope": ("ok", "an unparenthesized temporal operand followed by a connective: read as the operator on the operand alone (the standard reading)"),
     "close_parentheses": ("ok", "brackets still open at the end closed (a missing ), or a formula cut by the extraction: its first part)"),
-    "operator_alone": ("rejected", "a temporal operator with no operand (F_{[a,b]}, U_{[a,b]} alone, or at the end)"),
-    "parse_error": ("rejected", "a construct the parser doesn't recognise"),
+    "operator_alone": ("rejected", "a temporal operator with no operand (F_{[a,b]}, U_{[a,b]} alone, or at the end): an operator, not a formula"),
+    "parse_error": ("rejected", "a construct the parser can't read (a subscript where none can go, an unexpected symbol, unbalanced brackets): it is never guessed"),
     # Stage 5: validation
     "stlgen_error": ("rejected", "the stlgen parser of stl-nl rejects the result"),
 }

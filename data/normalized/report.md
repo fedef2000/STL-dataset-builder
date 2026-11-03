@@ -12,28 +12,174 @@ From `data/dataset/stl_formulas_unpaired.jsonl` (6592 formulas), with the rules 
 
 ## Why formulas are rejected
 
-The first reason of each formula. *Example* is one of these formulas as the paper writes it; *What the rule found* is the part of that same formula that made the rule reject it, written after the paper's macros are expanded and with the names already normalized (\varphi_{1} is varphi_1). The example is a formula without the paper's macros when there is one, so that the part can be seen in it; *(macro)* marks one where it comes from a macro of the paper.
+Each formula is counted under the first rule that rejects it: a single construct the rule can't accept rejects the whole formula, even when the rest is valid STL.
 
-| Rule | Formulas | What it is | Example | What the rule found |
-|---|---|---|---|---|
-| semantics_definition | 610 | a definition of the semantics (\models, \vDash) | `(x, t) \models G_{[a,b]}\phi` | `\models` |
-| unknown_command | 567 | a command neither defined by the paper nor known | `\LTLonce_{[0,T]}p` | `\LTLonce` |
-| function | 462 | a name followed by (...) or [...] with an argument that isn't a name or an integer (rho(G_{[a,b]} phi,t), x(t+1)), or \max, \min, \log, ... | `\mathsf L[\Until[0,\infty]]` | `L[{\mathcal{U}}[0,\infty]]` |
-| power | 445 | a power or a superscript that isn't a name | `\mu^1 U_{[a,b]}\mu^2` | `mu^1` |
-| parse_error | 414 | a construct the parser doesn't recognise | `G_[0,H](F_[0,h](mu))` | `subscript [` |
-| grammar_definition | 388 | a grammar of the logic (::=, \mid, | between alternatives) | `\phi ::= \Box_{[t_1, t_2]} \mu` | `::=` |
-| operator_definition | 297 | a definition of an operator: the left side of = or := is not a single name | `F_{[a,b]} \phi=\top U_{[a,b]}\phi` | `an operator on the left of =` |
-| other_logic | 275 | the formula holds a construct of another logic | `p\since_{[1,3]}q` | `past-time` |
-| nonstandard_operator | 156 | an operator STL doesn't have, or a G/F/U/R with a script that isn't an interval | `\boxplus_{[r,r]}` | `\boxplus` |
-| several_formulas | 149 | several formulas, or a formula with text (where, and, if, ...) | `\eventually{[0,1]}{}` | `a comma between formulas` |
-| indexed_operator | 130 | \bigwedge, \bigvee, \land_{i}, \sum, \ldots, ... | `\bigwedge_l (\mathcal{F}_{[t',t']}\psi_l)` | `\bigwedge` |
-| operator_alone | 94 | a temporal operator with no operand (F_{[a,b]}, U_{[a,b]} alone, or at the end) | `\diamond_{[x,y]}` | `F` |
-| set_membership | 78 | \in a set that is not an interval | `\diamondsuit_{[3,4]}(x\in A)` | `\in a set` |
-| multiplication | 68 | a product: 2x, \cdot, \times, *, two terms side by side | `F_{[0,10]}(\cdot)` | `\cdot` |
-| connective_at_edge | 63 | starts or ends with a connective: part of it is on another row | `\land \G{0}{T} SDF (\cdot, M)` |  |
-| quantifier | 63 | \forall, \exists | `\varphi_1=X(\Diamond_{[0,5]}(\exists^2 x\geq 2))` | `\exists` |
-| division | 25 | a division other than of two integers | `\Box_{[11,40]}(\|\frac{\lambda(t) - \lambda_{ref}}{\lambda_{ref}}\| < tol)` | `\frac{\lambda(t)-\lambda_{ref}}{\lambda_{ref}}` |
-| macro_loop | 4 | a macro still left after 10 rounds of expansion | `\urule {\Gamma, F^m(T)\le X, X\le F^n(T)\vdash X:\alpha,\Delta} {\Gamma\vdash T:\Box_{[m,n]}\alpha,\Delta } {  …` *(macro)* | `the expansion grows without end` |
+| Rule | Formulas | Why it is rejected |
+|---|---|---|
+| semantics_definition | 610 | a definition of the semantics (\models, \vDash): it says when a signal satisfies a formula, it is not a formula itself |
+| unknown_command | 567 | a LaTeX command the paper doesn't define and the normalizer has no translation for (it is not an STL operator, connective, comparison, font or spacing command): its meaning is unknown, so the whole formula is rejected even if the rest is valid STL |
+| function | 462 | a function applied to something (rho(G_{[a,b]} phi,t), x(t+1), \max, \min, \log, ...): stl-nl has no functions (a call on names and integers only, Reg(4,4), is kept as one name) |
+| power | 445 | a power or a superscript that isn't a name (x^2, \rho^{\varphi}): stl-nl has no powers |
+| parse_error | 414 | a construct the parser can't read (a subscript where none can go, an unexpected symbol, unbalanced brackets): it is never guessed |
+| grammar_definition | 388 | a grammar of the logic (::=, \mid, \| between alternatives): it lists the forms a formula can take, it is not a formula itself |
+| operator_definition | 297 | a definition of an operator in terms of others (F_{[a,b]} phi := true U_{[a,b]} phi): the left side of = or := is not a single name |
+| other_logic | 275 | the paper writes it in another logic (past-time, spatial, probabilistic, strategic): its operators have no STL equivalent |
+| nonstandard_operator | 156 | an operator STL doesn't have (\boxplus, \sqcup, ...), or a G/F/U/R with a script that isn't an interval |
+| several_formulas | 149 | several formulas, or a formula with text (where, and, if, ...): stl-nl takes exactly one formula |
+| indexed_operator | 130 | an operator over an index (\bigwedge, \bigvee, \land_{i}, \sum, \ldots, ...): the number of terms isn't known, so it can't be written out |
+| operator_alone | 94 | a temporal operator with no operand (F_{[a,b]}, U_{[a,b]} alone, or at the end): an operator, not a formula |
+| set_membership | 78 | \in a set that is not an interval: STL can only compare a signal with numbers |
+| multiplication | 68 | a product (2x, \cdot, \times, *, two terms side by side): stl-nl has no multiplication |
+| connective_at_edge | 63 | starts or ends with a connective (\land, \lor, ...): the extraction found that the rest of the formula is on another row |
+| quantifier | 63 | a quantifier (\forall, \exists): STL has none |
+| division | 25 | a division other than of two integers: stl-nl has no division |
+| macro_loop | 4 | a macro of the paper still left after 10 rounds of expansion: it never turns into a formula |
+
+### Examples of each rule
+
+Up to 3 formulas per rule, from different papers and showing different cases of the rule. *Example* is the formula as the paper writes it. *Why* names the part that made the rule reject it, written after the paper's macros are expanded and with the names normalized (\varphi_{1} is varphi_1); *(macro)* marks an example where that part comes from a macro of the paper, so it can't be seen in the formula as written.
+
+**semantics_definition** (610 formulas): a definition of the semantics (\models, \vDash): it says when a signal satisfies a formula, it is not a formula itself.
+
+| Example | Why |
+|---|---|
+| `(x, t) \models G_{[a,b]}\phi` | `\models` says when a signal satisfies a formula: this defines the meaning of an operator |
+| `\tau\vDash \Box_{[u,v]} \varphi` | `\vDash` says when a signal satisfies a formula: this defines the meaning of an operator |
+| `\vdash C: \Box_{[0,1]} c: \Box_{[0,1]}p` | `\vdash` says when a signal satisfies a formula: this defines the meaning of an operator |
+
+**unknown_command** (567 formulas): a LaTeX command the paper doesn't define and the normalizer has no translation for (it is not an STL operator, connective, comparison, font or spacing command): its meaning is unknown, so the whole formula is rejected even if the rest is valid STL.
+
+| Example | Why |
+|---|---|
+| `\mathbb{S}_{\mathsf{F}_{[a, b]}\mu_1}` | `\mathbb` isn't defined by the paper and the normalizer doesn't know it |
+| `\phi_2:=F_{[5,15]}(\|\boldsymbol{x}_2-\begin{bmatrix} 90 90 \end{bmatrix}\|\le 5)` | `\begin` isn't defined by the paper and the normalizer doesn't know it |
+| `\llbracket\Diamond_{[S,T]}\phi\rrbracket_\omega` | `\llbracket` isn't defined by the paper and the normalizer doesn't know it |
+
+**function** (462 formulas): a function applied to something (rho(G_{[a,b]} phi,t), x(t+1), \max, \min, \log, ...): stl-nl has no functions (a call on names and integers only, Reg(4,4), is kept as one name).
+
+| Example | Why |
+|---|---|
+| `\rho(x_{k:K},G_{[k_s,k_e]}\phi)` | `rho(x_{k:K},G_{[k_s,k_e]}\phi)` applies a function to something that isn't a name or an integer |
+| `r(s,F_{[a,b)} \varphi,t) = \underset{t' \in [t+a,t+b)}{\max} r(s,\varphi,t')` | `r(s,F_{[a,b)` applies a function to something that isn't a name or an integer |
+| `\tau(s,\lozenge_{[a,b]}\phi)` | `tau(s,\lozenge_{[a,b]}\phi)` applies a function to something that isn't a name or an integer |
+
+**power** (445 formulas): a power or a superscript that isn't a name (x^2, \rho^{\varphi}): stl-nl has no powers.
+
+| Example | Why |
+|---|---|
+| `\rho^{\square_{[a, b]} \varphi}(\xi, k)` | `rho^\square_{[a, b]} \varphi` is a power or a superscript that isn't a name |
+| `\phi^2=F_{\le 5}\clubsuit` | `phi^2` is a power or a superscript that isn't a name |
+| `z_k^{\square_{[a, b]} \varphi}` | `z_k^\square_{[a, b]} \varphi` is a power or a superscript that isn't a name |
+
+**parse_error** (414 formulas): a construct the parser can't read (a subscript where none can go, an unexpected symbol, unbalanced brackets): it is never guessed.
+
+| Example | Why |
+|---|---|
+| `G_[0,H](F_[0,h](mu))` | the subscript `[` is on a name, but it is neither an interval nor part of the name |
+| `\\|\square_{[a,b]}\phi\\| = b` | the parser didn't expect `G` here: `\| G phi \|` |
+| `\square_{[t_1, t_2]}#1` | the character `#` isn't part of the grammar |
+
+**grammar_definition** (388 formulas): a grammar of the logic (::=, \mid, \| between alternatives): it lists the forms a formula can take, it is not a formula itself.
+
+| Example | Why |
+|---|---|
+| `\phi ::= \Box_{[t_1, t_2]} \mu` | `::=` introduces the forms a formula can take: a grammar |
+| `(\bm{s}, t_k, t_{l}) \mid\asymp \varphi_1 \mathsf{U}_{[a, b]} \varphi_2` | `\mid` introduces the forms a formula can take: a grammar |
+| `\phi := F_{[0, T]} \psi \| G_{[0, T]} \psi` | a `\|` separates the alternatives of a grammar (it can't be read as an absolute value) |
+
+**operator_definition** (297 formulas): a definition of an operator in terms of others (F_{[a,b]} phi := true U_{[a,b]} phi): the left side of = or := is not a single name.
+
+| Example | Why |
+|---|---|
+| `\always\phi:=\always_{[0,\infty)}\phi` | the left side of := (or \equiv) is an expression, not a name: the formula defines it |
+| `F_{[a,b]} \phi=\top U_{[a,b]}\phi` | a temporal operator is on the left of =: the formula defines that operator |
+| `F_{[a,b]}\Phi=\top\,U_{[a,b]}\,\Phi` | a temporal operator is on the left of =: the formula defines that operator |
+
+**other_logic** (275 formulas): the paper writes it in another logic (past-time, spatial, probabilistic, strategic): its operators have no STL equivalent.
+
+| Example | Why |
+|---|---|
+| `p\since_{[1,3]}q` | the extraction classed it as past-time logic: its operators (once, since, historically, ...) look back in time, STL's only forward |
+| `\everywhere_{\ra}\always_{[a,b]}\varphi` | the extraction classed it as a spatial or description logic: its operators are about places or objects |
+| `\mathbb{P}_s(\lozenge^{\leq n}\target)` | the extraction classed it as a probabilistic logic: its operators are about probabilities |
+
+**nonstandard_operator** (156 formulas): an operator STL doesn't have (\boxplus, \sqcup, ...), or a G/F/U/R with a script that isn't an interval.
+
+| Example | Why |
+|---|---|
+| `\boxplus_{[r,r]}` | `\boxplus` isn't an STL operator |
+| `\Box_{I}(\Diamond_{[0,t]}\varphi_2)` | `G_{I}` isn't an STL operator |
+| `\Diamond_{[a,b]}\varphi=True\sqcup_{[a,b]}\varphi` | `\sqcup` isn't an STL operator |
+
+**several_formulas** (149 formulas): several formulas, or a formula with text (where, and, if, ...): stl-nl takes exactly one formula.
+
+| Example | Why |
+|---|---|
+| `\text{ if } \phi=F_{[a,b]}\psi` | the word "if" joins the formula to text or to another formula |
+| `\eventually{[0,1]}{}` | a comma inside brackets separates formulas (a set or a tuple) |
+| `(p,p \wedge \Box_{[0,10]} p)` | a comma inside brackets separates formulas (a set or a tuple) |
+
+**indexed_operator** (130 formulas): an operator over an index (\bigwedge, \bigvee, \land_{i}, \sum, \ldots, ...): the number of terms isn't known, so it can't be written out.
+
+| Example | Why |
+|---|---|
+| `\bigwedge_l (\mathcal{F}_{[t',t']}\psi_l)` | `\bigwedge` stands for a number of terms that isn't known |
+| `\diamondsuit_{[a,b]}\varphi \implies \bigvee_{t' \in [t+a,t+b]} z_{\varphi}^{t'}` | `\bigvee` stands for a number of terms that isn't known |
+| `\{ \wedge, F_{[a,b]}, G_{[a,b]}\}, j\in \{k+1,\ldots, N_f\}` | `\ldots` stands for a number of terms that isn't known |
+
+**operator_alone** (94 formulas): a temporal operator with no operand (F_{[a,b]}, U_{[a,b]} alone, or at the end): an operator, not a formula.
+
+| Example | Why |
+|---|---|
+| `\mathbf{G}[0, 3]` | the operator `G` has no operand |
+| `\phi_1=F_{\le i_1}` | the operator `F` has no operand |
+| `\textbf{U}_{[a,b]}` | the operator `U` has no operand |
+
+**set_membership** (78 formulas): \in a set that is not an interval: STL can only compare a signal with numbers.
+
+| Example | Why |
+|---|---|
+| `\diamondsuit_{[3,4]}(x\in A)` | \in says that a signal belongs to a set: STL can only compare it with numbers |
+| `\bm{u}\in \mathcal{U}_{\ge k}` | \in says that a signal belongs to a set: STL can only compare it with numbers |
+| `\Box_{[a,b]}\varphi\in\Delta_1` | \in says that a signal belongs to a set: STL can only compare it with numbers |
+
+**multiplication** (68 formulas): a product (2x, \cdot, \times, *, two terms side by side): stl-nl has no multiplication.
+
+| Example | Why |
+|---|---|
+| `F_{[0,10]}(\cdot)` | `\cdot` is a product |
+| `\varphi^{I}_{\epsilon_I} = \big(*_1 \LTLeventually_{[0,0]} d_{I}(X_{\pi_2},X^{*_1}_{\pi_1}) \leq \epsilon_I\bi …` | `*` is a product |
+| `\psi_2 = \square_{[0,20]} (G_Rx \leq H_R)` | `G_R x`: two terms side by side are a product |
+
+**connective_at_edge** (63 formulas): starts or ends with a connective (\land, \lor, ...): the extraction found that the rest of the formula is on another row.
+
+| Example | Why |
+|---|---|
+| `\land \G{0}{T} SDF (\cdot, M)` | it starts or ends with a connective: the rest of the formula is on another row of the paper |
+| `\land(\Box_{[12,15]}gear == 2)` | it starts or ends with a connective: the rest of the formula is on another row of the paper |
+| `\wedge\Box_{[0,100]} (D\le0.02)` | it starts or ends with a connective: the rest of the formula is on another row of the paper |
+
+**quantifier** (63 formulas): a quantifier (\forall, \exists): STL has none.
+
+| Example | Why |
+|---|---|
+| `G_{[0,20)}F_{[0,5)}\forall_\mathcal{L}\bigcirc (\mu \geq1)` | `\forall` is a quantifier |
+| `\varphi_1=X(\Diamond_{[0,5]}(\exists^2 x\geq 2))` | `\exists` is a quantifier |
+| `\varphi^k_{rs} = G_{[a^k,b^k]} \mu_{rs}^k, \; \forall k\in \mathcal{I}_G` | `\forall` is a quantifier |
+
+**division** (25 formulas): a division other than of two integers: stl-nl has no division.
+
+| Example | Why |
+|---|---|
+| `\Box_{[11,40]}(\|\frac{\lambda(t) - \lambda_{ref}}{\lambda_{ref}}\| < tol)` | `\frac{\lambda(t)-\lambda_{ref}}{\lambda_{ref}}` is a division |
+| `\Diamond_{[0,20]} ((x-\mathit{prev}(x))/0.01>5 \land \Diamond_{[0,2]} (x-\mathit{prev}(x))/0.01<-5)` | `/` is a division |
+| `\Box_{[1,m]}(\rho) = \frac{\sum_{i=1}^m \rho_i - (\delta^{\max} \cdot \mathrm{erf}(\mu \cdot \delta^{\max}))}{ …` | `\frac{\sum_{i=1}^m\rho_i-(\delta^{\max}\cdot\mathrm{erf}(\mu\cdot\delta^{\max}))}{m}` is a division |
+
+**macro_loop** (4 formulas): a macro of the paper still left after 10 rounds of expansion: it never turns into a formula.
+
+| Example | Why |
+|---|---|
+| `\urule {\Gamma, F^m(T)\le X, X\le F^n(T)\vdash X:\alpha,\Delta} {\Gamma\vdash T:\Box_{[m,n]}\alpha,\Delta } {  …` *(macro)* | a macro of the paper keeps expanding without end |
 
 ## Most frequent unknown commands
 
