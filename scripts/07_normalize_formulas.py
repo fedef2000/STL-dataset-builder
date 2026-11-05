@@ -3,7 +3,7 @@ Step 7: normalizes the formulas without a requirement into the input of stl-nl (
 grammar), so that stl-nl can write natural-language descriptions of them.
 
     python scripts/07_normalize_formulas.py                     # data/dataset/stl_formulas_unpaired.jsonl
-    python scripts/07_normalize_formulas.py --seed 1            # other random values for the symbolic bounds
+    python scripts/07_normalize_formulas.py --seed 1            # other random values for the bounds that cannot stay symbolic
     python scripts/07_normalize_formulas.py --stlgen PATH       # the stlgen binary of stl-nl (default: STLGEN_BIN)
     python scripts/07_normalize_formulas.py --max-per-pattern 0 # every formula ok to stl-nl (default: 10 per pattern)
     python scripts/07_normalize_formulas.py --show-rejected               # the reasons of rejection, with counts
@@ -289,7 +289,7 @@ def report(lines: list[dict], seed: str, max_per_pattern: int) -> str:
     status = collections.Counter(l["status"] for l in lines)
     out = ["# Normalized formulas for stl-nl", "",
            f"From `{INPUT_FILE.relative_to(BASE_DIR)}` ({total} formulas), with the rules of "
-           f"`docs/normalization_rules.md` and the stlgen parser of stl-nl. Seed of the random bounds: `{seed}`.", ""]
+           f"`docs/normalization_rules.md` and the stlgen parser of stl-nl. Seed of the random values: `{seed}`.", ""]
     out += ["## By status", ""]
     out += table([(s, status[s], f"{100 * status[s] / total:.1f}%") for s in ("ok", "needs_review", "rejected")],
                  ("Status", "Formulas", "Share"))

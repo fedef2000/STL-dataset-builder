@@ -24,8 +24,8 @@ class Interval:
 class Tok:
     """
     An STL token. kind: OP (G, F, X), BOP (U, R), NOT, AND, OR, IMP, IFF, REL (<, <=, >, >=, =, ==, !=), DEF (:=, \\equiv,
-    ...), COLON, COMMA (, ;), PUNCT (.), PLUS, MINUS, SLASH, LP, RP (value: the bracket), ABS, NUM (a Fraction), ID (a
-    name), BOOL, IN, INF.
+    ...), COLON, COMMA (, ;), PUNCT (.), PLUS, MINUS, STAR, SLASH, LP, RP (value: the bracket), ABS, NUM (a Fraction), ID
+    (a name), BOOL, IN, INF.
     """
     kind: str
     value: object = None
@@ -46,7 +46,7 @@ class Tok:
         if self.kind == "BOOL":
             return "true" if self.value else "false"
         fixed = {"NOT": "!", "AND": "&&", "OR": "||", "IMP": "->", "IFF": "<->", "COLON": ":", "PLUS": "+",
-                 "MINUS": "-", "SLASH": "/", "ABS": "|", "IN": "\\in", "INF": "\\infty"}
+                 "MINUS": "-", "STAR": "*", "SLASH": "/", "ABS": "|", "IN": "\\in", "INF": "\\infty"}
         return fixed.get(self.kind, str(self.value))
 
 
@@ -93,8 +93,10 @@ NAME_FONTS = MATH_FONTS | TEXT_FONTS | MATH_WRAPPERS | {"\\mathbb", "\\mathscr",
 # A norm is read as an absolute value (its subscript and a square after it are dropped: norm_as_abs)
 NORMS = {"\\|", "\\lVert", "\\rVert", "\\Vert"}
 
+# A product: written * (products_and_divisions)
+PRODUCTS = {"\\cdot", "\\times", "\\ast"}
+
 REJECTED = {
-    **dict.fromkeys(["\\cdot", "\\times", "\\ast"], "multiplication"),
     **dict.fromkeys(["\\sin", "\\cos", "\\tan", "\\exp", "\\log", "\\ln", "\\max", "\\min", "\\sup", "\\inf",
                      "\\sqrt", "\\det", "\\arg", "\\lim"], "function"),
     **dict.fromkeys(["\\bigwedge", "\\bigvee", "\\sum", "\\prod", "\\ldots", "\\dots", "\\cdots", "\\vdots",
@@ -112,7 +114,7 @@ WORD_TOKEN = re.compile(r"[A-Za-z0-9]")
 # Every command the lexer knows: never expanded from a paper's definitions (except PAPER_OVERRIDABLE)
 KNOWN_COMMANDS = ({f"\\{g}" for g in GREEK} | set(OPERATORS) | set(CONNECTIVES) | set(RELATIONS) | DEFINITIONS
                   | LAYOUT | LAYOUT_WITH_ARGUMENT | LAYOUT_WITH_DIMENSION | MATH_FONTS | MATH_WRAPPERS | TEXT_FONTS
-                  | set(ACCENTS) | set(OVERLINES) | set(REJECTED) | NORMS
+                  | set(ACCENTS) | set(OVERLINES) | set(REJECTED) | NORMS | PRODUCTS
                   | {"\\top", "\\bot", "\\in", "\\infty", "\\frac", "\\prime", "\\lvert", "\\rvert", "\\vert", "\\{",
                      "\\}", "\\_", "\\textcolor", "\\mathbb", "\\mathscr", "\\mathfrak"})
 PROTECTED_COMMANDS = KNOWN_COMMANDS - PAPER_OVERRIDABLE
@@ -227,10 +229,12 @@ class Lexer:
                 text, j = f"{text}e{sign}{exponent}", k
                 self.trace.fire("number_forms")
         self._emit(out, Tok("NUM", Fraction(text)), spaced)
-        # A number with a letter, a command or a parenthesis right after it: a product (2x, 2\pi, 2(x+y))
+        # A number with a letter, a Greek letter or a parenthesis right after it: a product (2x, 2\pi, 2(x+y)). With a
+        # space between (200\ \mathrm{N}, 0.0032 s_1) it may be a unit: the parser rejects it (multiplication)
         if j < len(tokens) and (WORD_TOKEN.fullmatch(tokens[j]) or tokens[j] == "(" or
                                 (tokens[j].startswith("\\") and tokens[j][1:] in GREEK)):
-            raise Rejected("multiplication", f"{text}{tokens[j]}")
+            self.trace.fire("products_and_divisions")
+            self._emit(out, Tok("STAR", "side by side"), False)
         return j
 
     def _command(self, tokens, i, out, spaced) -> int:
@@ -316,10 +320,17 @@ class Lexer:
             numerator, j = argument(tokens, i + 1)
             denominator, j = argument(tokens, j)
             n, d = ("".join(x).replace(" ", "") for x in (numerator, denominator))
-            if not (re.fullmatch(r"-?\d+", n) and re.fullmatch(r"-?\d+", d)) or int(d) == 0:
-                raise Rejected("division", f"\\frac{{{n}}}{{{d}}}")
-            self.trace.fire("frac_numbers")
-            self._emit(out, Tok("NUM", Fraction(int(n), int(d))), spaced)
+            if re.fullmatch(r"-?\d+", n) and re.fullmatch(r"-?\d+", d) and int(d) != 0:
+                self.trace.fire("frac_numbers")
+                self._emit(out, Tok("NUM", Fraction(int(n), int(d))), spaced)
+                return j
+            # Anything else is a division: (numerator) / (denominator)
+            self.trace.fire("products_and_divisions")
+            self._emit(out, Tok("LP", "("), spaced)
+            self._splice(self.read(numerator), out, False)
+            out += [Tok("RP", ")"), Tok("SLASH", "/"), Tok("LP", "(")]
+            self._splice(self.read(denominator), out, False)
+            out.append(Tok("RP", ")"))
             return j
         if t in ACCENTS:
             content, j = argument(tokens, i + 1)
@@ -343,6 +354,10 @@ class Lexer:
             raise Rejected("unknown_command", t)
         if t == "\\_":
             raise Rejected("parse_error", "\\_ outside a name")
+        if t in PRODUCTS:
+            self.trace.fire("products_and_divisions")
+            self._emit(out, Tok("STAR", "*"), spaced)
+            return i + 1
         if t in REJECTED:
             raise Rejected(REJECTED[t], t)
         raise Rejected("unknown_command", t)
@@ -459,7 +474,9 @@ class Lexer:
             self._emit(out, Tok(simple[t], t), spaced)
             return i + 1
         if t == "*":
-            raise Rejected("multiplication", "*")
+            self.trace.fire("products_and_divisions")
+            self._emit(out, Tok("STAR", "*"), spaced)
+            return i + 1
         raise Rejected("parse_error", f"character {t!r}")
 
     # ------------------------------------------------------------ names followed by ( or [
@@ -631,7 +648,7 @@ class Lexer:
             self.trace.fire("bound_shorthand")
             return Interval([Tok("NUM", Fraction(0))], inner[1:], False, inner[0].value == "<")
         if inner and inner[0].kind == "REL" and inner[0].value in (">", ">=") and len(inner) > 1:
-            self.trace.fire("bound_shorthand")  # G_{>= c} is [c, \infty): the parser gives it a horizon
+            self.trace.fire("bound_shorthand")  # G_{>= c} is [c, \infty): the parser writes [c,inf]
             return Interval(inner[1:], [Tok("INF")], inner[0].value == ">", False)
         return None
 

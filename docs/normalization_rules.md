@@ -54,9 +54,10 @@ Each rule has a name (the list is `RULES` in `src/normalization/rules.py`). The 
 | `bound_shorthand` | `G_{\le 100}` → `G[0,100]`; `F_{< 5}` → `F[0,5]` (closed by `close_open_interval`); `\mathbf{U}^{\leq T}` → `U[0,T]` |
 | `close_open_interval` | `(1,2)` → `[1,2]`; `[0,10)` → `[0,10]` (agreed: never shrink an interval) |
 | `round_bounds_outward` | `[0.2, 0.4]` → `[0,1]`; `[1.5, 3.7]` → `[1,4]`; `[0.0, 5.0]` → `[0,5]` without firing (agreed: lower bound down, upper bound up). The manifest lists each rounding (`rounded`). |
-| `random_symbolic_bounds` | `G[0,T] (x < T)` → `G[0,37] (x < 37)`. Each symbol in a bound is drawn uniformly from 0–100. The same symbol gets the same value in the whole formula, comparisons included. Expressions (`[0, T-\tau]`, `[t, t+5]`) are computed after the draw. If a bound is negative or a lower bound is above its upper one, all the symbols are drawn again (up to 100 times). The seed is `<--seed>:<record id>`, so a rerun gives the same numbers and one record doesn't change another. The manifest lists the values (`substitutions`). |
-| `random_horizon` | `\Box p`, `G (p \rightarrow F q)`, `p \mathcal{U} q` (no interval) → `G[0,h] p`, ...; `F_{[a,\infty)} p`, `F_{\geq 3} p` (an infinite upper bound) → `F[a,a+h] p`, `F[3,3+h] p`. Each operator gets its own horizon `h`, a symbol drawn as in `random_symbolic_bounds` but never 0, which would give `G[0,0]`: a draw with a horizon of 0 is made again, so `h` is 1–100 (since 2026-10-21; the other records keep their values). The manifest lists it in `substitutions` as `horizon#1`, `horizon#2`, ... (no name of a formula has a `#`). Adding it to the lower bound keeps the interval valid whatever the draw. The brief rejects these (a horizon changes the meaning); decided on 2026-10-20 to keep them, as for symbolic bounds: the description is written from our formula. `X` keeps no interval. |
-| `unbounded_operator` | rejected: `\infty` in a lower bound (`F_{(-\infty, 0]} p`) or inside a bound expression (`[0, \infty - 1]`) |
+| `parameter_bounds` | `\Box_{[0,T]} p` → `G[0,T] p`; `\Diamond_{[a,b]} p` → `F[a,b] p`; `\mathbf{G}_{\le T} p` → `G[0,T] p`. A symbol alone in a bound stays a parameter of `stl-nl`, which accepts a name as a bound since 2026-10-27 (stl-nl `8c66e1b`). `stl-nl` assumes `lower <= upper` for parameters. Decided on 2026-11-05, replacing random values for these: the formula is the paper's. |
+| `random_symbolic_bounds` | Only for the symbols that can't be a parameter of `stl-nl`: those in a bound expression (`[0, T-\tau]`, `[t, t+5]`, `[0, 2p]`), which the grammar doesn't have, and those also used as a signal (`G[0,T] (x < T)` → `G[0,37] (x < 37)`), which it forbids. Each is drawn uniformly from 0–100; the same symbol gets the same value in the whole formula, comparisons and other bounds included (`(F[0,t] p) && (G[t,t+5] q)` → `(F[0,37] p) && (G[37,42] q)`). Expressions are computed after the draw. If a bound is negative or a lower bound is above its upper one, all the symbols are drawn again (up to 100 times). The seed is `<--seed>:<record id>`, so a rerun gives the same numbers and one record doesn't change another. The manifest lists the values (`substitutions`). |
+| `unbounded_interval` | `\Box p`, `G (p \rightarrow F q)`, `p \mathcal{U} q` (no interval) → `G[0,inf] p`, `G[0,inf] (p -> (F[0,inf] q))`, `p U[0,inf] q`; `F_{[a,\infty)} p`, `F_{\geq 3} p` (an infinite upper bound) → `F[a,inf] p`, `F[3,inf] p`. `stl-nl` accepts `inf` as an upper bound since 2026-10-27. Decided on 2026-11-05, replacing the random horizons of 2026-10-20 (`random_horizon`): an operator without an interval is unbounded, and `inf` says so. `X` keeps no interval. |
+| `unbounded_operator` | rejected: `\infty` in a lower bound (`F_{(-\infty, 0]} p`) or inside a bound expression (`[0, \infty - 1]`), which `stl-nl` doesn't have |
 | `bounds_unsatisfiable` | rejected: no draw in 100 gives valid intervals (`[a, a-200]`). The draft had needs_review, but with no valid intervals there is no formula to put in `needs_review/`. |
 | `negative_bound`, `empty_interval`, `bound_too_large` | rejected: `[-1,0]` (a past bound); `[3,1]`; a bound above 2,147,483,647 (the largest stlgen accepts) |
 
@@ -71,9 +72,10 @@ Each rule has a name (the list is `RULES` in `src/normalization/rules.py`). The 
 | `overline_operator` | `\overline{\Diamond}_{[0,10]} p` → `F[0,10] p`; also on `\square`, `\mathcal{U}`, `\mathsf{G}`, ... (and `\underline`). Papers use the line for a variant of the operator: the averaged operators of AvSTL, the marked operators of a tableau. The variant is read as the plain operator: the meaning may change, the pattern stays (decided on 2026-10-20). `\overline` on anything other than a name or an operator stays `unknown_command`. |
 | `current_time_index` | `x(t)`, `x[t]`, `x_t` → `x` (only the letter `t`, the evaluation time) |
 | `reserved_names` | a signal named `G`, `F`, `X`, `U` or `R` → `G_sig`, ...: `F > 3` → `F_sig > 3`; `X(t)` → `X_sig` |
-| `frac_numbers` | `\frac{1}{3}` → `1/3` (integer literals only; otherwise rejected `division`) |
+| `frac_numbers` | `\frac{1}{3}` → `1/3` (integer literals; any other `\frac` is a division, see `products_and_divisions`) |
 | `number_forms` | `.5` → `0.5`; `5.` → `5`; `1e-3` → `0.001` (exact) |
 | `negation_minus` | `-x > 0` → `(0 - x) > 0`; `-3` stays a literal |
+| `products_and_divisions` | `a \cdot x`, `a \times x`, `a \ast x`, `a * x` → `a * x`; a number written against a name, a Greek letter or a parenthesis: `2x` → `2 * x`, `0.75r` → `0.75 * r`, `2(x+y)` → `2 * (x + y)`; `x / y` → `x / y`; `\frac{x - y}{y}` → `(x - y) / y`. `*` and `/` bind tighter than `+` and `-`, left to right, as in `stl-nl`, which has them since 2026-10-27 (stl-nl `4a6571a`). After a `/`, a fraction is parenthesized (`x / (1/3)`), as `stl-nl` reads `x / 1/3` as `(x / 1) / 3`. Decided on 2026-11-05. |
 | `norm_as_abs` | `\|x - y\|`, `\lVert x \rVert`, `\Vert x \Vert` → `\|x - y\|`. The norm's subscript (`\|x\|_2`, `\|x\|_\infty`, `\Vert x\Vert_{P_1}`) and a square after it (`\|x\|^2`) are dropped. The meaning changes, the pattern (a size compared with a number) stays: decided on 2026-10-20, as the description is written from our formula. Other powers of a norm stay `power`. |
 | `function_as_name` | a name followed by `(...)` or `[...]` whose arguments are only names and non-negative integers becomes one name, the function and its arguments joined with `_`: `\mathrm{Reg}(4,4)` → `Reg_4_4`; `behind(p_s, p_{uas})` → `behind_p_s_p_uas`; `h_4(\beta_2(\mathbf{x}))` → `h_4_beta_2_x` (the inner call first); `\phi[\theta]` → `phi_theta`. It can be a proposition (`F[0,10] Reg_4_4`) or a signal (`tau_p_P_A <= 24.5`). The arguments stay in the name so that different calls stay different atoms (`Reg(4,4) && Reg(3,3)` is not `a && a`). Decided on 2026-10-20. Anything else in the brackets (an operator, a formula, an expression, a real number) is `function`. |
 | `placeholder_subformula` | `\varphi_1 \mathcal{U}_{[a,b]} \varphi_2` where `variables` calls `\varphi_1` a "(sub)formula" or "specification": kept as the atom `varphi_1` with no flag (decided on 2026-10-19: the subformula can't be rebuilt). The rule is only recorded in the manifest, so these formulas can be found. |
@@ -90,8 +92,8 @@ Each rule has a name (the list is `RULES` in `src/normalization/rules.py`). The 
 
 | Rule | Example |
 |---|---|
-| `multiplication` | `2x`, `2\pi`, `a \cdot x`, `\times`, `\ast`, `x * y`, and two terms side by side (`k x`, `p q`: a product or a missing operator) |
-| `division` | `x / y`, `1/x`, `\frac{a}{b}` (anything but an integer over an integer) |
+| `multiplication` | two terms side by side with a space between (`k x`, `p q`, `0.0032 s_1`): a product, a missing operator, or a number with its unit (`200\ \mathrm{N}`, `0.3\ \mathrm{m/s}`), which can't be told apart; also a number written against a time unit in a bound (`[0.1s, 0.6s]`, `[0,24h]`: `s`, `ms`, `sec`, `min`, `h`, `hr`), which is not a product. Since 2026-11-05 the products written with an operator, or a number against a name, are `products_and_divisions`. |
+| `division` | a division by `0` (`x / 0`), which `stl-nl` rejects |
 | `power` | `(x-1)^2`, `x^2`, `E^*`, a superscript that isn't letters |
 | `function` | `\sin x`, `\max`, `\exp`, `\sqrt`, `x(t+1)` (a signal at another time), `\rho(\Box_{[a,b]} \varphi, x, t)` (a call with an argument that isn't a name or an integer, see `function_as_name`) |
 | `indexed_operator` | `\bigwedge_{i=1}^n`, `\bigvee`, `\sum`, `\prod`, `\ldots`, `\cdots`; `\land_{i}`, `\lor_{w=1}^{n}` (a connective with a subscript) |
@@ -126,7 +128,7 @@ The whole tree is written with explicit parentheses around every temporal operan
 
 `\psi = \Box_{[0,30]} (gear = 4 \rightarrow \Diamond_{[0,5]} rpm < 3000)` → `G[0,30] ((gear == 4) -> (F[0,5] (rpm < 3000)))`
 
-Numbers are written exactly: integers, exact decimals (`0.25`), or fractions of integers (`1/3`).
+Numbers are written exactly: integers, exact decimals (`0.25`), or fractions of integers (`1/3`). Arithmetic is parenthesized too, except a comparison's own operands: `G[0,5] ((a + (b * c)) - (d / 2) > 0)`. A bound is an integer, a parameter or `inf`.
 
 ## Stage 5: validation (`validate.py`)
 
@@ -146,7 +148,7 @@ A manifest line: `id`, `status`, `file` (or null), `reasons`, `rules` (those tha
 
 ## Patterns
 
-The pattern of a formula (`emit.pattern`, decided on 2026-10-19) is its normalized text, written by the same writer, with every number (bounds and constants) written `#` and the names renamed `a`, `b`, ... (then `v27`, `v28`, ...) in the order they appear. A name used twice keeps its letter, and the operators and comparison directions are kept; the operands of `&&`/`||` are not sorted.
+The pattern of a formula (`emit.pattern`, decided on 2026-10-19) is its normalized text, written by the same writer, with every number (bounds and constants) and every parameter written `#` (so `G[0,T] p` and `G[0,5] p` share `G[#,#] a`; decided on 2026-11-05), `inf` kept (`G[#,inf] a`: an unbounded operator is another shape), and the names renamed `a`, `b`, ... (then `v27`, `v28`, ...) in the order they appear. A name used twice keeps its letter, and the operators and comparison directions are kept; the operands of `&&`/`||` are not sorted.
 
 | Formula | Pattern |
 |---|---|
@@ -164,7 +166,7 @@ Not every formula ok goes to stl-nl (decided on 2026-10-21; `src/normalization/s
 | `selection` | What it means |
 |---|---|
 | `kept` | written in `stl/`: the input of stl-nl |
-| `duplicate` | the same normalized text as an earlier formula (in manifest order), whose id is in `duplicate_of`. Only the text counts: the same original with other random bounds is a different formula and stays, as stl-nl describes it differently. |
+| `duplicate` | the same normalized text as an earlier formula (in manifest order), whose id is in `duplicate_of`. Only the text counts: the same original with other random bounds is a different formula and stays, as stl-nl describes it differently. Since parameters are kept (2026-11-05), formulas such as `F[a,b] varphi` from different papers are the same text, and duplicates. |
 | `pattern_cap` | its pattern already has `--max-per-pattern` formulas (default 10; `0`: no cap), so that the most frequent patterns don't fill the dataset |
 
 The duplicates are left out first, then the cap is applied to the rest. When a pattern has more formulas than the cap, they are taken from its papers in turn (one from each paper, then a second, ...), with the papers and the formulas of each in random order, so that the names and contexts vary. The seed of a pattern is `<--seed>:<pattern>`: a rerun picks the same, and a change to one pattern doesn't change the others. A duplicate's `duplicate_of` may be a formula left out by the cap. The report section *Selection for stl-nl* counts each and lists the patterns that are cut.

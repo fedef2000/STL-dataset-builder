@@ -2,7 +2,7 @@
 The parser of the normalization: the STL tokens of a formula (lexer.py) parsed into a tree, by recursive descent with
 the precedence levels of stl-nl (tightest first): unary (G, F, X, !), U/R, &&, ||, -> and <->. Before parsing, the
 label in front of the formula and a final punctuation mark are taken out; a formula that is a definition, or several
-formulas, is rejected. A temporal operator with no interval or an infinite upper bound gets a random horizon. An
+formulas, is rejected. A temporal operator with no interval gets [0, inf], as stl-nl writes an unbounded operator. An
 unparenthesized temporal operand followed by a connective is read as the operator on the operand alone, as stl-nl
 reads it (the standard reading), and recorded as ambiguous_scope.
 """
@@ -15,13 +15,16 @@ from src.normalization.rules import Rejected, Trace
 
 @dataclass
 class Bounds:
-    """A parsed interval: its bounds as arithmetic trees; `lower` and `upper` are set once resolved (rules.py)."""
+    """
+    A parsed interval: its bounds as arithmetic trees (hi is an inf node for an infinite upper bound); `lower` and
+    `upper` are set once resolved (rules.py): an integer, the name of a parameter, or math.inf.
+    """
     lo: "Node"
     hi: "Node"
     lo_open: bool
     hi_open: bool
-    lower: int | None = None
-    upper: int | None = None
+    lower: int | str | float | None = None
+    upper: int | str | float | None = None
 
 
 @dataclass
@@ -29,7 +32,7 @@ class Node:
     """
     A node of the tree. Formulas: true, false, atom (value: name), rel (value: operator; args: two expressions), not,
     and, or, imp, iff, G, F, X, U, R (interval: Bounds). Expressions: num (value: Fraction), var (value: name), add,
-    sub, neg, abs.
+    sub, mul, div, neg, abs; inf (only as the upper bound of an interval).
     """
     kind: str
     args: list = field(default_factory=list)
@@ -44,6 +47,7 @@ class ParseFail(Exception):
 # What can start the operand of a bare G, F or X (a minus can't: in "X - 3 > 0", X is a signal)
 TERM_START = {"ID", "NUM", "LP", "NOT", "OP", "BOOL", "ABS"}
 CONNECTIVE_KINDS = {"AND", "OR", "IMP", "IFF", "BOP"}
+TIME_UNITS = {"s", "ms", "sec", "min", "h", "hr"}
 FORMULA_KINDS = {"OP", "BOP", "NOT", "AND", "OR", "IMP", "IFF", "REL", "BOOL"}
 
 
@@ -142,7 +146,6 @@ class Parser:
         self.pos = 0
         self.furthest = 0
         self.paren_end = -1  # where the last parenthesized formula ended
-        self.horizons = 0  # the operators given a random horizon so far
 
     # ------------------------------------------------------------ helpers
 
@@ -292,13 +295,27 @@ class Parser:
                             Node("rel", [x, hi], value="<" if closing.value == ")" else "<=")])
 
     def arith(self) -> Node:
-        node = self.arith_term()
+        node = self.product()
         while self.peek_kind() in ("PLUS", "MINUS"):
             kind = "add" if self.take().kind == "PLUS" else "sub"
-            node = Node(kind, [node, self.arith_term()])
+            node = Node(kind, [node, self.product()])
         return node
 
-    def arith_term(self) -> Node:
+    def product(self) -> Node:
+        """* and / bind tighter than + and -, left to right, as in stl-nl."""
+        node = self.arith_term()
+        while self.peek_kind() in ("STAR", "SLASH"):
+            kind = "mul" if self.take().kind == "STAR" else "div"
+            # Right after /, n/d is not one number: x / 1/3 is (x / 1) / 3
+            right = self.arith_term(fold=kind == "mul")
+            if kind == "div" and right.kind == "num" and right.value == 0:
+                raise Rejected("division", "by 0")
+            self.trace.fire("products_and_divisions")
+            node = Node(kind, [node, right])
+        return node
+
+    def arith_term(self, fold: bool = True) -> Node:
+        """A number, a name, a parenthesized expression or an absolute value; with `fold`, n/d of integers is one number."""
         t = self.peek()
         if t is None:
             self.fail()
@@ -315,12 +332,10 @@ class Parser:
         if t.kind == "NUM":
             self.take()
             value = t.value
-            if self.peek_kind() == "SLASH":
-                self.take()
-                d = self.peek()
-                if d is None or d.kind != "NUM" or d.value.denominator != 1 or value.denominator != 1 or d.value == 0:
-                    raise Rejected("division", "/")
-                self.take()
+            d = self.peek(1)
+            if fold and self.peek_kind() == "SLASH" and d is not None and d.kind == "NUM" and value.denominator == 1 \
+                    and d.value.denominator == 1 and d.value != 0:
+                self.pos += 2
                 value = value / d.value
             node = Node("num", value=value)
         elif t.kind == "ID":
@@ -338,34 +353,30 @@ class Parser:
             raise Rejected("infinity", "\\infty")
         else:
             self.fail()
-        if self.peek_kind() == "SLASH":
-            raise Rejected("division", "/")
         return node
 
     # ------------------------------------------------------------ intervals
 
     def bounds(self, interval: Interval | None) -> Bounds:
-        """
-        The interval of an operator. With no interval, [0, h]; with an infinite upper bound, [a, a + h]: h is a symbol
-        of its own (horizon#1, horizon#2, ...: no name of the formula has a #), drawn as the symbolic bounds are.
-        """
+        """The interval of an operator. With no interval, [0, inf]; an infinite upper bound is inf: [a, inf]."""
         if interval is None:
-            return Bounds(Node("num", value=Fraction(0)), self.horizon(), False, False)
+            self.trace.fire("unbounded_interval")
+            return Bounds(Node("num", value=Fraction(0)), Node("inf"), False, False)
         if any(t.kind == "INF" for t in interval.lo):
             raise Rejected("unbounded_operator", "\\infty in the lower bound")
         if [t.kind for t in interval.hi if t.kind != "PLUS"] == ["INF"]:  # \\infty, +\\infty
-            return Bounds(self.bound(interval.lo), Node("add", [self.bound(interval.lo), self.horizon()]),
-                          interval.lo_open, False)
+            self.trace.fire("unbounded_interval")
+            return Bounds(self.bound(interval.lo), Node("inf"), interval.lo_open, False)
         if any(t.kind == "INF" for t in interval.hi):
             raise Rejected("unbounded_operator", "\\infty")
         return Bounds(self.bound(interval.lo), self.bound(interval.hi), interval.lo_open, interval.hi_open)
 
-    def horizon(self) -> Node:
-        self.trace.fire("random_horizon")
-        self.horizons += 1
-        return Node("var", value=f"horizon#{self.horizons}")
-
     def bound(self, tokens: list[Tok]) -> Node:
+        # A number side by side with a time unit is not a product: [0.1s, 0.6s], [0, 24h]
+        for k, t in enumerate(tokens[:-1]):
+            unit = tokens[k + 1]
+            if t.kind == "STAR" and t.value == "side by side" and unit.kind == "ID" and unit.value in TIME_UNITS:
+                raise Rejected("multiplication", f"a time unit in a bound: {tokens[k - 1].text()}{unit.value}")
         sub = Parser(tokens, self.trace)
         try:
             node = sub.arith()

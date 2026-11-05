@@ -34,8 +34,9 @@ RULES = {
     "bound_shorthand": ("ok", "G_{<= c} written as G[0,c]"),
     "close_open_interval": ("ok", "an open or half-open interval closed"),
     "round_bounds_outward": ("ok", "real bounds rounded: the lower one down, the upper one up"),
-    "random_symbolic_bounds": ("ok", "symbols in bounds replaced by random integers, everywhere in the formula"),
-    "random_horizon": ("ok", "a temporal operator without an interval, or with an infinite upper bound, given a random horizon: [0,h] or [a,a+h]"),
+    "parameter_bounds": ("ok", "a symbol alone in a bound kept as a parameter of stl-nl: G[0,T]"),
+    "random_symbolic_bounds": ("ok", "the symbols of a bound expression ([t,t+5]) or also used as a signal (x < T) replaced by random integers, everywhere in the formula"),
+    "unbounded_interval": ("ok", "a temporal operator without an interval read as [0,inf]; an infinite upper bound written inf"),
     "unbounded_operator": ("rejected", "an infinite lower bound, or \\infty in a bound expression"),
     "bounds_unsatisfiable": ("rejected", "no random values of the symbols give valid intervals"),
     "negative_bound": ("rejected", "a negative time bound"),
@@ -59,8 +60,9 @@ RULES = {
     "chained_comparison": ("ok", "a < x < b written as (a < x) && (x < b)"),
     "interval_membership": ("ok", "x \\in [a,b] written as two comparisons"),
     # Stage 2: what can't be represented
-    "multiplication": ("rejected", "a product (2x, \\cdot, \\times, *, two terms side by side): stl-nl has no multiplication"),
-    "division": ("rejected", "a division other than of two integers: stl-nl has no division"),
+    "products_and_divisions": ("ok", "a product or a division written with * and /: a \\cdot x, 2x, \\frac{a}{b}"),
+    "multiplication": ("rejected", "two terms side by side: a product with a space (k x), a unit (200 N) or a missing operator"),
+    "division": ("rejected", "a division by 0"),
     "power": ("rejected", "a power or a superscript that isn't a name (x^2, \\rho^{\\varphi}): stl-nl has no powers"),
     "function": ("rejected", "a function applied to something (rho(G_{[a,b]} phi,t), x(t+1), \\max, \\min, \\log, ...): stl-nl has no functions (a call on names and integers only, Reg(4,4), is kept as one name)"),
     "indexed_operator": ("rejected", "an operator over an index (\\bigwedge, \\bigvee, \\land_{i}, \\sum, \\ldots, ...): the number of terms isn't known, so it can't be written out"),
@@ -131,6 +133,17 @@ def _walk(node):
             yield from _walk(node.interval.hi)
 
 
+def _walk_formula(node):
+    """The nodes of the formula outside its intervals."""
+    yield node
+    for child in node.args:
+        yield from _walk_formula(child)
+
+
+def _symbols(node) -> set[str]:
+    return {n.value for n in _walk(node) if n.kind == "var"}
+
+
 def _value(node, values: dict) -> Fraction:
     """The number an arithmetic expression of a bound gives, with `values` for its symbols."""
     if node.kind == "num":
@@ -142,20 +155,37 @@ def _value(node, values: dict) -> Fraction:
     if node.kind == "abs":
         return abs(_value(node.args[0], values))
     left, right = (_value(a, values) for a in node.args)
+    if node.kind == "mul":
+        return left * right
+    if node.kind == "div":
+        return left / right
     return left + right if node.kind == "add" else left - right
 
 
-def _resolved(interval, values: dict) -> tuple[int, int, str | None]:
+def _bound(node, values: dict, rounding) -> tuple[int | str | float, Fraction | None]:
+    """A bound resolved (an integer rounded with `rounding`, a parameter, math.inf) and its exact value if a number."""
+    if node.kind == "inf":
+        return math.inf, None
+    if node.kind == "var" and node.value not in values:
+        return node.value, None
+    exact = _value(node, values)
+    return rounding(exact), exact
+
+
+def _resolved(interval, values: dict) -> tuple[int | str | float, int | str | float, str | None]:
     """(lower, upper, the rule a failure breaks or None) of an interval: closed, rounded outward."""
-    lo, hi = _value(interval.lo, values), _value(interval.hi, values)
-    lo_int, hi_int = math.floor(lo), math.ceil(hi)
-    if lo_int < 0:
-        return lo_int, hi_int, "negative_bound"
-    if lo_int > hi_int:
-        return lo_int, hi_int, "empty_interval"
-    if hi_int > MAX_BOUND:
-        return lo_int, hi_int, "bound_too_large"
-    return lo_int, hi_int, None
+    try:
+        lo, hi = _bound(interval.lo, values, math.floor)[0], _bound(interval.hi, values, math.ceil)[0]
+    except ZeroDivisionError:
+        return 0, 0, "division"
+    numbers = [b for b in (lo, hi) if isinstance(b, int)]
+    if any(b < 0 for b in numbers):
+        return lo, hi, "negative_bound"
+    if len(numbers) == 2 and lo > hi:
+        return lo, hi, "empty_interval"
+    if any(b > MAX_BOUND for b in numbers):
+        return lo, hi, "bound_too_large"
+    return lo, hi, None
 
 
 def _number_text(x: Fraction) -> str:
@@ -164,21 +194,27 @@ def _number_text(x: Fraction) -> str:
 
 def resolve_bounds(root, trace: Trace, rng):
     """
-    Makes every interval of the tree a closed integer interval: the symbols of the bounds get random integers (the same
-    symbol the same value, also where it is compared), open intervals are closed, real bounds rounded outward. The
-    nodes are changed in place; each interval gets `lower` and `upper`.
+    Makes every interval of the tree a closed interval of stl-nl, whose bounds are integers, parameters or an upper
+    inf. A symbol alone in a bound stays a parameter (G[0,T]). The symbols that can't (in a bound expression such as
+    [t, t+5], which stl-nl doesn't have, or also used as a signal, as in G[0,T] (x < T), which it forbids) get random
+    integers: the same symbol the same value, also where it is compared. Open intervals are closed, real bounds rounded
+    outward. The nodes are changed in place; each interval gets `lower` and `upper`.
     """
     intervals = [n.interval for n in _walk(root) if n.interval is not None]
-    symbols = sorted({n.value for i in intervals for n in _walk(i.lo) if n.kind == "var"}
-                     | {n.value for i in intervals for n in _walk(i.hi) if n.kind == "var"})
+    bounds = [b for i in intervals for b in (i.lo, i.hi)]
+    in_bounds = set().union(*map(_symbols, bounds))
+    in_expressions = set().union(*(_symbols(b) for b in bounds if b.kind != "var"))
+    signals = {n.value for n in _walk_formula(root) if n.kind in ("var", "atom")}
+    # inf is stl-nl's word for an infinite bound: a symbol of that name can't be a parameter
+    symbols = sorted(in_expressions | (in_bounds & signals) | ({"inf"} & in_bounds))
+    if in_bounds - set(symbols):
+        trace.fire("parameter_bounds")
     values = {}
     if symbols:
         trace.fire("random_symbolic_bounds")
         for _ in range(RANDOM_BOUND_TRIES):
             values = {s: rng.randint(*RANDOM_BOUND_RANGE) for s in symbols}
-            # A horizon of 0 would give G[0,0]: drawn again, so a horizon is 1-100 (and other records draw as before)
-            if all(_resolved(i, values)[2] is None for i in intervals) and \
-                    all(v > 0 for s, v in values.items() if s.startswith("horizon#")):
+            if all(_resolved(i, values)[2] is None for i in intervals):
                 break
         else:
             raise Rejected("bounds_unsatisfiable", ", ".join(symbols))
@@ -188,16 +224,18 @@ def resolve_bounds(root, trace: Trace, rng):
             if node.kind == "var" and node.value in values:
                 node.kind, node.value = "num", Fraction(values[node.value])
     for interval in intervals:
-        lo_int, hi_int, broken = _resolved(interval, values)
+        lower, upper, broken = _resolved(interval, values)
         if broken:
-            raise Rejected(broken, f"[{lo_int},{hi_int}]")
+            raise Rejected(broken, f"[{lower},{upper}]")
         if interval.lo_open or interval.hi_open:
             trace.fire("close_open_interval")
-        exact = (_value(interval.lo, values), _value(interval.hi, values))
-        if exact != (lo_int, hi_int):
+        exact = [_bound(interval.lo, values, math.floor)[1], _bound(interval.hi, values, math.ceil)[1]]
+        resolved = [lower, upper]
+        if any(x is not None and x != b for x, b in zip(exact, resolved)):
             trace.fire("round_bounds_outward")
-            trace.rounded.append([[_number_text(x) for x in exact], [str(lo_int), str(hi_int)]])
-        interval.lower, interval.upper = lo_int, hi_int
+            trace.rounded.append([[str(b) if x is None else _number_text(x) for x, b in zip(exact, resolved)],
+                                  [str(b) for b in resolved]])
+        interval.lower, interval.upper = lower, upper
 
 
 # ---------------------------------------------------------------- the symbols and their meanings
@@ -212,11 +250,11 @@ def check_symbols(root, meanings: dict[str, str], trace: Trace):
     signals) and the Boolean atoms it calls a (sub)formula (placeholder_subformula: the subformula can't be rebuilt,
     so the atom stands for it). `meanings` maps the normalized names to the meanings.
     """
-    constants = sorted({n.value for n in _walk(root) if n.kind == "var"
+    constants = sorted({n.value for n in _walk_formula(root) if n.kind == "var"
                         and CONSTANT_PATTERN.search(meanings.get(n.value, ""))})
     if constants:
         trace.fire("symbolic_constant")
-    placeholders = sorted({n.value for n in _walk(root) if n.kind == "atom"
+    placeholders = sorted({n.value for n in _walk_formula(root) if n.kind == "atom"
                            and PLACEHOLDER_PATTERN.search(meanings.get(n.value, ""))})
     if placeholders:
         trace.fire("placeholder_subformula")

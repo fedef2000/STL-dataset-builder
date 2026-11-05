@@ -69,6 +69,15 @@ OK_CASES = [
     (r"\Box_{[0.2,0.4]} p", "G[0,1] p", "round_bounds_outward"),
     (r"\Box_{[1.5,3.7]} p", "G[1,4] p", "round_bounds_outward"),
     (r"\Box_{[0.0,5.0]} p", "G[0,5] p", None),
+    (r"\Box_{[0,T]} p", "G[0,T] p", "parameter_bounds"),
+    (r"\Diamond_{(a,b]} (x > 1)", "F[a,b] (x > 1)", "parameter_bounds"),
+    (r"\mathbf{G}_{\le T} p", "G[0,T] p", "parameter_bounds"),
+    (r"\Box p", "G[0,inf] p", "unbounded_interval"),
+    (r"G (p \rightarrow F q)", "G[0,inf] (p -> (F[0,inf] q))", "unbounded_interval"),
+    (r"p \mathcal{U} q", "p U[0,inf] q", "unbounded_interval"),
+    (r"\mathbf{F}_{[5,\infty)} p", "F[5,inf] p", "unbounded_interval"),
+    (r"F_{\ge 3} p", "F[3,inf] p", "unbounded_interval"),
+    (r"\Diamond_{[a,\infty)} p", "F[a,inf] p", "unbounded_interval"),
     # Stage 2: signals and numbers
     (r"\Box_{[0,5]} \theta > 1", "G[0,5] (theta > 1)", "greek_names"),
     (r"\Box_{[0,5]} (x_{1} > v_{max})", "G[0,5] (x_1 > v_max)", "index_names"),
@@ -80,6 +89,13 @@ OK_CASES = [
     (r"\Box_{[0,5]} x > \frac{1}{3}", "G[0,5] (x > 1/3)", "frac_numbers"),
     (r"\Box_{[0,5]} (x > .5 \wedge y < 1e-3)", "G[0,5] ((x > 0.5) && (y < 0.001))", "number_forms"),
     (r"\Box_{[0,5]} -x > 0", "G[0,5] ((0 - x) > 0)", "negation_minus"),
+    (r"\Box_{[0,5]} a \cdot x > 1", "G[0,5] (a * x > 1)", "products_and_divisions"),
+    (r"\Box_{[0,5]} (2x \leq 1 \wedge 0.75r < y)", "G[0,5] ((2 * x <= 1) && (0.75 * r < y))", "products_and_divisions"),
+    (r"\Box_{[0,5]} x / y > 1", "G[0,5] (x / y > 1)", "products_and_divisions"),
+    (r"\Box_{[0,5]} |\frac{x - y}{y}| < 0.1", "G[0,5] (|(x - y) / y| < 0.1)", "products_and_divisions"),
+    (r"\Box_{[0,5]} a + b \times c - d / 2 > 0", "G[0,5] ((a + (b * c)) - (d / 2) > 0)", "products_and_divisions"),
+    (r"\Box_{[0,5]} x / 2 / 3 > 0", "G[0,5] ((x / 2) / 3 > 0)", "products_and_divisions"),
+    (r"\Box_{[0,5]} x / \frac{1}{3} > 0", "G[0,5] (x / (1/3) > 0)", "products_and_divisions"),
     (r"\Box_{[0,5]} x > -3", "G[0,5] (x > -3)", None),
     # Stage 2: comparisons
     (r"\Box_{[0,30]} (gear = 4)", "G[0,30] (gear == 4)", "relational_eq"),
@@ -119,16 +135,22 @@ def test_label_with_equals_only_for_formula_names():
 
 
 def test_random_symbolic_bounds():
+    # A symbol also used as a signal can't be a parameter of stl-nl: it gets a random value, everywhere
     result = run(r"\Box_{[0,T]} (x < T)")
     value = result.substitutions["T"]
     assert result.normalized == f"G[0,{value}] (x < {value})"
-    assert "random_symbolic_bounds" in result.rules
-    # The same record and seed give the same values; the values respect lower <= upper
+    assert "random_symbolic_bounds" in result.rules and "parameter_bounds" not in result.rules
+    # The same record and seed give the same values
     assert run(r"\Box_{[0,T]} (x < T)").substitutions == result.substitutions
+    # A symbol in a bound expression gets a random value; a symbol alone stays a parameter
     for record_id in map(str, range(50)):
         r = run(r"(\Diamond_{[a,b]} p) \wedge (\Box_{[t, t+5]} q)", record_id=record_id)
-        assert r.status == "ok" and r.substitutions["a"] <= r.substitutions["b"]
-        assert r.normalized.endswith(f"(G[{r.substitutions['t']},{r.substitutions['t'] + 5}] q)")
+        assert r.status == "ok" and set(r.substitutions) == {"t"}
+        assert r.normalized == f"(F[a,b] p) && (G[{r.substitutions['t']},{r.substitutions['t'] + 5}] q)"
+    # The same symbol alone in another bound gets the same value
+    r = run(r"(\Diamond_{[0,t]} p) \wedge (\Box_{[t, t+5]} q)")
+    t = r.substitutions["t"]
+    assert r.normalized == f"(F[0,{t}] p) && (G[{t},{t + 5}] q)"
 
 
 # Rules that only record what they find (they were needs_review until 2026-10-19)
@@ -162,35 +184,12 @@ def test_recorded(formula, expected, rule):
 
 def test_bounds_under_and_over_a_line_are_two_symbols():
     r = run(r"F_{[\underline{t}, \overline{t}]} p")
-    assert r.status == "ok" and set(r.substitutions) == {"t_under", "t_bar"}
+    assert r.status == "ok" and r.normalized == "F[t_under,t_bar] p"
 
 
-@pytest.mark.parametrize("formula,pattern", [
-    (r"G (p \rightarrow F q)", r"G\[0,(\d+)\] \(p -> \(F\[0,(\d+)\] q\)\)"),
-    (r"\Box p", r"G\[0,(\d+)\] p"),
-    (r"p \mathcal{U} q", r"p U\[0,(\d+)\] q"),
-    (r"\mathbf{F}_{[5,\infty)} p", r"F\[5,(\d+)\] p"),
-    (r"F_{\ge 3} p", r"F\[3,(\d+)\] p"),
-    (r"\bigcirc p", r"X p"),
-])
-def test_random_horizon(formula, pattern):
-    r = run(formula)
-    assert r.status == "ok" and re.fullmatch(pattern, r.normalized), (r.normalized, r.reasons)
-    assert ("random_horizon" in r.rules) == ("X" not in r.normalized)
-    if "\\infty" in formula or "ge" in formula:
-        lower = int(re.search(r"\[(\d+),", r.normalized).group(1))
-        assert int(re.fullmatch(pattern, r.normalized).group(1)) >= lower
-
-
-def test_each_operator_has_its_own_horizon():
-    r = run(r"G (p \rightarrow F q)")
-    assert set(r.substitutions) == {"horizon#1", "horizon#2"}
-
-
-def test_a_horizon_is_never_zero():
-    # With 0-100 about 1 draw in 101 would be 0 (G[0,0]): such a draw is made again
-    horizons = [run(r"\Box p", record_id=f"W{n}:P1").substitutions["horizon#1"] for n in range(1000)]
-    assert min(horizons) == 1 and max(horizons) == 100
+def test_x_keeps_no_interval():
+    r = run(r"\bigcirc p")
+    assert r.normalized == "X p" and "unbounded_interval" not in r.rules
 
 
 def test_a_working_definition_wins_over_the_table():
@@ -237,10 +236,11 @@ REJECTED_CASES = [
     (r"\Box_{[3,1]} p", "empty_interval"),
     (r"\Box_{[-1,0]} p", "negative_bound"),
     (r"\Box_{[0,3000000000]} p", "bound_too_large"),
-    (r"\Box_{[0,5]} 2x > 1", "multiplication"),
-    (r"\Box_{[0,5]} a \cdot x > 1", "multiplication"),
     (r"\Box_{[0,5]} k x > 1", "multiplication"),
-    (r"\Box_{[0,5]} x / y > 1", "division"),
+    (r"\Box_{[0,5]} s < 200\ \mathrm{N}", "multiplication"),
+    (r"\Box_{[0,5]} x / 0 > 1", "division"),
+    (r"\Diamond_{[0.1s,0.6s]} p", "multiplication"),
+    (r"\Diamond_{[0,24h]} p", "multiplication"),
     (r"\Box_{[0,5]} (x-1)^2 < 1", "power"),
     (r"\Box_{[0,5]} \sin x < 1", "function"),
     (r"\Box_{[0,5]} \|x\|^3 < 1", "power"),
@@ -272,7 +272,7 @@ def test_record_filters():
 def test_every_rule_is_tested():
     tested = ({c[2] for c in OK_CASES} | {c[2] for c in RECORDED_CASES} | {c[1] for c in REJECTED_CASES}
               | {"random_symbolic_bounds", "other_logic", "connective_at_edge", "bounds_unsatisfiable",
-                 "placeholder_subformula", "ambiguous_scope", "random_horizon"})
+                 "placeholder_subformula", "ambiguous_scope"})
     # stlgen_error is the check of step 7, after the normalization (test_stlgen_accepts_every_ok_case)
     assert set(RULES) - tested == {"stlgen_error"}
 
@@ -292,6 +292,10 @@ def test_pattern():
     assert run(r"\Box_{[0,5]} |x - y| > -x").pattern == "G[#,#] (|a - b| > (# - a))"
     # Formulas that differ only in numbers and names share their pattern
     assert run(r"\Diamond_{[1,2]} p").pattern == run(r"\Diamond_{[0,T]} \varphi").pattern == "F[#,#] a"
+    # A parameter is written # as a number (G[0,T] and G[0,5] share a pattern); inf is kept
+    assert run(r"\Box_{[a,b]} x > c").pattern == "G[#,#] (a > b)"
+    assert run(r"\Box p").pattern == "G[#,inf] a"
+    assert run(r"\Box_{[0,5]} 2x + y > 1").pattern == "G[#,#] ((# * a) + b > #)"
     assert run(r"\Box p \wedge \forall i").pattern is None
 
 

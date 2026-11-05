@@ -1,9 +1,10 @@
 """
 The tree of a normalized formula written in the grammar of stl-nl, with explicit parentheses around every temporal
 operand and every binary subformula, so that stl-nl's precedence can't change its reading. The same writer gives the
-pattern of the formula: the same text with every number written # and the names renamed a, b, ... in the order they
-appear, so that formulas that differ only in their numbers and names have the same pattern.
+pattern of the formula: the same text with every number and parameter written # and the names renamed a, b, ... in the
+order they appear, so that formulas that differ only in their numbers and names have the same pattern.
 """
+import math
 import re
 from fractions import Fraction
 
@@ -12,7 +13,7 @@ from src.normalization.rules import Rejected
 
 IDENTIFIER_PATTERN = re.compile(r"[A-Za-z][A-Za-z0-9_]{0,255}")
 CONNECTIVES = {"and": " && ", "or": " || "}
-ARITHMETIC = {"add": " + ", "sub": " - "}
+ARITHMETIC = {"add": " + ", "sub": " - ", "mul": " * ", "div": " / "}
 
 
 def number(x: Fraction) -> str:
@@ -55,6 +56,14 @@ class Names:
     def number(self, x) -> str:
         return "#" if self.hidden else (number(x) if isinstance(x, Fraction) else str(x))
 
+    def bound(self, x) -> str:
+        """A time bound: an integer or a parameter (both # in the pattern), or inf (kept in the pattern)."""
+        if x == math.inf:
+            return "inf"
+        if isinstance(x, str):
+            return "#" if self.hidden else identifier(x)
+        return self.number(x)
+
 
 def expression(node: Node, names: Names) -> str:
     if node.kind == "num":
@@ -66,7 +75,11 @@ def expression(node: Node, names: Names) -> str:
     if node.kind == "neg":
         return f"({names.number(0)} - {_wrapped_expression(node.args[0], names)})"
     left, right = node.args
-    return f"{_wrapped_expression(left, names)}{ARITHMETIC[node.kind]}{_wrapped_expression(right, names)}"
+    left_text, right_text = _wrapped_expression(left, names), _wrapped_expression(right, names)
+    # stl-nl reads x / 1/3 as (x / 1) / 3: a fraction after / is grouped
+    if node.kind == "div" and right.kind == "num" and "/" in right_text:
+        right_text = f"({right_text})"
+    return f"{left_text}{ARITHMETIC[node.kind]}{right_text}"
 
 
 def _wrapped_expression(node: Node, names: Names) -> str:
@@ -75,7 +88,7 @@ def _wrapped_expression(node: Node, names: Names) -> str:
 
 
 def interval(node: Node, names: Names) -> str:
-    return f"[{names.number(node.interval.lower)},{names.number(node.interval.upper)}]"
+    return f"[{names.bound(node.interval.lower)},{names.bound(node.interval.upper)}]"
 
 
 def _formula(node: Node, names: Names) -> str:
@@ -113,8 +126,8 @@ def formula(node: Node) -> str:
 
 def pattern(node: Node) -> str:
     """
-    The pattern of the formula: its text with every number (bound or constant) written # and the names renamed a,
-    b, ... in the order they appear. A name used twice keeps one letter, so (G (x < 3)) -> (G (x < 4)) and
-    (G (x < 3)) -> (G (y < 4)) have different patterns; the comparison operators are kept.
+    The pattern of the formula: its text with every number (bound or constant) and parameter written # (inf is kept)
+    and the names renamed a, b, ... in the order they appear. A name used twice keeps one letter, so
+    (G (x < 3)) -> (G (x < 4)) and (G (x < 3)) -> (G (y < 4)) have different patterns; the comparison operators are kept.
     """
     return _formula(node, Names(hidden=True))

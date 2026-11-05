@@ -72,7 +72,7 @@ STL_dataset_builder/
 │       ├── latex.py                   # TeX tokens; the paper's macros, read from its sources and expanded
 │       ├── lexer.py                   # TeX tokens -> STL tokens: operators and intervals, names, numbers
 │       ├── parser.py                  # STL tokens -> tree (stl-nl's precedence); labels, definitions, ambiguous scope
-│       ├── rules.py                   # The named rules; time bounds (random values, closing, rounding); symbol checks
+│       ├── rules.py                   # The named rules; time bounds (parameters, random values, closing, rounding); symbol checks
 │       ├── emit.py                    # Tree -> text in the grammar of stl-nl, fully parenthesized; its pattern
 │       ├── validate.py                # The check with stlgen, the parser of stl-nl
 │       ├── normalize.py               # One formula through all the stages
@@ -595,15 +595,15 @@ Turns the formulas of `data/dataset/stl_formulas_unpaired.jsonl` into the input 
 
 * the paper's own macros are expanded from its LaTeX sources (PDF formulas are already in standard notation);
 * the formula is cut into tokens (LaTeX operators to STL tokens, Greek letters and subscripts to names, intervals attached to their operators) and parsed with the precedence of `stl-nl`;
-* the time bounds are made closed integer intervals: open intervals are closed, real bounds rounded outward (the lower one down, the upper one up), symbolic bounds (`[0,T]`) get random integers from 0 to 100, the same symbol the same value everywhere in the formula, and an operator without an interval or with an infinite upper bound gets a random horizon (`G p` → `G[0,h] p`, `F_{[a,\infty)} p` → `F[a,a+h] p`, `h` from 1 to 100);
+* the time bounds are made closed intervals of `stl-nl`: open intervals are closed, real bounds rounded outward (the lower one down, the upper one up), a symbol alone in a bound stays a parameter (`G[0,T]`), and an operator without an interval or with an infinite upper bound gets `inf` (`G p` → `G[0,inf] p`, `F_{[a,\infty)} p` → `F[a,inf] p`); the symbols the grammar can't keep (in a bound expression such as `[t, t+5]`, or also used as a signal) get random integers from 0 to 100, the same symbol the same value everywhere in the formula;
 * the result is written fully parenthesized and checked with `stlgen`, the parser of `stl-nl`.
 
-A formula is `ok` or `rejected` (definitions of the semantics, of a grammar or of an operator, products, powers, functions, quantifiers, unknown commands, ...): a construct no rule covers is rejected with its reason. Some rules change the paper's meaning to keep a valid formula (random bounds and horizons, a norm read as an absolute value, a call such as `Reg(4,4)` read as the name `Reg_4_4`, ...): the description `stl-nl` writes is of our formula, not the paper's. `docs/normalization_rules.md` says which, and when each was decided. Of the formulas `ok`, those with the same normalized text as an earlier one are left out, and at most 10 of each pattern go to `stl-nl`, taken from the papers in turn.
+A formula is `ok` or `rejected` (definitions of the semantics, of a grammar or of an operator, powers, functions, quantifiers, unknown commands, ...): a construct no rule covers is rejected with its reason. Some rules change the paper's meaning to keep a valid formula (random values for some bounds, a norm read as an absolute value, a call such as `Reg(4,4)` read as the name `Reg_4_4`, ...): the description `stl-nl` writes is of our formula, not the paper's. `docs/normalization_rules.md` says which, and when each was decided. Of the formulas `ok`, those with the same normalized text as an earlier one are left out, and at most 10 of each pattern go to `stl-nl`, taken from the papers in turn.
 
 ```bash
 python scripts/07_normalize_formulas.py
 
-# Other random values for the symbolic bounds
+# Other random values for the bounds that can't stay symbolic
 python scripts/07_normalize_formulas.py --seed 1
 
 # Every formula ok to stl-nl (no cap per pattern; duplicates are still left out)
@@ -618,12 +618,12 @@ python scripts/07_normalize_formulas.py --show-rejected "unknown_command: \overl
 python scripts/inspect_normalization.py
 ```
 
-It needs the `stlgen` binary of `stl-nl`, built with `cargo build --release --locked --manifest-path rust/stlgen/Cargo.toml` in the `stl-nl` repository. By default it is looked for in a checkout of `stl-nl` next to this one (`../stl-nl/rust/stlgen/target/release/stlgen`); set `STLGEN_BIN` in `.env` or pass `--stlgen` for another place. It writes, in `data/normalized/`: `stl/` (the formulas kept for `stl-nl`; the `.stl` files of an earlier run are replaced; they are numbered in input order, so a file's number can change from one run to another, and `manifest.jsonl` says which record each file is), `manifest.jsonl` (one line per input formula: `id`, `status`, `file`, `reasons`, `rules` that fired, `original`, `normalized`, `pattern` (the normalized text with the numbers written `#` and the names renamed `a`, `b`, ... in order, so that formulas differing only in numbers and names share it), `stl` as `stlgen` prints it back, `substitutions` of the symbolic bounds and horizons, `rounded` bounds, `over_limits` of `stl-nl`'s selection, `selection`: `kept`, `duplicate` (with the first one's id in `duplicate_of`) or `pattern_cap` for the formulas ok) and `report.md`. The same input and seed give the same files.
+It needs the `stlgen` binary of `stl-nl`, built with `cargo build --release --locked --manifest-path rust/stlgen/Cargo.toml` in the `stl-nl` repository. By default it is looked for in a checkout of `stl-nl` next to this one (`../stl-nl/rust/stlgen/target/release/stlgen`); set `STLGEN_BIN` in `.env` or pass `--stlgen` for another place. It writes, in `data/normalized/`: `stl/` (the formulas kept for `stl-nl`; the `.stl` files of an earlier run are replaced; they are numbered in input order, so a file's number can change from one run to another, and `manifest.jsonl` says which record each file is), `manifest.jsonl` (one line per input formula: `id`, `status`, `file`, `reasons`, `rules` that fired, `original`, `normalized`, `pattern` (the normalized text with the numbers written `#` and the names renamed `a`, `b`, ... in order, so that formulas differing only in numbers and names share it), `stl` as `stlgen` prints it back, `substitutions` of the symbolic bounds given random values, `rounded` bounds, `over_limits` of `stl-nl`'s selection, `selection`: `kept`, `duplicate` (with the first one's id in `duplicate_of`) or `pattern_cap` for the formulas ok) and `report.md`. The same input and seed give the same files.
 
 | Flag | What it does |
 |---|---|
 | `--input FILE` | Another file of dataset records (default `data/dataset/stl_formulas_unpaired.jsonl`). |
-| `--seed S` | The seed of the random values of the symbolic bounds and horizons, and of the choice per pattern (default `0`); each record's values depend only on the seed and its id. |
+| `--seed S` | The seed of the random values of the bounds that can't stay symbolic, and of the choice per pattern (default `0`); each record's values depend only on the seed and its id. |
 | `--stlgen PATH` | The `stlgen` binary (default `STLGEN_BIN`). |
 | `--max-per-pattern K` | At most `K` formulas of each pattern go to `stl-nl` (default `10`, `0` for no cap), taken from the papers in turn, at random with `--seed`. |
 | `--show-rejected [REASON]` | Doesn't normalize: reads `manifest.jsonl` of the last run and prints the rejected formulas whose reason starts with `REASON` (a rule, as `function`, or a rule and what it found, as `"unknown_command: \overline"`), each with its id, original, the part the rule found and the rules applied before. A random sample drawn with `--seed`, since the manifest is ordered by paper. Without `REASON`, the reasons with their counts. |
