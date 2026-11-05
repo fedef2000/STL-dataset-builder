@@ -1,6 +1,6 @@
 """
-Writes the formulas of step 7 as CSV files, to check by eye that each was translated correctly. Reads the manifests of
-the last run of step 7: nothing is normalized again.
+Writes the formulas of step 6 as CSV files, to check by eye that each was translated correctly. Reads the manifests of
+the last run of step 6: nothing is normalized again.
 
     data/normalized/unpaired/translations.csv   the formulas kept for stl-nl: original LaTeX, normalized text, pattern
     data/normalized/paired/translations.csv     the paired formulas ok, one row per requirement passage: original
@@ -46,7 +46,7 @@ def write(name: str):
     header, rows_of = FILES[name]
     manifest = NORMALIZED_DIR / name / "manifest.jsonl"
     if not manifest.is_file():
-        sys.exit(f"{manifest.relative_to(BASE_DIR)} not found: run scripts/07_normalize_formulas.py first")
+        sys.exit(f"{manifest.relative_to(BASE_DIR)} not found: run scripts/06_normalize_formulas.py first")
     rows = rows_of([json.loads(line) for line in open(manifest, encoding="utf-8")])
     output = NORMALIZED_DIR / name / "translations.csv"
     with open(output, "w", encoding="utf-8", newline="") as f:

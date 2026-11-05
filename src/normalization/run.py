@@ -1,5 +1,5 @@
 """
-The normalization of a file of records (step 7): one manifest line per record. The formulas without a requirement are
+The normalization of a file of records (step 6): one manifest line per record. The formulas without a requirement are
 normalized in the stl-nl mode and checked with stlgen, the parser of stl-nl, which also gives their skeleton. The
 paired formulas are normalized in the faithful mode (rules.py), which stlgen can't parse, as it keeps the paper's bounds
 and powers: their skeleton comes from their own tree (stlgen_ast.py), and their requirement passages are written to
@@ -44,7 +44,7 @@ def normalize_records(records: list[dict], seed: str, stlgen: Path | None, mode:
             macros_of[paper] = paper_macros(RAW_LATEX_DIR / paper)
         macros = macros_of.get(paper, {}) if record["source_type"] == "latex" else {}
         result = normalize(record["formula"], record_id=record["id"], seed=seed, macros=macros,
-                           variables=record.get("variables") or {}, other_logic=record.get("other_logic"),
+                           variables=record.get("variables") or {},
                            flags=record["provenance"].get("flags", []), mode=mode)
         line = {"id": record["id"], "status": result.status, "file": None, "reasons": result.reasons,
                 "rules": result.rules, "original": record["formula"], "normalized": result.normalized,

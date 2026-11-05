@@ -268,7 +268,6 @@ def test_rejected(formula, rule):
 
 
 def test_record_filters():
-    assert run(r"\Box_{[0,5]} p", other_logic="past-time").reasons == ["other_logic: past-time"]
     flag = "the formula ends or starts with a connective: part of it may be on another row"
     assert run(r"\Box_{[0,5]} p \wedge", flags=[flag]).reasons == ["connective_at_edge"]
 
@@ -276,9 +275,9 @@ def test_record_filters():
 def test_every_rule_is_tested():
     tested = ({c[2] for c in OK_CASES} | {c[2] for c in RECORDED_CASES} | {c[1] for c in REJECTED_CASES}
               | {c[2] for c in FAITHFUL_CASES} | {c[1] for c in FAITHFUL_REJECTED_CASES}
-              | {"random_symbolic_bounds", "other_logic", "connective_at_edge", "bounds_unsatisfiable",
+              | {"random_symbolic_bounds", "connective_at_edge", "bounds_unsatisfiable",
                  "placeholder_subformula", "ambiguous_scope"})
-    # stlgen_error is the check of step 7, after the normalization (test_stlgen_accepts_every_ok_case)
+    # stlgen_error is the check of step 6, after the normalization (test_stlgen_accepts_every_ok_case)
     assert set(RULES) - tested == {"stlgen_error"}
 
 
@@ -436,7 +435,7 @@ def test_faithful_names():
 
 @pytest.mark.skipif(not STLGEN_BIN.is_file(), reason="stlgen of stl-nl not built")
 def test_converter_gives_stlgen_skeletons():
-    # Our tree as stlgen's AST gives the skeleton stlgen's own AST gives (step 7 checked it on every unpaired formula ok)
+    # Our tree as stlgen's AST gives the skeleton stlgen's own AST gives (step 6 checked it on every unpaired formula ok)
     for formula, expected, _ in OK_CASES + [(r"\bigcirc a \leftrightarrow b", None, None),
                                             (r"\Box_{[0,5]} -x > 0 \wedge |y| < 1", None, None)]:
         result = run(formula)

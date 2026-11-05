@@ -7,7 +7,7 @@ Inputs (since 2026-11-05 both, so that the final dataset has every formula in on
 
 Everything below applies to both modes unless *The faithful mode* says otherwise.
 Spec: `NORMALIZER_BRIEF.md`. Target grammar: `stl-nl`, `rust/stlgen/src/parser.rs`.
-Code: `src/normalization/`, run by `scripts/07_normalize_formulas.py`. Tests: `tests/test_normalization.py`, with at least one case per rule.
+Code: `src/normalization/`, run by `scripts/06_normalize_formulas.py`. Tests: `tests/test_normalization.py`, with at least one case per rule.
 
 Every record ends with one status:
 
@@ -21,7 +21,6 @@ Each rule has a name (the list is `RULES` in `src/normalization/rules.py`). The 
 
 | Rule | Status | Example |
 |---|---|---|
-| `other_logic` | rejected | `other_logic` is not null (past-time, spatial, ...): 275 records |
 | `semantics_definition` | rejected | `(x,t) \models \varphi \mathcal{U}_{[a,b]} \psi \Leftrightarrow \exists t' ...` (contains `\models`, `\vDash`, `\vdash`, `\Vdash`) |
 | `grammar_definition` | rejected | `\varphi ::= \top \mid \mu \mid \neg\varphi ...` (contains `::=` or `\mid`); also `\phi := \mu \| \neg\phi \| ...`, a `\|` the parser can't read as an absolute value (found by the parser, since 2026-10-20) |
 | `operator_definition` | rejected | `F_{[a,b]} \varphi := \top \mathcal{U}_{[a,b]} \varphi`: a `:=`/`\equiv`/`\triangleq` at the top level whose left side is not a single name, or a `=` with an operator on its left and a formula on its right (compare `strip_label`) |
@@ -149,7 +148,7 @@ data/normalized/
 │   ├── report.md                     # counts by status, the rejection reasons, the most frequent unknown commands and patterns, each with an example, the skeletons, and the selection
 │   └── translations.csv              # written by scripts/inspect_normalization.py, to check the formulas kept by eye
 └── paired/
-    ├── stl_dataset.jsonl             # the records of step 6 whose formula is ok, with the normalized formula and descriptions
+    ├── stl_dataset.jsonl             # the records of step 5 whose formula is ok, with the normalized formula and descriptions
     ├── manifest.jsonl                # one line per input record, as for unpaired, with the passages of the formulas ok
     ├── translations.csv              # written by scripts/inspect_normalization.py: one row per passage, formula and text, original and normalized
     └── report.md                     # as for unpaired, without the selection, with what goes beyond stl-nl's grammar and how the descriptions were written

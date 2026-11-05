@@ -1,12 +1,20 @@
 """
-Turns the records of step 5 (one per formula, with every model's answer and the outcome of the vote) into the records
-of the dataset: one per formula with a requirement, with the formula as the paper writes it, the requirement passages,
-the domain, the meaning of the variables, the paper and its licence. Used by step 6.
+The dataset, built at the end of step 5 from its records (one per formula, with every model's answer and the outcome
+of the vote): one record per formula with a requirement, with the formula as the paper writes it, the requirement
+passages, the domain, the meaning of the variables, the paper and its licence; one per formula the models agree has
+no requirement; the formulas left out of both, with the reason; and stats.md, what the dataset holds.
 """
+import collections
+import json
 import re
+from pathlib import Path
 
+from config import DATA_DIR
 from src.extraction.extractor import FORMULA_LAYOUT_PATTERN, formula_key
 from src.storage import classify_tier
+
+DATASET_DIR = DATA_DIR / "dataset"
+LICENSE_TIERS = ("permissive_cc", "restricted_cc", "custom_or_arxiv", "unspecified")
 
 # ---------------------------------------------------------------- the formula of a LaTeX paper
 
@@ -87,33 +95,6 @@ def license_of(license_info: dict) -> str | None:
     return next((n for n in names if classify_tier([n]) == tier), license_name(license_info.get("effective_license")))
 
 
-# ---------------------------------------------------------------- constructs of other logics
-
-# The constructs of logics other than STL, found by keyword searches such as "Metric Temporal Logic" and by step 4,
-# which takes any time-bounded operator: the logic each one marks, the first found deciding
-LOGIC_PATTERNS = {
-    "strategic": re.compile(r"\\langle\s*\\langle|⟨⟨|\\llangle"),    # a strategy quantifier, as in timed ATL
-    # A path quantifier, as in TCTL. Not AF in letters: in the powertrain benchmarks it is the air-fuel ratio
-    "branching-time": re.compile(
-        r"(?<![A-Za-z\\])(?:[AE]\s*(?:\\Box|\\Diamond|\\square|\\lozenge|\\diamondsuit)|A[GXU]|E[GFXU])(?![A-Za-z])"
-        r"|\\(?:forall|exists)\s*\\(?:Box|Diamond|square|lozenge|diamondsuit)(?![A-Za-z])"),
-    "probabilistic": re.compile(                                          # a probability operator, as in PCTL or PrSTL
-        r"(?<![A-Za-z\\])P\s*_\s*\{?\s*(?:\\[gl]eq?|[<>]|\\sim)|\\mathbb\{E?P\}|\\Pr(?![a-z])"),
-    # Spatial operators (SSTL) and the concept inclusion and intersection of description logics
-    "spatial-or-description": re.compile(r"\\(?:sqsubseteq|sqcap|somewhere|everywhere)(?![A-Za-z])"),
-    "past-time": re.compile(r"\\(?:boxminus|diamondminus|since|Since|once|historically)(?![A-Za-z])|\\mathcal\{S\}"),
-}
-
-
-def other_logic_of(formula: str) -> str | None:
-    """
-    The logic other than STL whose construct the formula holds: one of LOGIC_PATTERNS ("strategic", "branching-time",
-    "probabilistic", "spatial-or-description", "past-time"), or None when none is found. None does not make a formula
-    STL: no parser has checked it.
-    """
-    return next((logic for logic, pattern in LOGIC_PATTERNS.items() if pattern.search(formula)), None)
-
-
 # ---------------------------------------------------------------- the language of a passage
 
 # Common words of other languages, that English text hardly ever uses
@@ -188,7 +169,6 @@ def dataset_record(record: dict, bounds: str, paper: dict) -> tuple[dict | None,
     return {
         "id": f"{record['paper_id']}:{record['formula_id']}",
         "formula": formula,
-        "other_logic": other_logic_of(formula),
         "requirements": [{"text": " ".join(p["text"].split()), "kind": p["kind"]} for p in passages],
         "domain": final["domain"],
         "variables": final["variables"],
@@ -227,3 +207,161 @@ def duplicate_key(item: dict) -> tuple:
 
 def formula_of_paper(item: dict) -> tuple:
     return item["paper_id"], formula_key(item["formula"])
+
+
+# ---------------------------------------------------------------- the whole dataset
+
+FORMULA_ID_PATTERN = re.compile(r"(?:[\w.]+:)?\b[FP]\d+\b")
+
+
+def formula_number(record_id: str) -> int:
+    return int(record_id.rsplit(":", 1)[1][1:])
+
+
+def left_out(item_id: str, reason: str, outcome: str, source_type: str, bounds: str, source: str, requirements: list) -> dict:
+    """An entry of excluded.jsonl. `outcome` is the vote of step 5: "requirement", "none" or "open" (undecided)."""
+    return {"id": item_id, "reason": reason, "outcome": outcome, "source_type": source_type, "bounds": bounds,
+            "source": source, "requirements": requirements}
+
+
+def build(groups: list[tuple[str, list[dict]]], papers: dict) -> tuple[list[dict], list[dict], list[dict]]:
+    """
+    The records of the dataset, the formulas without a requirement (records with no passages), and the formulas left
+    out of either (with the reason). `groups` holds the records of step 5 of every source and kind of formula, each
+    with its bounds ("numeric" for the concrete formulas, "symbolic" for the parametric ones), the LaTeX ones first:
+    a formula repeated in a paper is kept where it is first met. `papers` is the corpus.
+    """
+    kept, unpaired, excluded, seen = [], [], [], {}
+    for bounds, records in groups:
+        for record in records:
+            item, reason = dataset_record(record, bounds, papers.get(record["paper_id"], {}))
+            if item is None:
+                excluded.append(left_out(f"{record['paper_id']}:{record['formula_id']}", reason,
+                                         record["final"]["outcome"], record.get("source_type", "latex"), bounds,
+                                         record["source"], record["final"]["requirements"]))
+                continue
+            outcome = "requirement" if item["requirements"] else "none"
+            key = duplicate_key(item)
+            if key in seen:
+                # The same formula (with the same passages), elsewhere in the paper: kept once
+                seen[key].setdefault("also_at", []).append(item["location"])
+                what = "formula and requirement" if item["requirements"] else "formula, without a requirement,"
+                excluded.append(left_out(item["id"], f"the same {what} as {seen[key]['id']}", outcome,
+                                         item["source_type"], bounds, item["formula"], item["requirements"]))
+                continue
+            seen[key] = item
+            (kept if item["requirements"] else unpaired).append(item)
+    # A formula the paper also has with a requirement is in the dataset already
+    paired = {formula_of_paper(r): r["id"] for r in kept}
+    for item in [r for r in unpaired if formula_of_paper(r) in paired]:
+        excluded.append(left_out(item["id"], f"the same formula as {paired[formula_of_paper(item)]}, which has a requirement",
+                                 "none", item["source_type"], item["bounds"], item["formula"], []))
+    unpaired = [r for r in unpaired if formula_of_paper(r) not in paired]
+    for records in (kept, unpaired):
+        records.sort(key=lambda r: (r["paper_id"], r["bounds"], formula_number(r["id"])))
+    return kept, unpaired, excluded
+
+
+def write_jsonl(path: Path, rows: list[dict]) -> None:
+    with open(path, "w", encoding="utf-8", newline="\n") as out:
+        for row in rows:
+            out.write(json.dumps(row, ensure_ascii=False) + "\n")
+
+
+def write_dataset(groups: list[tuple[str, list[dict]]], papers: dict, licenses: list[str] | None = None) -> None:
+    """
+    Builds the dataset and writes it to data/dataset/ (stl_dataset.jsonl, stl_formulas_unpaired.jsonl, excluded.jsonl,
+    stats.md), with copies of the first two holding only the licence tiers in `licenses`, if given.
+    """
+    records, unpaired, excluded = build(groups, papers)
+    DATASET_DIR.mkdir(parents=True, exist_ok=True)
+    write_jsonl(DATASET_DIR / "stl_dataset.jsonl", records)
+    write_jsonl(DATASET_DIR / "stl_formulas_unpaired.jsonl", unpaired)
+    write_jsonl(DATASET_DIR / "excluded.jsonl", excluded)
+    (DATASET_DIR / "stats.md").write_text(stats(records, unpaired, excluded), encoding="utf-8", newline="\n")
+    print(f"\nDATASET")
+    print(f"{len(records):,} records from {len({r['paper_id'] for r in records}):,} papers -> {DATASET_DIR / 'stl_dataset.jsonl'}")
+    for tier, n in collections.Counter(r["license_tier"] for r in records).most_common():
+        print(f"   {n:>6,}  {tier}")
+    print(f"{len(unpaired):,} formulas without a requirement -> {DATASET_DIR / 'stl_formulas_unpaired.jsonl'}")
+    print(f"{len(excluded):,} formulas left out -> {DATASET_DIR / 'excluded.jsonl'} (reasons in stats.md)")
+    if licenses:
+        tiers = "_".join(sorted(licenses))
+        for name, rows in (("stl_dataset", records), ("stl_formulas_unpaired", unpaired)):
+            subset = [r for r in rows if r["license_tier"] in licenses]
+            path = DATASET_DIR / f"{name}_{tiers}.jsonl"
+            write_jsonl(path, subset)
+            print(f"{len(subset):,} records with licence tier {', '.join(licenses)} -> {path}")
+
+
+# ---------------------------------------------------------------- stats.md
+
+def table(title: str, counts: collections.Counter, total: int, unit: str = "Records") -> list[str]:
+    lines = [f"| {title} | {unit} | Share |", "|---|---|---|"]
+    lines += [f"| {name} | {n:,} | {100 * n / total:.1f}% |" for name, n in counts.most_common()]
+    return lines + [""]
+
+
+def reason_table(excluded: list[dict]) -> list[str]:
+    reasons = collections.Counter(FORMULA_ID_PATTERN.sub("another formula", e["reason"]) for e in excluded)
+    return [f"| Reason | Formulas |", "|---|---|"] + [f"| {reason} | {n:,} |" for reason, n in reasons.most_common()] + [""]
+
+
+def subsets(records: list[dict]) -> list[str]:
+    """How many records are left with a specific passage, and the licence tiers of those."""
+    def row(name, rows):
+        return f"| {name} | {len(rows):,} | {len({r['paper_id'] for r in rows}):,} |"
+
+    with_specific = [r for r in records if any(p["kind"] == "specific" for p in r["requirements"])]
+    lines = ["## Best quality subset", "", "",
+             "| Filter | Records | Papers |", "|---|---|---|",
+             row("all records", records),
+             row("... with a specific passage", with_specific), ""]
+    return lines + table("Licence tier of the cleanest set",
+                         collections.Counter(r["license_tier"] or "none" for r in with_specific), len(with_specific))
+
+
+# What each kind of requirement passage means, and a record of the dataset that shows it
+PASSAGE_KINDS = {
+    "specific": ("it states what the formula says: its condition, with the thresholds and time bounds (or, for a "
+                 "formula with symbolic bounds, the names of its parameters)", "W3008764564:F22"),
+    "generic": ("it only says what the formula is for, without what is needed to write it", "W4311414009:P9"),
+}
+
+
+def passage_kinds(records: list[dict]) -> list[str]:
+    """What specific and generic mean, each with a real example."""
+    by_id = {r["id"]: r for r in records}
+    lines = ["| Kind | Meaning | Example |", "|---|---|---|"]
+    for kind, (meaning, example_id) in PASSAGE_KINDS.items():
+        example = by_id.get(example_id)
+        passage = next((p["text"] for p in example["requirements"] if p["kind"] == kind), None) if example else None
+        shown = (f"\"{passage}\" for `{example['formula']}` ({example_id})" if passage else "").replace("|", "\\|")
+        lines.append(f"| **{kind}** | {meaning} | {shown} |")
+    return lines + ["", ""]
+
+
+def stats(records: list[dict], unpaired: list[dict], excluded: list[dict]) -> str:
+    """stats.md: what the dataset holds. No date in it, so that a rebuild with the same data changes nothing."""
+    total = len(records)
+    lines = ["# STL dataset: statistics", "",
+             f"{total:,} records (one per formula with a requirement), "
+             f"with {sum(len(r['requirements']) for r in records):,} requirement passages.", "", "", ""]
+    kinds = collections.Counter(p["kind"] for r in records for p in r["requirements"])
+    lines += table("Kind of requirement passage", kinds, sum(kinds.values()), unit="Passages")
+    lines += passage_kinds(records)
+    lines += table("Licence tier", collections.Counter(r["license_tier"] or "none" for r in records), total)
+    lines += table("Licence", collections.Counter(r["license"] or "none" for r in records), total)
+    lines += table("Domain", collections.Counter(r["domain"] for r in records), total)
+    lines += [""] + subsets(records)
+    n = len(unpaired)
+    lines += ["## Formulas without a requirement", "",
+              f"{n:,} formulas that the models agree have no requirement (`stl_formulas_unpaired.jsonl`): records with "
+              "no passages.", ""]
+    lines += table("Licence tier", collections.Counter(r["license_tier"] or "none" for r in unpaired), n)
+    lines += table("Domain", collections.Counter(r["domain"] for r in unpaired), n)
+    lines += ["## Left out", "", "Formulas with a requirement (or undecided) that are not in the dataset (`excluded.jsonl`):", ""]
+    lines += reason_table([e for e in excluded if e["outcome"] != "none"])
+    lines += ["Formulas without a requirement that are not in `stl_formulas_unpaired.jsonl` (`excluded.jsonl`):", ""]
+    lines += reason_table([e for e in excluded if e["outcome"] == "none"])
+    return "\n".join(lines)

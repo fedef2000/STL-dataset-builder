@@ -8,11 +8,10 @@ A modular, resumable pipeline that builds a dataset of **(Natural Language Requi
 | 2 | `02_download_papers.py` | Downloads the LaTeX source of each paper, or its open-access PDF | `data/raw/` |
 | 3 | `03_audit_and_print_licenses.py` | Finds the licence of each downloaded paper | `data/corpus.json` |
 | 4 | `04_estimate_formulas.py` | Counts and locates the STL formulas of each paper | `data/corpus.json` |
-| 5 | `05_extract_requirements.py` | Two models (a third on their disagreements) give the requirement of each formula | `data/processed/extractions/` |
-| 6 | `06_build_dataset.py` | Builds the dataset from the answers of step 5: the formulas with a requirement, and those without | `data/dataset/` |
-| 7 | `07_normalize_formulas.py` | Normalizes every formula into the STL syntax of `stl-nl`: the unpaired ones as its input, the paired ones (and their descriptions) for fine-tuning | `data/normalized/` |
+| 5 | `05_extract_requirements.py` | Two models (a third on their disagreements) give the requirement of each formula; the dataset is built from their vote: the formulas with a requirement, and those without | `data/processed/extractions/`, `data/dataset/` |
+| 6 | `06_normalize_formulas.py` | Normalizes every formula into the STL syntax of `stl-nl`: the unpaired ones as its input, the paired ones (and their descriptions) for fine-tuning | `data/normalized/` |
 
-**Current state:** all seven steps are implemented. The corpus, the dataset and the normalized formulas are tracked in git (`data/corpus.json`, `data/dataset/`, `data/normalized/`); the downloaded papers and the answers of step 5 are not (`data/raw/`, `data/processed/`).
+**Current state:** all six steps are implemented. The corpus, the dataset and the normalized formulas are tracked in git (`data/corpus.json`, `data/dataset/`, `data/normalized/`); the downloaded papers and the answers of step 5 are not (`data/raw/`, `data/processed/`).
 
 ---
 
@@ -27,19 +26,19 @@ STL_dataset_builder/
 │
 ├── data/
 │   ├── corpus.json                    # Single Source of Truth (metadata, status, licenses) - tracked in git
-│   ├── dataset/                       # The dataset built by step 6 - tracked in git
+│   ├── dataset/                       # The dataset built by step 5 - tracked in git
 │   │   ├── stl_dataset.jsonl          # One record per formula with a requirement
 │   │   ├── stl_formulas_unpaired.jsonl # One record per formula without a requirement
 │   │   ├── excluded.jsonl             # The formulas left out of both, and why
 │   │   └── stats.md                   # What the dataset holds
-│   ├── normalized/                    # The formulas in the syntax of stl-nl, built by step 7 - tracked in git
+│   ├── normalized/                    # The formulas in the syntax of stl-nl, built by step 6 - tracked in git
 │   │   ├── unpaired/                  # The formulas without a requirement, as input of stl-nl
 │   │   │   ├── stl/                   # One .stl file per formula kept for stl-nl (f00001.stl ...)
 │   │   │   ├── manifest.jsonl         # One line per input formula: status, reasons, rules, original and normalized text, pattern, skeleton, selection
 │   │   │   ├── report.md              # Counts by status, rejection reason, pattern, skeleton and selection, with examples
 │   │   │   └── translations.csv       # The formulas kept, original next to normalized (inspect_normalization.py)
 │   │   └── paired/                    # The formulas with a requirement, for fine-tuning
-│   │       ├── stl_dataset.jsonl      # The records of step 6 whose formula is ok, with the normalized formula and descriptions
+│   │       ├── stl_dataset.jsonl      # The records of step 5 whose formula is ok, with the normalized formula and descriptions
 │   │       ├── manifest.jsonl         # One line per input formula, with the passages of the formulas ok
 │   │       ├── report.md              # Counts by status, rejection reason, pattern, skeleton; beyond stl-nl's grammar; descriptions
 │   │       └── translations.csv       # One row per passage: formula and text, original next to normalized (inspect_normalization.py)
@@ -72,7 +71,7 @@ STL_dataset_builder/
 │   │   ├── extractor.py               # The extraction call (OpenRouter), its prompt and the checks on the answer
 │   │   ├── runs.py                    # Runs many calls, stores every answer, resumes; compares requirement passages
 │   │   ├── pdf_context.py             # What the model reads for a PDF: one region per page, with its image
-│   │   ├── dataset.py                 # Turns the records of step 5 into the records of the dataset
+│   │   ├── dataset.py                 # Builds the dataset from the records of step 5, and its stats.md
 │   │   └── records.py                 # One record per formula: the answers side by side, their agreement, the tie-breaker's verdict
 │   └── normalization/                 # The formulas in the STL syntax of stl-nl (rules: docs/normalization_rules.md)
 │       ├── latex.py                   # TeX tokens; the paper's macros, read from its sources and expanded
@@ -100,10 +99,9 @@ STL_dataset_builder/
     ├── 03_audit_and_print_licenses.py # Step 3: Verify licenses & print statistical tables
     ├── 04_estimate_formulas.py        # Step 4: Estimate the STL formula yield per paper
     ├── 05_extract_requirements.py     # Step 5: Extract the requirements with two models, a third on their disagreements
-    ├── 06_build_dataset.py            # Step 6: Build the dataset file from the answers of step 5
-    ├── 07_normalize_formulas.py       # Step 7: Normalize every formula into the syntax of stl-nl (unpaired and paired)
+    ├── 06_normalize_formulas.py       # Step 6: Normalize every formula into the syntax of stl-nl (unpaired and paired)
     ├── inspect_extractions.py         # Prints the undecided formulas and the answers that failed a check, to read
-    ├── inspect_normalization.py       # Writes the formulas of step 7 as CSV files (unpaired, paired), to check the translation by eye
+    ├── inspect_normalization.py       # Writes the formulas of step 6 as CSV files (unpaired, paired), to check the translation by eye
     ├── migrate_corpus_lookups.py      # One-off: rebuilt the enrichment lookups of the corpus from the log (already run)
     └── eval/
         ├── build_eval_set.py          # Checks the labels against the LaTeX sources and writes the evaluation set
@@ -131,7 +129,7 @@ source .venv/bin/activate
 
 pip install -r requirements.txt
 
-# Only to run the tests of step 7
+# Only to run the tests of step 6
 pip install pytest
 
 ```
@@ -158,11 +156,11 @@ Without a Semantic Scholar key, the enrichment lookups of step 1 are likely to b
 
 ## Pipeline Usage
 
-Steps 1 to 4 read from and update **`data/corpus.json`** incrementally; steps 5 to 7 read the outputs of the step before (see each step). You can interrupt (`Ctrl+C`) and resume any script at any time without losing progress: step 5 keeps every answer as it arrives, and steps 6 and 7 are rebuilt whole in a few seconds or minutes.
+Steps 1 to 4 read from and update **`data/corpus.json`** incrementally; steps 5 and 6 read the outputs of the step before (see each step). You can interrupt (`Ctrl+C`) and resume any script at any time without losing progress: step 5 keeps every answer as it arrives, and its dataset and step 6 are rebuilt whole in a minute or two.
 
 Every script also accepts `-h` / `--help`, which prints its flags and exits.
 
-Steps 1 to 4 can print their statistics from `data/corpus.json` without redoing the work: `--stats` on any of the four scripts. Step 5 has `--report` for the same.
+Steps 1 to 4 can print their statistics from `data/corpus.json` without redoing the work: `--stats` on any of the four scripts. Step 5 has `--no-calls` for the same: it makes its report and the dataset again from the stored answers.
 
 ### Step 1: Build & Expand the Paper Corpus
 
@@ -343,7 +341,7 @@ python scripts/eval/check_contexts.py --corpus
 | `--max-formulas N` | Most formulas marked in one region (default 15). |
 | `--symbolic` | Also marks the formulas whose time bounds are all symbolic. |
 
-### Step 5: Extract the Requirements
+### Step 5: Extract the Requirements and Build the Dataset
 
 One request per region goes to a model through [OpenRouter](https://openrouter.ai) (`src/extraction/extractor.py`). For every marked formula the model returns the formula, every passage of the paper that states what it requires (a paper may state it more than once in different words; possibly none), each tagged `specific` or `generic`, the application domain from a fixed list, and the meaning of the variables.
 
@@ -361,18 +359,18 @@ python scripts/05_extract_requirements.py --tie-break
 # How many calls a run would make, and about what they cost (no call is made)
 python scripts/05_extract_requirements.py --tie-break --dry-run
 
-# The summary of the stored answers, without calling a model
-python scripts/05_extract_requirements.py --report
+# The summary and the dataset from the stored answers, without calling a model
+python scripts/05_extract_requirements.py --no-calls
 
 # The report of one kind of formula; --details adds its technical tables
-python scripts/05_extract_requirements.py --report --concrete
-python scripts/05_extract_requirements.py --report --parametric --details
+python scripts/05_extract_requirements.py --no-calls --concrete
+python scripts/05_extract_requirements.py --no-calls --parametric --details
 
 # Only one paper, and print its answers; with --dry-run, print its prompts instead
 python scripts/05_extract_requirements.py --paper W3080701220
 ```
 
-Every answer is appended to `answers.jsonl` as it arrives, so an interrupted run (Ctrl+C included) continues where it stopped. An answer stored for a region whose formulas have since changed is asked again, and so is one that left some formulas of its region unanswered. A run or a report over the whole corpus also writes `data/processed/extractions/formulas.jsonl`: one record per formula with its source, the answer of each model and the outcome of the vote.
+Every answer is appended to `answers.jsonl` as it arrives, so an interrupted run (Ctrl+C included) continues where it stopped. An answer stored for a region whose formulas have since changed is asked again, and so is one that left some formulas of its region unanswered. A run over the whole corpus (with or without `--no-calls`) also writes `data/processed/extractions/formulas.jsonl`: one record per formula with its source, the answer of each model and the outcome of the vote. A run over the whole corpus and every kind of formula also builds the dataset from the vote (see *The dataset* below).
 
 #### Where the answers are kept
 
@@ -474,7 +472,8 @@ Every answer is checked, and an answer that fails a check is flagged: the formul
 | `--concrete` | Only the concrete formulas, with their own report instead of the summary. |
 | `--parametric` | Only the parametric formulas, with their own report instead of the summary. With `--concrete`: both, each with its own report. |
 | `--latex` / `--pdf` | Only the papers held as LaTeX / as PDF only, with their own reports instead of the summary. |
-| `--report` | Prints the summary (or the report of `--concrete` / `--parametric`) of the stored answers and writes `formulas.jsonl`. No model is called. |
+| `--no-calls` | Uses only the stored answers: no model is called. The vote, the checks, the summary (or the report of `--concrete` / `--parametric`), `formulas.jsonl` and the dataset are made again from them. |
+| `--licenses TIER ...` | Also writes copies of `stl_dataset.jsonl` and `stl_formulas_unpaired.jsonl` with only the records of these licence tiers (`permissive_cc`, `restricted_cc`, `custom_or_arxiv`, `unspecified`). |
 | `--details` | Prints the report of each kind of formula with its technical tables. |
 | `--dry-run` | Prints how many calls a run would make and about what they cost (at the average cost of the stored calls of each model), and exits. With `--paper`, also prints the prompts. |
 | `--paper ID` | Only this paper (repeatable). Its answers, and the passages the vote keeps, are printed. |
@@ -486,7 +485,7 @@ Every answer is checked, and an answer that fails a check is flagged: the formul
 
 #### Reading the answers
 
-`scripts/inspect_extractions.py` prints answers of step 5 for a person to read, from the `formulas.jsonl` files written by its last run or report. Every entry shows the paper, the path and line of the source file, the formula, and the answers.
+`scripts/inspect_extractions.py` prints answers of step 5 for a person to read, from the `formulas.jsonl` files written by its last run. Every entry shows the paper, the path and line of the source file, the formula, and the answers.
 
 ```bash
 # The formulas the vote leaves undecided, with the answer of every model and why no two agree
@@ -519,7 +518,7 @@ python scripts/inspect_extractions.py flags --check variable formula-copy --limi
 | `unknown-kind` | unknown kind of requirement |
 | `unknown-domain` | unknown domain |
 
-The flags are those of the checks at the last run or report of step 5: after a change to the checks, `python scripts/05_extract_requirements.py --report` refreshes them.
+The flags are those of the checks at the last run of step 5: after a change to the checks, `python scripts/05_extract_requirements.py --no-calls` refreshes them.
 
 #### Choosing a model: the benchmark
 
@@ -557,17 +556,20 @@ When a paper prints the same formula more than once, the entry is scored on the 
 | `--entries N` | Only the first `N` entries of the evaluation set. |
 | `--report` | Scores the stored answers and prints the comparison. No model is called. |
 
-### Step 6: Build the Dataset
+#### The dataset
 
-Builds the dataset from the answers of step 5, with no model calls: one record per formula with a requirement, in `data/dataset/stl_dataset.jsonl`, and one per formula without a requirement, in `data/dataset/stl_formulas_unpaired.jsonl`. It reads the four `formulas.jsonl` files of step 5, so run step 5 (or `python scripts/05_extract_requirements.py --report`) first. The dataset can be rebuilt at any time; the same answers give the same file.
+At the end of a run, step 5 builds the dataset from the vote (`src/extraction/dataset.py`): one record per formula with a requirement, in `data/dataset/stl_dataset.jsonl`, and one per formula without a requirement, in `data/dataset/stl_formulas_unpaired.jsonl`. With `--no-calls` it is rebuilt from the stored answers at any time; the same answers give the same files.
 
 ```bash
-python scripts/06_build_dataset.py
+# The dataset again from the stored answers (after a change to the checks or to the rules below)
+python scripts/05_extract_requirements.py --no-calls
 
 # Also copies with only some licence tiers: data/dataset/stl_dataset_permissive_cc.jsonl
 # and data/dataset/stl_formulas_unpaired_permissive_cc.jsonl
-python scripts/06_build_dataset.py --licenses permissive_cc
+python scripts/05_extract_requirements.py --no-calls --licenses permissive_cc
 ```
+
+The dataset is written only by a run over the whole corpus and every kind of formula (no `--paper`, `--limit`, `--concrete`, `--parametric`, `--latex` or `--pdf`): a formula repeated in a paper is kept once over all of them, so a part would give another dataset. A run whose calls the budget stopped leaves the dataset as it is, so that it never holds the answers of half a run; run again to continue. A formula still without an answer of a model (a call that failed) is left out as undecided, and the run says how many there are.
 
 A formula is in the dataset when the vote of step 5 gives it a requirement. It is left out (and listed in `excluded.jsonl` with the reason) when:
 
@@ -585,7 +587,6 @@ A record (the same in both files):
 |---|---|
 | `id` | `<paper_id>:<formula ID>`, e.g. `W2082084336:P5` (`F` for numeric, `P` for symbolic bounds: the concrete and parametric formulas of steps 4 and 5) |
 | `formula` | The formula in LaTeX. From a LaTeX paper: the paper's own text, trimmed to the formula by a model's copy, with labels, row breaks, alignment marks and spacing commands taken out (the authors' macros are kept). From a PDF: the transcription two models agree on. |
-| `other_logic` | The logic other than STL whose construct the formula holds, found by patterns (the corpus also holds papers on related timed logics): `strategic` (a strategy quantifier, as in timed ATL), `branching-time` (a path quantifier, as in TCTL), `probabilistic` (a probability operator), `spatial-or-description` (spatial operators, or the concept inclusion and intersection of description logics), `past-time` (past operators such as since, once, historically); `null` when none is found. `null` does not make a formula STL: no parser has checked it yet.  |
 | `requirements` | The requirement passages, each with its `text` (on one line) and `kind` (`specific`, `generic`, or `unclear` when the models are split); empty in `stl_formulas_unpaired.jsonl` |
 | `domain`, `variables` | The application domain, and the meaning of the symbols |
 | `bounds` | `numeric` when a time bound at least is a number (`\Box_{[0,5]}`), `symbolic` when every one is a symbol (`\Box_{[0,T]}`). A description of the formula, not a measure of the pair: a symbolic formula whose requirement explains its parameters is as good a pair as a numeric one. |
@@ -594,20 +595,16 @@ A record (the same in both files):
 | `source_type`, `location` | `latex` with the file and line, or `pdf` with the file and page |
 | `provenance` | How the formula was obtained, the models that give the requirement (and for a PDF the formula), `disputed` (the first two models disagree on the formula; the third model may be among the models giving the requirement even when it is not, as it answers every formula of a region it is asked about), and `flags`: the checks failed by the answers the passages are taken from, and a formula that starts or ends with a connective (part of it may be on another row) |
 
-`stats.md` counts the records by source and bounds of the formula, construct of another logic, licence, domain and provenance, the requirement passages by kind, the subsets for fine-tuning (records left as filters on passage kind, other logic and flags are added), the formulas without a requirement, and the formulas left out by reason. In `excluded.jsonl`, `outcome` is the vote of step 5 for the formula: `requirement`, `none` or `open` (undecided). It has no date, so a rebuild with the same answers leaves it unchanged.
+`stats.md` counts the records by licence and domain, the requirement passages by kind, the records with a specific passage (the best quality subset for fine-tuning) and their licence tiers, the formulas without a requirement, and the formulas left out by reason. Formulas in another logic (past-time, spatial, probabilistic, ...) are not marked here: the parser of step 6 rejects them. In `excluded.jsonl`, `outcome` is the vote of step 5 for the formula: `requirement`, `none` or `open` (undecided). It has no date, so a rebuild with the same answers leaves it unchanged.
 
-| Flag | What it does |
-|---|---|
-| `--licenses TIER ...` | Also writes copies of both files with only the records of these licence tiers (`permissive_cc`, `restricted_cc`, `custom_or_arxiv`, `unspecified`). |
+### Step 6: Normalize the Formulas into the Syntax of stl-nl
 
-### Step 7: Normalize the Formulas into the Syntax of stl-nl
-
-Writes every formula of step 6 in one STL syntax, that of `stl-nl`, so that the final dataset has all its formulas written the same way. The two files of step 6 are normalized in the same run, with the same rules, each in its mode:
+Writes every formula of the dataset of step 5 in one STL syntax, that of `stl-nl`, so that the final dataset has all its formulas written the same way. The two files of the dataset are normalized in the same run, with the same rules, each in its mode:
 
 * **unpaired** (`data/dataset/stl_formulas_unpaired.jsonl`, mode `stl-nl`): the formulas become the input of `stl-nl`, described below.
 * **paired** (`data/dataset/stl_dataset.jsonl`, mode `faithful`): the formulas keep the paper's requirement and go to fine-tuning with it, so they must keep the meaning it describes. Same rules, except that the bounds stay as the paper writes them (`F[0,2.5]`, `F(2,12]`, `G[T,T + delta]`), powers with an integer exponent stay (`x^2`), and the two rules that would change the meaning (an operator with a line over it read as the plain one, a cut formula closed) reject the formula. So these formulas may go beyond `stl-nl`'s grammar (four additions, listed in `docs/normalization_rules.md`) and are not checked with `stlgen`; their skeleton comes from their own tree. Each requirement passage is written to match its formula: plain text, every symbol as the formula writes it (`$\varphi_{1}$` → `varphi_1`, the paper's macros expanded, `\emph{...}` and Unicode made plain); what can't be converted is left as written and counted in the report. All the formulas ok are kept, with no selection.
 
-For the unpaired formulas, step 7 turns `data/dataset/stl_formulas_unpaired.jsonl` into the input of `stl-nl`, a tool that writes natural-language descriptions of STL formulas: one formula per `.stl` file, in its STL grammar (bounded discrete time, closed integer intervals, every operand parenthesized). No model is called. Each formula goes through named rules, listed with an example each in `docs/normalization_rules.md`:
+For the unpaired formulas, step 6 turns `data/dataset/stl_formulas_unpaired.jsonl` into the input of `stl-nl`, a tool that writes natural-language descriptions of STL formulas: one formula per `.stl` file, in its STL grammar (bounded discrete time, closed integer intervals, every operand parenthesized). No model is called. Each formula goes through named rules, listed with an example each in `docs/normalization_rules.md`:
 
 * the paper's own macros are expanded from its LaTeX sources (PDF formulas are already in standard notation);
 * the formula is cut into tokens (LaTeX operators to STL tokens, Greek letters and subscripts to names, intervals attached to their operators) and parsed with the precedence of `stl-nl`;
@@ -618,22 +615,22 @@ A formula is `ok` or `rejected` (definitions of the semantics, of a grammar or o
 
 ```bash
 # Both files
-python scripts/07_normalize_formulas.py
+python scripts/06_normalize_formulas.py
 
 # Only one of them (the paired formulas don't need stlgen)
-python scripts/07_normalize_formulas.py --only paired
+python scripts/06_normalize_formulas.py --only paired
 
 # Other random values for the bounds that can't stay symbolic
-python scripts/07_normalize_formulas.py --seed 1
+python scripts/06_normalize_formulas.py --seed 1
 
 # Every formula ok to stl-nl (no cap per pattern; duplicates are still left out)
-python scripts/07_normalize_formulas.py --max-per-pattern 0
+python scripts/06_normalize_formulas.py --max-per-pattern 0
 
 # Read the rejected formulas of the last run: the reasons with counts, then a sample of one reason
-python scripts/07_normalize_formulas.py --show-rejected
-python scripts/07_normalize_formulas.py --show-rejected function
-python scripts/07_normalize_formulas.py --show-rejected "unknown_command: \overline" --limit 0
-python scripts/07_normalize_formulas.py --show-rejected --only paired
+python scripts/06_normalize_formulas.py --show-rejected
+python scripts/06_normalize_formulas.py --show-rejected function
+python scripts/06_normalize_formulas.py --show-rejected "unknown_command: \overline" --limit 0
+python scripts/06_normalize_formulas.py --show-rejected --only paired
 
 # To check the translation by eye, as CSV: data/normalized/unpaired/translations.csv (the formulas kept for stl-nl:
 # original, normalized, pattern) and data/normalized/paired/translations.csv (one row per requirement passage of a
@@ -642,7 +639,7 @@ python scripts/inspect_normalization.py
 python scripts/inspect_normalization.py --only paired
 ```
 
-It needs the `stlgen` binary of `stl-nl`, built with `cargo build --release --locked --manifest-path rust/stlgen/Cargo.toml` in the `stl-nl` repository. By default it is looked for in a checkout of `stl-nl` next to this one (`../stl-nl/rust/stlgen/target/release/stlgen`); set `STLGEN_BIN` in `.env` or pass `--stlgen` for another place (only the unpaired formulas need it). It writes, in `data/normalized/unpaired/`: `stl/` (the formulas kept for `stl-nl`; the `.stl` files of an earlier run are replaced; they are numbered in input order, so a file's number can change from one run to another, and `manifest.jsonl` says which record each file is), `manifest.jsonl` (one line per input formula: `id`, `status`, `file`, `reasons`, `rules` that fired, `original`, `normalized`, `pattern` (the normalized text with the numbers written `#` and the names renamed `a`, `b`, ... in order, so that formulas differing only in numbers and names share it), `skeleton` (the coarser grouping of stl-nl's `scripts/formula_patterns.py`: the temporal and Boolean structure, each condition a Greek letter, as in `G[#,#] (φ -> F[#,#] ψ)`), `stl` as `stlgen` prints it back, `substitutions` of the symbolic bounds given random values, `rounded` bounds, `over_limits` of `stl-nl`'s selection, `selection`: `kept`, `duplicate` (with the first one's id in `duplicate_of`) or `pattern_cap` for the formulas ok) and `report.md`. In `data/normalized/paired/`: `stl_dataset.jsonl` (the records of step 6 whose formula is ok, each with `normalized`, `pattern` and `skeleton` after `formula`, which stays the paper's LaTeX, and `normalized` after the `text` of each requirement), `manifest.jsonl` (as above, with no `stl` and no selection, and for the formulas ok their `requirements`: each passage's `text`, `normalized`, and what was left as written: `unreadable` math, `references`, `latex_left`, `names_not_in_formula`) and `report.md` (as above, without the selection, with the formulas that go beyond `stl-nl`'s grammar and the counts of the descriptions). The same input and seed give the same files.
+It needs the `stlgen` binary of `stl-nl`, built with `cargo build --release --locked --manifest-path rust/stlgen/Cargo.toml` in the `stl-nl` repository. By default it is looked for in a checkout of `stl-nl` next to this one (`../stl-nl/rust/stlgen/target/release/stlgen`); set `STLGEN_BIN` in `.env` or pass `--stlgen` for another place (only the unpaired formulas need it). It writes, in `data/normalized/unpaired/`: `stl/` (the formulas kept for `stl-nl`; the `.stl` files of an earlier run are replaced; they are numbered in input order, so a file's number can change from one run to another, and `manifest.jsonl` says which record each file is), `manifest.jsonl` (one line per input formula: `id`, `status`, `file`, `reasons`, `rules` that fired, `original`, `normalized`, `pattern` (the normalized text with the numbers written `#` and the names renamed `a`, `b`, ... in order, so that formulas differing only in numbers and names share it), `skeleton` (the coarser grouping of stl-nl's `scripts/formula_patterns.py`: the temporal and Boolean structure, each condition a Greek letter, as in `G[#,#] (φ -> F[#,#] ψ)`), `stl` as `stlgen` prints it back, `substitutions` of the symbolic bounds given random values, `rounded` bounds, `over_limits` of `stl-nl`'s selection, `selection`: `kept`, `duplicate` (with the first one's id in `duplicate_of`) or `pattern_cap` for the formulas ok) and `report.md`. In `data/normalized/paired/`: `stl_dataset.jsonl` (the records of step 5 whose formula is ok, each with `normalized`, `pattern` and `skeleton` after `formula`, which stays the paper's LaTeX, and `normalized` after the `text` of each requirement), `manifest.jsonl` (as above, with no `stl` and no selection, and for the formulas ok their `requirements`: each passage's `text`, `normalized`, and what was left as written: `unreadable` math, `references`, `latex_left`, `names_not_in_formula`) and `report.md` (as above, without the selection, with the formulas that go beyond `stl-nl`'s grammar and the counts of the descriptions). The same input and seed give the same files.
 
 | Flag | What it does |
 |---|---|

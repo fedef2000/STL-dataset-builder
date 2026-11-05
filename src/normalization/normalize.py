@@ -75,8 +75,7 @@ def symbol_names(variables: dict[str, str], macros: dict[str, list[Macro]], mode
 
 
 def normalize(formula: str, *, record_id: str = "", seed: str = "0", macros: dict[str, list[Macro]] | None = None,
-              variables: dict[str, str] | None = None, other_logic: str | None = None,
-              flags: list[str] = (), mode: str = "stl-nl") -> Result:
+              variables: dict[str, str] | None = None, flags: list[str] = (), mode: str = "stl-nl") -> Result:
     """
     The formula in the grammar of stl-nl, and what happened to it. `seed` and `record_id` set the random values of
     the symbolic bounds (the same record gets the same values on every run, whatever the other records). `mode`:
@@ -85,8 +84,6 @@ def normalize(formula: str, *, record_id: str = "", seed: str = "0", macros: dic
     trace = Trace(mode)
     macros = with_fallback(macros or {})
     try:
-        if other_logic:
-            raise Rejected("other_logic", other_logic)
         if any(f.startswith(CONNECTIVE_FLAG) for f in flags):
             raise Rejected("connective_at_edge")
         tokens = lex(expand(tokenize(formula), macros, PROTECTED_COMMANDS, trace), trace)

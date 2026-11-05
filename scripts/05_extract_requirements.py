@@ -1,19 +1,28 @@
 """
-Step 5: asks two models, through OpenRouter, for the requirement, domain and variables of every formula of the papers
-held as LaTeX, and with --tie-break asks a third model about the formulas the two disagree on. Every answer is kept,
-and the models' answers are put to a vote: a requirement passage is kept when two models give it.
+Step 5: asks two models, through OpenRouter, for the requirement, domain and variables of every formula of the papers,
+and with --tie-break asks a third model about the formulas the two disagree on. Every answer is kept, and the models'
+answers are put to a vote: a requirement passage is kept when two models give it. Then builds the dataset from the
+vote.
 
-    python scripts/05_extract_requirements.py                       # the two models on every formula, then the summary
-    python scripts/05_extract_requirements.py --tie-break           # also the third model, on the disagreements
-    python scripts/05_extract_requirements.py --report              # the summary only: no model is called
-    python scripts/05_extract_requirements.py --report --concrete   # the report of the concrete formulas (--parametric: of those)
-    python scripts/05_extract_requirements.py --report --details    # the report of each kind, with its technical tables
-    python scripts/05_extract_requirements.py --dry-run             # how many calls a run would make, and their cost
-    python scripts/05_extract_requirements.py --paper W3080701220   # only this paper, and print its answers
+    python scripts/05_extract_requirements.py                         # the two models on every formula, the summary, the dataset
+    python scripts/05_extract_requirements.py --tie-break             # also the third model, on the disagreements
+    python scripts/05_extract_requirements.py --no-calls              # the same from the stored answers: no model is called
+    python scripts/05_extract_requirements.py --no-calls --licenses permissive_cc   # also copies with only these licence tiers
+    python scripts/05_extract_requirements.py --no-calls --concrete   # the report of the concrete formulas (--parametric: of those)
+    python scripts/05_extract_requirements.py --no-calls --details    # the report of each kind, with its technical tables
+    python scripts/05_extract_requirements.py --dry-run               # how many calls a run would make, and their cost
+    python scripts/05_extract_requirements.py --paper W3080701220     # only this paper, and print its answers
 
 Answers are stored as they arrive in data/processed/extractions/<latex|pdf>/<concrete|parametric>/answers.jsonl, so
-an interrupted run continues where it stopped. A run or a report over the whole corpus also
-writes formulas.jsonl next to it: one record per formula, with the answer of every model and the outcome of the vote.
+an interrupted run continues where it stopped. A run over the whole corpus also writes formulas.jsonl next to it: one
+record per formula, with the answer of every model and the outcome of the vote. A run over the whole corpus and every
+kind of formula (no --paper, --limit, --concrete, --parametric, --latex, --pdf) also writes the dataset, in
+data/dataset/, unless the budget stopped its calls:
+
+    stl_dataset.jsonl             one record per formula with a requirement
+    stl_formulas_unpaired.jsonl   one record per formula the models agree has no requirement (no passages)
+    excluded.jsonl                the formulas left out of both, and why
+    stats.md                      what the dataset holds
 """
 import argparse
 import collections
@@ -25,6 +34,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BASE_DIR))
 
 from src.storage import CorpusStore
+from src.extraction.dataset import DATASET_DIR, LICENSE_TIERS, write_dataset
 from src.extraction.extractor import REASONING_LEVELS, build_messages
 from src.extraction.records import (AGREED, AGREEMENTS, DEFAULT_MODELS, DEFAULT_TIE_BREAKER, DISPUTED, VERDICTS, collect,
                                     kind_of, load_contexts, parse_model, store_files, write_formulas)
@@ -102,7 +112,7 @@ def print_report(title: str, contexts: dict, records: list[dict], calls: dict, l
             line += "→ run with --tie-break to decide them"
         print(line)
     if agreement["not answered"]:
-        print(f"  {agreement['not answered']:>6,}  {'a model has no answer yet':<30} → run without --report to ask for it")
+        print(f"  {agreement['not answered']:>6,}  {'a model has no answer yet':<30} → run without --no-calls to ask for it")
 
     print("\nCOST")
     total = 0.0
@@ -240,7 +250,7 @@ def print_plan(regions: dict, answers_file: Path, pairs: list[tuple[str, str]], 
 
 
 def print_summary(results: list[dict], labels: list[str], tie_label: str) -> None:
-    """The report of a plain --report: every source and kind of formula side by side, and together."""
+    """The report of a run over every source and kind of formula: each side by side, and together."""
     records = [r for result in results for r in result["records"]]
     papers = {pid for result in results for pid in result["contexts"]}
     names = [result["column"] for result in results]
@@ -307,7 +317,7 @@ def print_summary(results: list[dict], labels: list[str], tie_label: str) -> Non
 
     pending = []
     if any(r["requirement_agreement"] == "not answered" for r in records):
-        pending.append("some formulas have no answer yet: run without --report")
+        pending.append("some formulas have no answer yet: run without --no-calls")
     if any(r.get("dispute") and "tie_breaker" not in r for r in records):
         pending.append("some disputed formulas were not asked to the third model: run with --tie-break")
     flagged = sum(1 for r in records for label in labels if r["answers"].get(label) and r["answers"][label]["problems"]) \
@@ -324,7 +334,7 @@ def print_summary(results: list[dict], labels: list[str], tie_label: str) -> Non
 
 def process(parametric: bool, pdf: bool, args, store: CorpusStore, pairs: list, tie_breaker: tuple, budget: float) -> dict:
     """
-    Reads the papers, makes the calls that are missing (unless --report) and collects the records of one kind of
+    Reads the papers, makes the calls that are missing (unless --no-calls) and collects the records of one kind of
     formula of one source.
     """
     labels = [f"{model}:{reasoning}" for model, reasoning in pairs]
@@ -338,7 +348,7 @@ def process(parametric: bool, pdf: bool, args, store: CorpusStore, pairs: list, 
     print(f"{len(contexts)} {source} papers with {kind} formulas | {len(regions)} {'pages' if pdf else 'regions'}"
           f" | {sum(len(c.formulas) for c in contexts.values())} formulas")
     result = dict(name=f"{kind} ({source})", column=f"{source} {kind[:5] + '.' if parametric else kind}", pdf=pdf,
-                  title=f"{kind.upper()} FORMULAS · {source} papers", contexts=contexts, formulas_file=formulas_file, spent=0.0)
+                  bounds="symbolic" if parametric else "numeric", title=f"{kind.upper()} FORMULAS · {source} papers", contexts=contexts, formulas_file=formulas_file, spent=0.0)
 
     if args.dry_run:
         if args.paper:
@@ -353,12 +363,12 @@ def process(parametric: bool, pdf: bool, args, store: CorpusStore, pairs: list, 
         print_plan(regions, answers_file, pairs, tie_breaker, records, args.tie_break)
         return result
 
-    if not args.report:
+    if not args.no_calls:
         print(f"Extraction models: {', '.join(short(label) for label in labels)}")
         tasks = [(model, reasoning, 1, pid, n) for model, reasoning in pairs for (pid, n) in regions]
         result["spent"] = run_calls(tasks, regions, answers_file, args.workers, budget)
     records, calls = collect(store, contexts, pairs, tie_breaker, answers_file)
-    if args.tie_break and not args.report:
+    if args.tie_break and not args.no_calls:
         asked = tie_regions(records)
         print(f"Tie-break: {short(tie_label)} on {len(asked):,} regions with a disputed formula")
         if budget - result["spent"] <= 0:
@@ -394,7 +404,10 @@ def main():
                              "of formula instead of the summary.")
     parser.add_argument("--paper", action="append", help="Only this paper (repeatable); its answers are printed.")
     parser.add_argument("--limit", type=int, help="Only the first N papers.")
-    parser.add_argument("--report", action="store_true", help="Report on the stored answers and write formulas.jsonl. No model is called.")
+    parser.add_argument("--no-calls", action="store_true",
+                        help="Use only the stored answers: no model is called. The vote, the checks, the report, formulas.jsonl and the dataset are made again from them.")
+    parser.add_argument("--licenses", nargs="+", choices=LICENSE_TIERS, metavar="TIER",
+                        help=f"Also write copies of the dataset with only the records of these licence tiers ({', '.join(LICENSE_TIERS)}).")
     parser.add_argument("--details", action="store_true",
                         help="Print the report of each kind of formula with its technical tables: answers per model, failed checks, agreement, verdicts.")
     parser.add_argument("--dry-run", action="store_true", help="Print how many calls a run would make and about what they cost, and exit. With --paper, also print the prompts.")
@@ -434,10 +447,21 @@ def main():
     else:
         print_summary(results, labels, tie_label)
     if args.paper or args.limit:
-        print("formulas.jsonl is not written for a selection of papers: only by a run or a report over the whole corpus.")
+        print("formulas.jsonl and the dataset are not written for a selection of papers: only by a run over the whole corpus.")
+        return
+    for result in results:
+        print(f"One record per {result['name']} formula, with every answer and the outcome of the vote: {result['formulas_file']}")
+    if len(kinds) < 2 or len(sources) < 2:
+        # The dataset needs every kind of formula at once: a formula repeated in a paper is kept once over all of them
+        print(f"The dataset is not written for a selection of kinds of formula: only by a run over all of them ({DATASET_DIR}).")
+    elif budget <= 0 and not args.no_calls:
+        # Some calls were not made: the dataset would lack their answers. The tracked dataset is left as it is
+        print(f"The budget stopped the calls: the dataset is not written ({DATASET_DIR}). Run again to continue.")
     else:
-        for result in results:
-            print(f"One record per {result['name']} formula, with every answer and the outcome of the vote: {result['formulas_file']}")
+        missing = sum(1 for result in results for r in result["records"] if r["requirement_agreement"] == "not answered")
+        if missing:
+            print(f"{missing:,} formulas have no answer of a model yet: they are left out of the dataset as undecided.")
+        write_dataset([(result["bounds"], result["records"]) for result in results], store.papers, args.licenses)
 
 
 if __name__ == "__main__":

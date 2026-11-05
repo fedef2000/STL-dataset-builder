@@ -1,6 +1,6 @@
 """
-Step 7: normalizes the formulas of step 6 into one STL syntax, that of stl-nl. Two inputs, each with its mode
-(src/normalization/rules.py):
+Step 6: normalizes the formulas of the dataset of step 5 into one STL syntax, that of stl-nl. Two inputs, each with
+its mode (src/normalization/rules.py):
 
 - unpaired (data/dataset/stl_formulas_unpaired.jsonl, mode stl-nl): the formulas without a requirement become the input
   of stl-nl (one formula per .stl file, in its grammar), so that stl-nl can write natural-language descriptions of
@@ -10,15 +10,15 @@ Step 7: normalizes the formulas of step 6 into one STL syntax, that of stl-nl. T
   writes them (F[0,2.5], F(2,12], G[T,T + delta], x^2), beyond stl-nl's grammar, and the rules that would change the
   meaning reject the formula. Their descriptions are written to match the formula (src/normalization/description.py).
 
-    python scripts/07_normalize_formulas.py                     # both inputs
-    python scripts/07_normalize_formulas.py --only paired       # one of them (unpaired, paired)
-    python scripts/07_normalize_formulas.py --seed 1            # other random values for the bounds that cannot stay symbolic
-    python scripts/07_normalize_formulas.py --stlgen PATH       # the stlgen binary of stl-nl (default: STLGEN_BIN)
-    python scripts/07_normalize_formulas.py --max-per-pattern 0 # every formula ok to stl-nl (default: 10 per pattern)
-    python scripts/07_normalize_formulas.py --show-rejected               # the reasons of rejection, with counts
-    python scripts/07_normalize_formulas.py --show-rejected function      # 10 random formulas rejected by `function`
-    python scripts/07_normalize_formulas.py --show-rejected "unknown_command: \\overline" --limit 0   # all of them
-    python scripts/07_normalize_formulas.py --show-rejected --only paired # the same, for the paired formulas
+    python scripts/06_normalize_formulas.py                     # both inputs
+    python scripts/06_normalize_formulas.py --only paired       # one of them (unpaired, paired)
+    python scripts/06_normalize_formulas.py --seed 1            # other random values for the bounds that cannot stay symbolic
+    python scripts/06_normalize_formulas.py --stlgen PATH       # the stlgen binary of stl-nl (default: STLGEN_BIN)
+    python scripts/06_normalize_formulas.py --max-per-pattern 0 # every formula ok to stl-nl (default: 10 per pattern)
+    python scripts/06_normalize_formulas.py --show-rejected               # the reasons of rejection, with counts
+    python scripts/06_normalize_formulas.py --show-rejected function      # 10 random formulas rejected by `function`
+    python scripts/06_normalize_formulas.py --show-rejected "unknown_command: \\overline" --limit 0   # all of them
+    python scripts/06_normalize_formulas.py --show-rejected --only paired # the same, for the paired formulas
 
 --show-rejected only reads the manifest of the last run (unpaired, unless --only paired): nothing is normalized again
 and no file is written.
@@ -34,7 +34,7 @@ earlier run are replaced):
         manifest.jsonl                one line per input record: status, file, reasons, rules, original and normalized text
         report.md                     counts by status, reason and pattern, with examples
     data/normalized/paired/
-        stl_dataset.jsonl             the records of step 6 whose formula is ok, with `normalized`, `pattern`, `skeleton`
+        stl_dataset.jsonl             the records of step 5 whose formula is ok, with `normalized`, `pattern`, `skeleton`
                                       and, in each requirement, `normalized`: the text that matches the formula
         manifest.jsonl                as above, with the passages of the formulas ok and what couldn't be converted
         report.md                     as above, with what goes beyond stl-nl's grammar and how the descriptions were written
@@ -83,7 +83,7 @@ def write_stl_files(lines: list[dict], output: Path):
 
 def paired_record(record: dict, line: dict) -> dict:
     """
-    The record of step 6 with its normalized formula (after `formula`, which stays the paper's LaTeX) and, in each
+    The record of step 5 with its normalized formula (after `formula`, which stays the paper's LaTeX) and, in each
     requirement, the normalized text (after `text`, which stays as the paper writes it).
     """
     out = {}

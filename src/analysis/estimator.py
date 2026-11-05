@@ -346,13 +346,18 @@ def find_document_files(tex_sources: dict[Path, str], folder: Path) -> set[Path]
     by_stem = {}
     for f in tex_sources:
         by_stem.setdefault(f.stem.lower(), []).append(f)
+    # The files by their exact path. Paths compare without case on Windows, so `candidate in tex_sources` would take
+    # \input{SMC} for smc.tex and return the spelling of the \input, not the file's name: the files would then be
+    # named, sorted and numbered differently on Windows and Linux. Matched as text, a name in another case falls
+    # through to the file-name search below on both, which returns the file as it is named on disk.
+    exact = {f.as_posix(): f for f in tex_sources}
 
     def resolve(name: str, from_file: Path) -> list[Path]:
         name = name.strip().replace("\\", "/")
         for base in (folder, from_file.parent):
             for candidate in (base / name, base / (name + ".tex")):
-                if candidate in tex_sources:
-                    return [candidate]
+                if candidate.as_posix() in exact:
+                    return [exact[candidate.as_posix()]]
         # Folders downloaded without their sub-directories: fall back to the file name
         stem = name.split("/")[-1]
         stem = stem[:-4] if stem.lower().endswith(".tex") else stem

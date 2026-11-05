@@ -17,7 +17,6 @@ from fractions import Fraction
 # the record becomes when the rule fires. See docs/normalization_rules.md.
 RULES = {
     # Stage 0: the whole record
-    "other_logic": ("rejected", "the paper writes it in another logic (past-time, spatial, probabilistic, strategic): its operators have no STL equivalent"),
     "semantics_definition": ("rejected", "a definition of the semantics (\\models, \\vDash): it says when a signal satisfies a formula, it is not a formula itself"),
     "grammar_definition": ("rejected", "a grammar of the logic (::=, \\mid, | between alternatives): it lists the forms a formula can take, it is not a formula itself"),
     "operator_definition": ("rejected", "a definition of an operator in terms of others (F_{[a,b]} phi := true U_{[a,b]} phi): the left side of = or := is not a single name"),

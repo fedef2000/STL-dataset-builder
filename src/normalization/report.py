@@ -1,5 +1,5 @@
 """
-The report of step 7 (report.md), from the manifest lines of one run: counts by status, why formulas are rejected (with
+The report of step 6 (report.md), from the manifest lines of one run: counts by status, why formulas are rejected (with
 examples), the most frequent unknown commands, the patterns and skeletons, and for the formulas without a requirement
 the selection for stl-nl; for the paired ones the extensions of stl-nl's grammar they use and how their descriptions
 were written (description.py).
@@ -121,19 +121,9 @@ def rejected_examples(lines: list[dict], rule: str) -> list[dict]:
     return chosen
 
 
-LOGICS = {
-    "past-time": "past-time logic: its operators (once, since, historically, ...) look back in time, STL's only forward",
-    "spatial-or-description": "a spatial or description logic: its operators are about places or objects",
-    "probabilistic": "a probabilistic logic: its operators are about probabilities",
-    "strategic": "a strategic logic: its operators are about what agents can enforce",
-}
-
-
 def why(line: dict) -> str:
     """Why this formula is rejected, in a sentence built from its rule and what the rule found."""
     rule, part = reason_rule(line["reasons"][0]), found(line)
-    if rule == "other_logic":
-        return f"the extraction classed it as {LOGICS.get(part, part)}"
     if rule == "semantics_definition":
         return f"{code(part)} says when a signal satisfies a formula: this defines the meaning of an operator"
     if rule == "grammar_definition":

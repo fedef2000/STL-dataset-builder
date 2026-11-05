@@ -1,5 +1,5 @@
 """
-Prints answers of step 5 for a person to read, from the formulas.jsonl files the last run or report of step 5 wrote.
+Prints answers of step 5 for a person to read, from the formulas.jsonl files the last run of step 5 wrote.
 
     python scripts/inspect_extractions.py undecided                 # the formulas the vote leaves undecided
     python scripts/inspect_extractions.py flags                     # the answers that failed a check, by check
@@ -8,8 +8,8 @@ Prints answers of step 5 for a person to read, from the formulas.jsonl files the
     python scripts/inspect_extractions.py flags --parametric        # only the parametric formulas (--concrete: those)
     python scripts/inspect_extractions.py undecided --pdf           # only the papers held as PDF (--latex: as LaTeX)
 
-The checks are those of step 5 at its last run or report: after a change to them, run
-`python scripts/05_extract_requirements.py --report` to refresh the files.
+The checks are those of step 5 at its last run: after a change to them, run
+`python scripts/05_extract_requirements.py --no-calls` to refresh the files.
 """
 import argparse
 import collections
@@ -203,7 +203,7 @@ def main():
             kind = f"{'parametric' if parametric else 'concrete'} {'PDF' if pdf else 'LaTeX'}"
             formulas_file = store_files(parametric, pdf)[1]
             if not formulas_file.exists():
-                print(f"No {kind} formulas yet: {formulas_file} is written by a run or report of step 5.")
+                print(f"No {kind} formulas yet: {formulas_file} is written by a run of step 5.")
                 continue
             runs.append((kind, [json.loads(line) for line in open(formulas_file, encoding="utf-8")]))
     if not runs:
