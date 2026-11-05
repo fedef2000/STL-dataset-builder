@@ -38,6 +38,7 @@ from src.normalization.latex import paper_macros
 from src.normalization.normalize import normalize
 from src.normalization.rules import RULES
 from src.normalization.select import select
+from src.normalization.skeleton import skeleton
 from src.normalization.validate import check, over_limits
 
 sys.stdout.reconfigure(encoding="utf-8")
@@ -59,7 +60,7 @@ def normalize_records(records: list[dict], seed: str, stlgen: Path) -> list[dict
                            flags=record["provenance"].get("flags", []))
         line = {"id": record["id"], "status": result.status, "file": None, "reasons": result.reasons,
                 "rules": result.rules, "original": record["formula"], "normalized": result.normalized,
-                "pattern": result.pattern,
+                "pattern": result.pattern, "skeleton": None,
                 "stl": None, "substitutions": result.substitutions, "rounded": result.rounded, "over_limits": [],
                 "bounds": record["bounds"], "source_type": record["source_type"]}
         if result.normalized is not None:
@@ -68,7 +69,11 @@ def normalize_records(records: list[dict], seed: str, stlgen: Path) -> list[dict
                 line.update(status="rejected", reasons=[f"stlgen_error: {error}"], rules=result.rules + ["stlgen_error"],
                             normalized=None, pattern=None)
             else:
-                line.update(stl=parsed["stl"], over_limits=over_limits(parsed))
+                text, exact = skeleton(parsed["ast"])
+                if not exact:
+                    print(f"   {record['id']}: too many interchangeable conditions to compare every renaming; its "
+                          f"skeleton may differ from an equal one")
+                line.update(stl=parsed["stl"], over_limits=over_limits(parsed), skeleton=text)
         lines.append(line)
         if n % 500 == 0:
             print(f"   {n}/{len(records)}")
@@ -335,6 +340,7 @@ def report(lines: list[dict], seed: str, max_per_pattern: int) -> str:
             "command to draw the symbol (\\raisebox, \\rotatebox, ...).", ""]
     out += table(rows, ("Command", "Formulas", "Written in the formula", "From a macro", "Example"))
     out += patterns(lines)
+    out += skeletons(lines)
     out += selection(lines, max_per_pattern)
     return "\n".join(out)
 
@@ -363,6 +369,41 @@ def patterns(lines: list[dict]) -> list[str]:
            f"{len(shown)} most common cover {covered} formulas ({100 * covered / len(kept):.0f}%).", ""]
     out += table([(code(s), n, f"{100 * n / len(kept):.1f}%", code(example[s]["normalized"])) for s, n in shown],
                  ("Pattern", "Formulas", "Share", "Example"))
+    return out
+
+
+def coverage(group: list[dict], field: str) -> tuple:
+    """Formulas, distinct values of `field`, values seen once, share of the formulas the 10 most common cover."""
+    count = collections.Counter(l[field] for l in group)
+    top = sum(n for _, n in count.most_common(10))
+    return (len(group), len(count), sum(1 for n in count.values() if n == 1), f"{100 * top / len(group):.1f}%")
+
+
+def skeletons(lines: list[dict]) -> list[str]:
+    """The skeletons of the formulas ok and of those kept for stl-nl, and the most common ones with an example each."""
+    ok = [l for l in lines if l["status"] == "ok"]
+    kept = [l for l in ok if l["selection"] == "kept"]
+    count = collections.Counter(l["skeleton"] for l in ok)
+    count_kept = collections.Counter(l["skeleton"] for l in kept)
+    shown = count.most_common(PATTERNS_SHOWN)
+    example = {}
+    for l in ok:
+        best = example.get(l["skeleton"])
+        if best is None or len(l["normalized"]) < len(best["normalized"]):
+            example[l["skeleton"]] = l
+    out = ["## Skeletons", "",
+           "The skeleton of a formula is its temporal and Boolean structure, as stl-nl's "
+           "`scripts/formula_patterns.py` computes it (`src/normalization/skeleton.py`, from stlgen's AST): each "
+           "distinct relation or Boolean signal is a Greek letter, which repeats only when the exact same condition "
+           "repeats; bounds are `[#,#]`, or `[#,inf]` when unbounded; the operands of `+ * && || == !=` are "
+           "unordered. It is coarser than the pattern, which also keeps the relations. The manifest has the skeleton "
+           "of each formula ok (`skeleton`); the example is the shortest formula of each skeleton.", ""]
+    out += table([(f"{level}, {group_name}", *coverage(group, field))
+                   for level, field in (("Skeleton", "skeleton"), ("Pattern", "pattern"))
+                   for group_name, group in (("ok", ok), ("kept for stl-nl", kept))],
+                 ("Level, formulas", "Formulas", "Distinct", "Seen once", "Top 10 cover"))
+    out += table([(code(s), n, f"{100 * n / len(ok):.1f}%", count_kept[s], code(example[s]["normalized"]))
+                  for s, n in shown], ("Skeleton", "Formulas ok", "Share", "Kept for stl-nl", "Example"))
     return out
 
 

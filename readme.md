@@ -34,8 +34,8 @@ STL_dataset_builder/
 │   │   └── stats.md                   # What the dataset holds
 │   ├── normalized/                    # The unpaired formulas as input of stl-nl, built by step 7 - tracked in git
 │   │   ├── stl/                       # One .stl file per formula kept for stl-nl (f00001.stl ...)
-│   │   ├── manifest.jsonl             # One line per input formula: status, reasons, rules, original and normalized text, selection
-│   │   ├── report.md                  # Counts by status, rejection reason, pattern and selection, with examples
+│   │   ├── manifest.jsonl             # One line per input formula: status, reasons, rules, original and normalized text, pattern, skeleton, selection
+│   │   ├── report.md                  # Counts by status, rejection reason, pattern, skeleton and selection, with examples
 │   │   └── translations.csv           # The formulas kept, original next to normalized (inspect_normalization.py; not tracked)
 │   ├── logs/                          # (gitignored)
 │   │   └── pipeline.log               # Timestamped log of the download step
@@ -76,6 +76,7 @@ STL_dataset_builder/
 │       ├── emit.py                    # Tree -> text in the grammar of stl-nl, fully parenthesized; its pattern
 │       ├── validate.py                # The check with stlgen, the parser of stl-nl
 │       ├── normalize.py               # One formula through all the stages
+│       ├── skeleton.py                # The skeleton of a formula, as stl-nl's formula_patterns.py computes it
 │       └── select.py                  # The formulas for stl-nl: duplicates and the cap per pattern left out
 │
 ├── docs/
@@ -618,7 +619,7 @@ python scripts/07_normalize_formulas.py --show-rejected "unknown_command: \overl
 python scripts/inspect_normalization.py
 ```
 
-It needs the `stlgen` binary of `stl-nl`, built with `cargo build --release --locked --manifest-path rust/stlgen/Cargo.toml` in the `stl-nl` repository. By default it is looked for in a checkout of `stl-nl` next to this one (`../stl-nl/rust/stlgen/target/release/stlgen`); set `STLGEN_BIN` in `.env` or pass `--stlgen` for another place. It writes, in `data/normalized/`: `stl/` (the formulas kept for `stl-nl`; the `.stl` files of an earlier run are replaced; they are numbered in input order, so a file's number can change from one run to another, and `manifest.jsonl` says which record each file is), `manifest.jsonl` (one line per input formula: `id`, `status`, `file`, `reasons`, `rules` that fired, `original`, `normalized`, `pattern` (the normalized text with the numbers written `#` and the names renamed `a`, `b`, ... in order, so that formulas differing only in numbers and names share it), `stl` as `stlgen` prints it back, `substitutions` of the symbolic bounds given random values, `rounded` bounds, `over_limits` of `stl-nl`'s selection, `selection`: `kept`, `duplicate` (with the first one's id in `duplicate_of`) or `pattern_cap` for the formulas ok) and `report.md`. The same input and seed give the same files.
+It needs the `stlgen` binary of `stl-nl`, built with `cargo build --release --locked --manifest-path rust/stlgen/Cargo.toml` in the `stl-nl` repository. By default it is looked for in a checkout of `stl-nl` next to this one (`../stl-nl/rust/stlgen/target/release/stlgen`); set `STLGEN_BIN` in `.env` or pass `--stlgen` for another place. It writes, in `data/normalized/`: `stl/` (the formulas kept for `stl-nl`; the `.stl` files of an earlier run are replaced; they are numbered in input order, so a file's number can change from one run to another, and `manifest.jsonl` says which record each file is), `manifest.jsonl` (one line per input formula: `id`, `status`, `file`, `reasons`, `rules` that fired, `original`, `normalized`, `pattern` (the normalized text with the numbers written `#` and the names renamed `a`, `b`, ... in order, so that formulas differing only in numbers and names share it), `skeleton` (the coarser grouping of stl-nl's `scripts/formula_patterns.py`: the temporal and Boolean structure, each condition a Greek letter, as in `G[#,#] (φ -> F[#,#] ψ)`), `stl` as `stlgen` prints it back, `substitutions` of the symbolic bounds given random values, `rounded` bounds, `over_limits` of `stl-nl`'s selection, `selection`: `kept`, `duplicate` (with the first one's id in `duplicate_of`) or `pattern_cap` for the formulas ok) and `report.md`. The same input and seed give the same files.
 
 | Flag | What it does |
 |---|---|

@@ -141,10 +141,10 @@ data/normalized/
 ├── stl/f00001.stl ...            # status ok and selection kept (the input of stl-nl), numbered in input order
 ├── needs_review/r00001.stl ...   # status needs_review (not written while no rule has it)
 ├── manifest.jsonl                # one line per input record
-└── report.md                     # counts by status, the rejection reasons, the most frequent unknown commands and patterns, each with an example, and the selection
+└── report.md                     # counts by status, the rejection reasons, the most frequent unknown commands and patterns, each with an example, the skeletons, and the selection
 ```
 
-A manifest line: `id`, `status`, `file` (or null), `reasons`, `rules` (those that fired), `original`, `normalized`, `pattern` (see below), `stl` (stlgen's canonical text), `substitutions` (e.g. `{"T": 37}`), `rounded` (e.g. `[[["0.2","0.4"],["0","1"]]]`), `over_limits`, `bounds`, `source_type`, `selection` and `duplicate_of` (see *Selection for stl-nl*).
+A manifest line: `id`, `status`, `file` (or null), `reasons`, `rules` (those that fired), `original`, `normalized`, `pattern` and `skeleton` (see below), `stl` (stlgen's canonical text), `substitutions` (e.g. `{"T": 37}`), `rounded` (e.g. `[[["0.2","0.4"],["0","1"]]]`), `over_limits`, `bounds`, `source_type`, `selection` and `duplicate_of` (see *Selection for stl-nl*).
 
 ## Patterns
 
@@ -158,6 +158,18 @@ The pattern of a formula (`emit.pattern`, decided on 2026-10-19) is its normaliz
 | `F[1,2] p`, `F[42,94] varphi` | `F[#,#] a` |
 
 The manifest has it in `pattern`, and the report counts the formulas of each (section *Patterns*).
+
+## Skeletons
+
+The skeleton of a formula (`src/normalization/skeleton.py`, added on 2026-11-05) is the coarser grouping of stl-nl's `scripts/formula_patterns.py`, copied from stl-nl at `efe09be` so that a formula gets the same skeleton in both: its temporal and Boolean structure, each distinct relation or Boolean signal written as a Greek letter (a letter repeats only when the exact same condition repeats), bounds `[#,#]` or `[#,inf]`, and the operands of `+ * && || == !=` unordered. It is computed from the AST `stlgen import` gives in the check (stage 5), so only formulas accepted by stlgen have one.
+
+| Formula | Pattern | Skeleton |
+|---|---|---|
+| `G[0,30] ((gear == 4) -> (F[0,5] (rpm < 3000)))` | `G[#,#] ((a == #) -> (F[#,#] (b < #)))` | `G[#,#] (φ -> F[#,#] ψ)` |
+| `G[0,5] (x < 3)`, `G[0,T] (x + y > z)` | `G[#,#] (a < #)`, `G[#,#] (a + b > c)` | `G[#,#] φ` |
+| `(G[0,5] (x < 3)) && (F[0,2] (x < 3))` | `(G[#,#] (a < #)) && (F[#,#] (a < #))` | `(F[#,#] φ) && (G[#,#] φ)` |
+
+The manifest has it in `skeleton`; the report section *Skeletons* compares the number of skeletons and patterns of the formulas ok and of those kept for stl-nl, and lists the most common skeletons. It is only reported: the cap of the selection is per pattern.
 
 ## Selection for stl-nl
 

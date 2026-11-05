@@ -17,6 +17,7 @@ from src.normalization.latex import source_macros
 from src.normalization.normalize import normalize
 from src.normalization.rules import RULES
 from src.normalization.select import select
+from src.normalization.skeleton import skeleton
 from src.normalization.validate import check
 
 MACROS = source_macros(r"""
@@ -326,6 +327,21 @@ def test_selection_caps_each_pattern_over_papers():
     assert [l["selection"] for l in again] == [l["selection"] for l in lines]
     select(lines, 0, "0")
     assert all(l["selection"] == "kept" for l in lines)
+
+
+@pytest.mark.skipif(not STLGEN_BIN.is_file(), reason="stlgen of stl-nl not built")
+def test_skeleton():
+    def of(formula):
+        parsed, error = check(run(formula).normalized, STLGEN_BIN)
+        assert error is None, error
+        return skeleton(parsed["ast"])[0]
+    assert of(r"\psi = \Box_{[0,30]} (gear = 4 \rightarrow \Diamond_{[0,5]} rpm < 3000)") == "G[#,#] (φ -> F[#,#] ψ)"
+    # Conditions become letters whatever their relations: two patterns, one skeleton
+    assert of(r"\Box_{[0,5]} x < 3") == of(r"\Diamond_{[0,T]} (x + y > z)".replace("Diamond", "Box")) == "G[#,#] φ"
+    # A letter repeats only when the same condition repeats; && is unordered; inf is kept
+    assert of(r"(\Box_{[0,5]} x < 3) \wedge (\Diamond_{[0,2]} x < 3)") == "(F[#,#] φ) && (G[#,#] φ)"
+    assert of(r"(\Box_{[0,5]} x < 3) \wedge (\Diamond_{[0,2]} x < 4)") == "(F[#,#] φ) && (G[#,#] ψ)"
+    assert of(r"\Box p") == "G[#,inf] φ"
 
 
 def test_number_text():
