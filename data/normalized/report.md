@@ -248,6 +248,50 @@ The pattern of a formula is its normalized text with every number written # and 
 | `G[#,#] (\|a - b\| <= #)` | 10 | 0.4% | `G[5,10] (\|x_1 - x_2\| <= 2)` |
 | `G[#,#] (a && b)` | 10 | 0.4% | `G[0,5] (mu_1 && mu_2)` |
 
+## Skeletons
+
+The skeleton of a formula is its temporal and Boolean structure, as stl-nl's `scripts/formula_patterns.py` computes it (`src/normalization/skeleton.py`, from stlgen's AST): each distinct relation or Boolean signal is a Greek letter, which repeats only when the exact same condition repeats; bounds are `[#,#]`, or `[#,inf]` when unbounded; the operands of `+ * && || == !=` are unordered. It is coarser than the pattern, which also keeps the relations. The manifest has the skeleton of each formula ok (`skeleton`); the example is the shortest formula of each skeleton.
+
+| Level, formulas | Formulas | Distinct | Seen once | Top 10 cover |
+|---|---|---|---|---|
+| Skeleton, ok | 2317 | 429 | 281 | 60.3% |
+| Skeleton, kept for stl-nl | 1200 | 429 | 303 | 35.2% |
+| Pattern, ok | 2317 | 680 | 462 | 42.6% |
+| Pattern, kept for stl-nl | 1200 | 680 | 508 | 8.3% |
+
+| Skeleton | Formulas ok | Share | Kept for stl-nl | Example |
+|---|---|---|---|---|
+| `G[#,#] φ` | 468 | 20.2% | 107 | `G[2,6] p` |
+| `F[#,#] φ` | 413 | 17.8% | 85 | `F[0,7] p` |
+| `φ U[#,#] ψ` | 185 | 8.0% | 25 | `p U[a,b] q` |
+| `G[#,#] F[#,#] φ` | 82 | 3.5% | 45 | `G[0,2] (F[2,4] p)` |
+| `F[#,#] G[#,#] φ` | 53 | 2.3% | 19 | `F[a,b] (G[c,d] p)` |
+| `G[#,#] (φ && ψ)` | 49 | 2.1% | 37 | `G[0,5] (mu_1 && mu_2)` |
+| `(F[#,#] φ) && (G[#,#] ψ)` | 46 | 2.0% | 41 | `(G[1,T] a) && (F[1,T] b)` |
+| `(F[#,#] φ) && (F[#,#] ψ)` | 39 | 1.7% | 20 | `(F[a,b] z_i) && (F[a,b] z_j)` |
+| `(G[#,#] φ) -> G[#,#] ψ` | 36 | 1.6% | 13 | `(G[0,30] (w < 3000)) -> (G[0,4] (v < 35))` |
+| `G[#,inf] φ` | 26 | 1.1% | 22 | `G[0,inf] psi` |
+| `G[#,#] !φ` | 24 | 1.0% | 12 | `G[5,8] (!c)` |
+| `G[#,inf] (φ -> F[#,#] ψ)` | 22 | 0.9% | 14 | `G[0,inf] (a -> (F[1,2] b))` |
+| `F[#,#] (φ && ψ)` | 22 | 0.9% | 22 | `F[0,10] (p && q)` |
+| `G[#,#] (φ -> F[#,#] ψ)` | 19 | 0.8% | 18 | `G[0,10] (p -> (F[0,5] q))` |
+| `G[#,#] (φ -> ψ)` | 15 | 0.6% | 14 | `G[a,b] ((x == k) -> varphi_k)` |
+| `G[#,#] F[#,#] G[#,#] φ` | 14 | 0.6% | 6 | `G[2,4] (F[3,5] (G[1,3] p))` |
+| `(F[#,#] φ) \|\| (F[#,#] ψ)` | 14 | 0.6% | 8 | `(F[0,t_1] mu_1) \|\| (F[0,t_1] mu_2)` |
+| `(G[#,#] φ) && (G[#,#] ψ)` | 13 | 0.6% | 12 | `(G[0,H] Z) && (G[0,H] P)` |
+| `F[#,inf] φ` | 12 | 0.5% | 8 | `F[a,inf] p` |
+| `φ U[#,inf] ψ` | 12 | 0.5% | 11 | `A U[0,inf] B` |
+| `(F[#,#] φ) && ψ` | 12 | 0.5% | 8 | `p_1 && (F[0,2] p_2)` |
+| `F[#,#] (φ \|\| ψ)` | 11 | 0.5% | 10 | `F[0,40] (p_1 \|\| p_3)` |
+| `(F[#,#] φ) \|\| (G[#,#] ψ)` | 11 | 0.5% | 10 | `(G[4,8] (x_10 > 0.1)) \|\| (F[8,14] (x_10 < 0.1))` |
+| `(F[#,#] G[#,#] φ) \|\| (F[#,#] G[#,#] ψ)` | 11 | 0.5% | 5 | `(F[0,15] (G[0,5] Reg_4_4)) \|\| (F[0,15] (G[0,5] Reg_2_2))` |
+| `G[#,#] !(φ && ψ && χ && θ)` | 11 | 0.5% | 10 | `G[0,10] (!((v >= -1) && (v <= 1) && (x >= 1) && (x <= 2)))` |
+| `G[#,#] F[#,#] ((G[#,#] φ) -> G[#,#] ψ)` | 10 | 0.4% | 2 | `G[0,72] (F[0,8] ((G[0,5] (y_2 - y_1 > 9)) -> (G[5,20] (y_5 - y_4 > 7))))` |
+| `(G[#,#] φ) \|\| (G[#,#] ψ)` | 10 | 0.4% | 9 | `(G[a,b] varphi_1) \|\| (G[a,b] varphi_2)` |
+| `G[#,#] ((F[#,#] φ) \|\| (G[#,#] ψ))` | 9 | 0.4% | 2 | `G[0,19] ((G[0,5] (b_1 <= 20)) \|\| (F[0,5] (b_2 >= 40)))` |
+| `(F[#,#] φ) && (G[#,#] !ψ)` | 9 | 0.4% | 6 | `(F[0,10] a) && (G[0,20] (!b))` |
+| `(F[#,#] φ) && (G[#,#] (ψ && χ))` | 9 | 0.4% | 5 | `(F[0,5] (vx > 0.5)) && (G[0,5] ((z > 1) && (z < 2)))` |
+
 ## Selection for stl-nl
 
 Of the formulas ok, one with the same normalized text as an earlier one is left out (`duplicate`; the manifest gives the id of the first in `duplicate_of`), and at most 10 formulas of each pattern are kept, taken from the papers in turn, at random with the seed (`pattern_cap`). Only the formulas kept are written in `stl/`.
