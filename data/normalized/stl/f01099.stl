@@ -1,1 +1,1 @@
-(phi_1 || phi_2) U[52,94] (varphi_1 || varphi_2)
+(F[18,32] (latency < 17)) && (F[26,52] (backlog > 4))

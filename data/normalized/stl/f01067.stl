@@ -1,1 +1,1 @@
-(F[18,32] (latency < 17)) && (F[26,52] (backlog > 4))
+(G[a,b] (f_x_1 > 0)) && (F[a_prime,b_prime] (f_prime_x_1_x_2 > 0))

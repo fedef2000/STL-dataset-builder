@@ -1,1 +1,1 @@
-F[17,29] varphi
+((F[a_1,b_1] psi_1) || (G[a_2,b_2] psi_2)) && (psi_3 U[a_3,b_3] psi_4)

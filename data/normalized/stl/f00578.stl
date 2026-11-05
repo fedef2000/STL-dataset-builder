@@ -1,1 +1,1 @@
-G[0,1] ((distance_to_boundary <= 20) -> (F[0,1] (distance_to_boundary > 2)))
+(G[0,29] varphi_1) && (F[30,b] varphi_2) && (F[30,30] (varphi_1 U[0,inf] varphi_2))

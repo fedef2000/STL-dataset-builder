@@ -1,1 +1,1 @@
-((G[0,55] transaction) && suspicious) -> ((G[0,3] transaction) -> (!suspicious))
+(F[0,30] p) && (F[0,20] p)

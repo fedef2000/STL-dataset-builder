@@ -1,1 +1,1 @@
-F[38,67] (G[6,36] psi)
+G[0,inf] ((cycle_starting && (F[0,inf] cycle_ending)) -> ((request -> ((!cycle_ending) && (F[0,3] pulse_reply) && (!cycle_ending) && (F[0,3] glucose_reply))) U[0,inf] cycle_ending))

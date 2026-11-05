@@ -1,1 +1,1 @@
-F[59,60] psi_i_prime
+G[0,inf] ((q && (!r) && (F[0,inf] r)) -> ((!p) U[l,u] r))

@@ -1,1 +1,1 @@
-G[0,30] ((gear == 3) -> (speed >= 19))
+(G[0,a] psi_1) && (F[a,b] psi_2) && ((F[a,a] psi_1) U[0,inf] psi_2)

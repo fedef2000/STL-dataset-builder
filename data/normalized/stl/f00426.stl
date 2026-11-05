@@ -1,1 +1,1 @@
-G[0,26] ((y > 22.2) && (x > 11.73))
+(G[0,tau] mu_inv_x) && (G[tau,tau_prime] mu_reach_x) && (G[0,tau_prime] mu_ws_x)

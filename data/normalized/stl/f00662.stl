@@ -1,1 +1,1 @@
-(G[3,4] (x_151 > 0.07)) || (F[4,6] (x_151 < 0.07))
+(G[a,t_prime] psi_1) && (F[t_prime,t_prime] psi_2)

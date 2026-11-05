@@ -1,1 +1,1 @@
-G[0,5] (mu_1 && mu_2)
+F[a,b] (G[a_prime,b_prime] (mu_h_1 || mu_h_2))

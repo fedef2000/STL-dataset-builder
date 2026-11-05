@@ -1,1 +1,1 @@
-G[19,58] (F[19,39] (x > 0.48))
+G[0,inf] (startResting_i -> (F[3,5] (!resting_i)))

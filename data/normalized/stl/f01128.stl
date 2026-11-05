@@ -1,1 +1,1 @@
-G[0,1000] ((x > 0.5) -> (F[0,100] (x < 0)))
+F[a_under,b_under] (G[a_bar,b_bar] psi)

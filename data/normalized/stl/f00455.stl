@@ -1,1 +1,1 @@
-phi_0 && (G[0,5] (!phi_obs1)) && (F[5,5] phi_goal)
+F[t_4,t_5] (mu_parent U[0,t_6] mu_child)

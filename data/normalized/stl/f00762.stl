@@ -1,1 +1,1 @@
-G[0,38] (psi -> (F[0,66] varphi))
+((10 <= tempe) && (tempe <= 90)) && (((0 <= cooling) && (cooling <= 1)) U[15,20] ((40 <= tempe) && (tempe <= 50)))

@@ -1,1 +1,1 @@
-G[0,88] (!(G[0,20] ((!g_4) && (omega >= omega_bar))))
+(((G[0,inf] varphi) || chi) U[a,5] theta) <-> ((chi U[a,5] theta) || ((chi U[0,5] (G[0,10] varphi_1)) && (F[a,5] theta) && varphi_ggb))

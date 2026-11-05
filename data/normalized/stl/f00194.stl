@@ -1,1 +1,1 @@
-G[11,50] ((controller_mode == 0) -> (mu < rho))
+G[0,10] ((speed <= 120) && (RPM <= 4500))

@@ -1,1 +1,1 @@
-F[0,79] (s <= mu)
+F[0,inf] (diagonalBehind_s && (X (stayPos && (F[6,inf] (alignedHeading_s && aboveTouchdown_s && (F[0,inf] descended_s))))))

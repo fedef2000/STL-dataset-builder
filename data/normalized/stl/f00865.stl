@@ -1,1 +1,1 @@
-(G[0,17] (F[0,24] p)) && (G[0,41] (!p))
+(F[0,T_bar] REACH_i) && (G[0,T_bar] AVOID_j)

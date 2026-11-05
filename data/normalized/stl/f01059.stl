@@ -1,1 +1,1 @@
-(F[11,60] (backlog < 4)) || (G[13,38] (backlog < 63))
+G[0,inf] true

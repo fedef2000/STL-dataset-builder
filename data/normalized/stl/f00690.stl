@@ -1,1 +1,1 @@
-G[5,20] (|ball_pos - tray_pos| <= 0.2)
+G[0,5] (behind_p_s_p_uav && heading_aligned_h_s_h_uav)

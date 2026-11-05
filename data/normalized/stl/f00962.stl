@@ -1,1 +1,1 @@
-F[0,66] (|Plane_Pose - Wire_Pose| <= varepsilon)
+(G[0,1] (act_1 -> (a || b))) && (F[0,1] (act_1 && b && (!a)))

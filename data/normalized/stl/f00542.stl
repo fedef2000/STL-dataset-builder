@@ -1,1 +1,1 @@
-(F[0,6] gamma_1_x) && (G[0,6] (!gamma_2_x))
+G[0,inf] ((q && (!r) && (F[0,inf] r)) -> ((F[0,u] (p || r)) U[0,inf] r))

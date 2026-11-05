@@ -1,1 +1,1 @@
-((G[0,16] (a -> (F[0,3] b))) && (G[0,78] (b -> (F[0,3] c)))) -> (G[0,86] (a -> (F[0,3] c)))
+((G[0,inf] transaction) && suspicious) -> ((G[0,6] transaction) -> (F[0,3] report))

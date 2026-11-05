@@ -1,1 +1,1 @@
-(x_P_0 <= 0.01) U[0,30] ((x_P_time > alpha) && (m_P_on == 1))
+G[0,27] ((Delta_3_speed > 30) -> (Delta_3_gear > 0))

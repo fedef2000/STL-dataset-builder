@@ -1,1 +1,1 @@
-F[0,1000] (deadlock && (global_clock >= m + 4))
+(G[a_1,b_1] psi_1) && (F[a_2,b_2] psi_2) && (psi_3 U[a_3,b_3] psi_4)

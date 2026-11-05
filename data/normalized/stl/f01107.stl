@@ -1,1 +1,1 @@
-F[0,1800] ((altitude > 3048) && (speed >= 102.89))
+(G[0,82] mu_z) && (G[0,82] mu_omega) && (F[59,82] mu_flip)

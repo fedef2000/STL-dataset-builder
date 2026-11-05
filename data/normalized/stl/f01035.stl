@@ -1,1 +1,1 @@
-F[3,5] ((0 <= sigma) && (sigma <= 5))
+G[a,b] (G[a_prime,b_prime] mu_h)

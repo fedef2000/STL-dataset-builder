@@ -1,1 +1,1 @@
-F[0,6] (G[0,10] ((I <= 37) && (R_sig >= 48)))
+F[0,66] (|Plane_Pose - Wire_Pose| <= varepsilon)

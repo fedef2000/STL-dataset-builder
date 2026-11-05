@@ -1,1 +1,1 @@
-F[73,99] psi
+G[5,30] (|ball_pos - tool_pos| <= 0.2)

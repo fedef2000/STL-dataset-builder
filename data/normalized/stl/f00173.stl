@@ -1,1 +1,1 @@
-G[0,33] (d < 5 + v)
+G[0,inf] ((G[0,t_1] (omega <= omega_bar)) -> (G[t_1,t_2] (v <= v_bar)))

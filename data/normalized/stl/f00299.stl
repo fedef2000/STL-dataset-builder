@@ -1,1 +1,1 @@
-G[199,298] (F[0,1] (x <= 23.6))
+(G[a,b] (varphi_1 && varphi_2)) && (G[t_1,a] (varphi_1 && (!varphi_2))) && (G[b,t_2] ((!varphi_1) && varphi_2))

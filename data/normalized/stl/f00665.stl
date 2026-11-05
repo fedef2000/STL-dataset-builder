@@ -1,1 +1,1 @@
-G[0,5] (behind_p_s_p_uav && heading_aligned_h_s_h_uav)
+G[0,10] (!((x1 >= -0.2) && (x1 <= 0.2) && (x2 >= 0.3) && (x2 <= 0.35)))

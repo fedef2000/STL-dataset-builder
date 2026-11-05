@@ -1,1 +1,1 @@
-G[0,82] ((G[0,13] (omega <= omega_bar)) -> (G[13,85] (v <= v_bar)))
+(((varphi_1 U[0,inf] varphi_2) || chi) U[a,45] theta) <-> ((((varphi_1 U[0,90] varphi_2) || chi) U[a,45] theta) || ((((varphi_1 U[0,90] varphi_2) || chi) U[0,45] (G[0,90] varphi_1)) && (F[a,45] theta) && varphi_ugb))
