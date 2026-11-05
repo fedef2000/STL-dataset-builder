@@ -3,7 +3,8 @@ The skeleton of a formula, as stl-nl's scripts/formula_patterns.py computes it (
 the skeleton): its temporal and Boolean structure, with each distinct relation or Boolean signal written as a Greek
 letter, a letter repeating only when the exact same condition repeats. Time bounds are [#,#], or [#,inf] when
 unbounded. Operands of + * && || == != are unordered. It is computed from the AST that `stlgen import` gives
-(validate.check), so a formula gets the same skeleton here and in stl-nl.
+(validate.check), so a formula gets the same skeleton here and in stl-nl; the formulas stlgen can't parse (faithful
+mode) give that AST with stlgen_ast.py. One addition to stl-nl's code: the power of the faithful mode (^, tightest).
 
     G[0,30] ((gear == 4) -> (F[0,5] (rpm < 3000)))  ->  G[#,#] (φ -> F[#,#] ψ)
 """
@@ -15,7 +16,7 @@ GREEK = "φψχθωαβγδηκλμνρξζ"
 UNARY_TEMPORAL = {"globally": "G", "eventually": "F"}
 BINARY_TEMPORAL = {"until": "U", "release": "R"}
 CONNECTIVES = {"and": " && ", "or": " || "}
-ARITHMETIC = {"add": ("+", 1), "subtract": ("-", 1), "multiply": ("*", 2), "divide": ("/", 2)}
+ARITHMETIC = {"add": ("+", 1), "subtract": ("-", 1), "multiply": ("*", 2), "divide": ("/", 2), "power": ("^", 3)}
 # Positions in the output reached by an operand, deciding which parentheses it needs.
 ROOT, UNDER_UNARY_TEMPORAL, UNDER_OPERATOR, UNDER_BINARY_TEMPORAL = range(4)
 # Identical-looking variables are tried in every order; past this limit one order is used.

@@ -1,6 +1,8 @@
 """
 The tree of a normalized formula written in the grammar of stl-nl, with explicit parentheses around every temporal
-operand and every binary subformula, so that stl-nl's precedence can't change its reading. The same writer gives the
+operand and every binary subformula, so that stl-nl's precedence can't change its reading. The faithful mode adds what
+stl-nl's grammar doesn't have: open intervals (F(2,12]), bounds that are real numbers or expressions (F[0,2.5],
+G[T,T + delta]) and powers with an integer exponent (x^2, without parentheses around it: a power binds tightest). The same writer gives the
 pattern of the formula: the same text with every number and parameter written # and the names renamed a, b, ... in the
 order they appear, so that formulas that differ only in their numbers and names have the same pattern.
 """
@@ -57,7 +59,11 @@ class Names:
         return "#" if self.hidden else (number(x) if isinstance(x, Fraction) else str(x))
 
     def bound(self, x) -> str:
-        """A time bound: an integer or a parameter (both # in the pattern), or inf (kept in the pattern)."""
+        """
+        A time bound: a number, a parameter or an expression (all # in the pattern), or inf (kept in the pattern).
+        """
+        if isinstance(x, Node):
+            return "#" if self.hidden else expression(x, self)
         if x == math.inf:
             return "inf"
         if isinstance(x, str):
@@ -74,6 +80,13 @@ def expression(node: Node, names: Names) -> str:
         return f"|{expression(node.args[0], names)}|"
     if node.kind == "neg":
         return f"({names.number(0)} - {_wrapped_expression(node.args[0], names)})"
+    if node.kind == "pow":
+        base, exponent = node.args
+        base_text = expression(base, names)
+        if base.kind not in ("var", "num", "abs") or (base.kind == "num" and base.value < 0) or "/" in base_text:
+            base_text = f"({base_text})"
+        exponent_text = names.number(exponent.value)
+        return f"{base_text}^{exponent_text if exponent.value >= 0 else f'({exponent_text})'}"
     left, right = node.args
     left_text, right_text = _wrapped_expression(left, names), _wrapped_expression(right, names)
     # stl-nl reads x / 1/3 as (x / 1) / 3: a fraction after / is grouped
@@ -88,7 +101,9 @@ def _wrapped_expression(node: Node, names: Names) -> str:
 
 
 def interval(node: Node, names: Names) -> str:
-    return f"[{names.bound(node.interval.lower)},{names.bound(node.interval.upper)}]"
+    """The interval, with ( or ) where it is open (only in the faithful mode: the stl-nl mode closes every interval)."""
+    i = node.interval
+    return f"{'(' if i.lo_open else '['}{names.bound(i.lower)},{names.bound(i.upper)}{')' if i.hi_open else ']'}"
 
 
 def _formula(node: Node, names: Names) -> str:

@@ -24,8 +24,8 @@ class Interval:
 class Tok:
     """
     An STL token. kind: OP (G, F, X), BOP (U, R), NOT, AND, OR, IMP, IFF, REL (<, <=, >, >=, =, ==, !=), DEF (:=, \\equiv,
-    ...), COLON, COMMA (, ;), PUNCT (.), PLUS, MINUS, STAR, SLASH, LP, RP (value: the bracket), ABS, NUM (a Fraction), ID
-    (a name), BOOL, IN, INF.
+    ...), COLON, COMMA (, ;), PUNCT (.), PLUS, MINUS, STAR, SLASH, CARET (^ of a power, faithful mode only, always
+    followed by an integer NUM), LP, RP (value: the bracket), ABS, NUM (a Fraction), ID (a name), BOOL, IN, INF.
     """
     kind: str
     value: object = None
@@ -46,7 +46,7 @@ class Tok:
         if self.kind == "BOOL":
             return "true" if self.value else "false"
         fixed = {"NOT": "!", "AND": "&&", "OR": "||", "IMP": "->", "IFF": "<->", "COLON": ":", "PLUS": "+",
-                 "MINUS": "-", "STAR": "*", "SLASH": "/", "ABS": "|", "IN": "\\in", "INF": "\\infty"}
+                 "MINUS": "-", "STAR": "*", "SLASH": "/", "CARET": "^", "ABS": "|", "IN": "\\in", "INF": "\\infty"}
         return fixed.get(self.kind, str(self.value))
 
 
@@ -64,7 +64,8 @@ OPERATOR_LETTERS = {"G", "F", "X", "U", "R"}
 CONNECTIVES = {"\\neg": "NOT", "\\lnot": "NOT", "\\wedge": "AND", "\\land": "AND", "\\vee": "OR", "\\lor": "OR",
                "\\rightarrow": "IMP", "\\Rightarrow": "IMP", "\\implies": "IMP", "\\to": "IMP",
                "\\leftrightarrow": "IFF", "\\Leftrightarrow": "IFF", "\\iff": "IFF"}
-RELATIONS = {"\\leq": "<=", "\\le": "<=", "\\geq": ">=", "\\ge": ">=", "\\neq": "!=", "\\ne": "!="}
+RELATIONS = {"\\leq": "<=", "\\le": "<=", "\\leqslant": "<=", "\\geq": ">=", "\\ge": ">=", "\\geqslant": ">=",
+             "\\neq": "!=", "\\ne": "!="}
 DEFINITIONS = {"\\equiv", "\\triangleq", "\\coloneqq", "\\coloneq", "\\doteq"}
 
 # Removed: spacing, sizing, alignment
@@ -90,7 +91,7 @@ OVERLINES = {"\\overline": "bar", "\\underline": "under"}
 # with their argument when the script is one of them with no braces (\\mu_\\text{inv})
 NAME_FONTS = MATH_FONTS | TEXT_FONTS | MATH_WRAPPERS | {"\\mathbb", "\\mathscr", "\\mathfrak", "\\rm", "\\it", "\\bf",
                                                        "\\sf", "\\tt", "\\cal"}
-# A norm is read as an absolute value (its subscript and a square after it are dropped: norm_as_abs)
+# A norm is read as an absolute value (its subscript, and in the stl-nl mode a square after it, are dropped: norm_as_abs)
 NORMS = {"\\|", "\\lVert", "\\rVert", "\\Vert"}
 
 # A product: written * (products_and_divisions)
@@ -107,6 +108,8 @@ REJECTED = {
     **dict.fromkeys(["\\widetilde", "\\boxplus", "\\sqcup", "\\oplus", "\\boxminus", "\\diamondminus"],
                     "nonstandard_operator"),
 }
+# The exponent of a power the faithful mode keeps: an integer
+INTEGER_EXPONENT = re.compile(r"[-+]?\d+")
 TEXT_CONNECTIVE_PATTERN = re.compile(
     r"\s*[,;:]?\s*(where|and|or|if|iff|for|with|s\.t\.|such that|otherwise|when|then|i\.e\.|e\.g\.)\b", re.I)
 WORD_TOKEN = re.compile(r"[A-Za-z0-9]")
@@ -510,7 +513,7 @@ class Lexer:
         The names and integers of a call's arguments, read as the formula is (f(\\beta_2(x)) -> beta_2_x), or None if
         an argument is anything else: an operator, a formula, an expression (rho(G_{[a,b]} phi, t), x(t+1)).
         """
-        trace = Trace()  # the rules the arguments fire count only if the call becomes a name
+        trace = Trace(self.trace.mode)  # the rules the arguments fire count only if the call becomes a name
         try:
             inner = Lexer(trace).read(content)
         except Rejected:
@@ -546,8 +549,9 @@ class Lexer:
             raise Rejected("parse_error", f"{mark} after nothing")
         if prev.kind in ("AND", "OR"):
             raise Rejected("indexed_operator", f"{prev.text()}{mark}{{{''.join(content)}}}")  # \\land_{i}: \\bigwedge_i
-        if prev.kind == "ABS" and prev.value == "norm" and (mark == "_" or [t for t in content if t != " "] == ["2"]):
-            return j  # \|x\|_2, \|x\|_\infty, \|x\|^2: the kind of norm and the square dropped (norm_as_abs)
+        if prev.kind == "ABS" and prev.value == "norm" and (
+                mark == "_" or ([t for t in content if t != " "] == ["2"] and self.trace.mode == "stl-nl")):
+            return j  # \|x\|_2, \|x\|_\infty, \|x\|^2: the kind of norm (and in the stl-nl mode the square) dropped
         if prev.kind in ("OP", "BOP") or prev.candidate:
             interval = self._script_interval(content)
             if interval is not None:
@@ -573,13 +577,29 @@ class Lexer:
                 prev.value, prev.candidate = f"{prev.value}_prime", False
                 return j
             if part is None or part.isdigit():
+                if self._power(content, out):
+                    return j
                 raise Rejected("power", f"{prev.value}^{''.join(content)}")
             self.trace.fire("index_names")
             prev.value, prev.candidate = f"{prev.value}_{part}", False
             return j
         if mark == "^":
+            if prev.kind in ("RP", "ABS", "NUM") and self._power(content, out):
+                return j
             raise Rejected("power", f"^{''.join(content)}")
         raise Rejected("parse_error", f"subscript after {prev.text()}")
+
+    def _power(self, content: list[str], out: list[Tok]) -> bool:
+        """
+        In the faithful mode, a superscript that is an integer is a power, kept: CARET and the exponent are added to
+        `out` (x^2, (x - 1)^2, |x|^2, \\pi^8 as the paper writes it). Whether it was one.
+        """
+        exponent = "".join(t for t in content if t not in (" ", "{", "}"))
+        if self.trace.mode != "faithful" or not INTEGER_EXPONENT.fullmatch(exponent):
+            return False
+        self.trace.fire("powers")
+        out += [Tok("CARET", "^"), Tok("NUM", Fraction(int(exponent)))]
+        return True
 
     def _attach_interval(self, op: Tok, interval: Interval, plain: bool = False):
         if op.candidate:
@@ -601,7 +621,7 @@ class Lexer:
                 depth -= 1
             elif depth == 0 and tokens[k] in ("]", ")"):
                 try:
-                    inner = Lexer(Trace()).read(tokens[i + 1:k])
+                    inner = Lexer(Trace(self.trace.mode)).read(tokens[i + 1:k])
                 except Rejected:
                     return -1
                 commas = sum(1 for x in inner if x.kind == "COMMA")

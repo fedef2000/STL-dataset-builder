@@ -2,6 +2,12 @@
 The named rules of the normalization, what a record collects as they fire (Trace), and the rules that work on the
 parsed tree: the time bounds (random values for symbols, open intervals closed, real bounds rounded outward) and the
 checks of the symbols against the meanings the extraction gives them (constants, placeholder subformulas).
+
+The normalization has two modes (Trace.mode). "stl-nl", for the formulas without a requirement, writes them in the
+grammar of stl-nl, which then describes them: a change of meaning is acceptable, as the description is written from the
+result. "faithful", for the formulas the paper describes, must keep the meaning the description has: the bounds stay
+as written (real numbers, open intervals, expressions: FAITHFUL_RULES), powers with an integer exponent stay, and the
+rules that change the meaning reject the formula instead (FAITHFUL_REJECTED).
 """
 import math
 import re
@@ -83,7 +89,38 @@ RULES = {
     "parse_error": ("rejected", "a construct the parser can't read (a subscript where none can go, an unexpected symbol, unbalanced brackets): it is never guessed"),
     # Stage 5: validation
     "stlgen_error": ("rejected", "the stlgen parser of stl-nl rejects the result"),
+    # Faithful mode only (FAITHFUL_RULES): what the stl-nl mode changes, kept as the paper writes it
+    "real_bounds": ("ok", "a time bound that isn't an integer kept as written: F[0,2.5] (faithful mode)"),
+    "open_intervals": ("ok", "an open or half-open interval kept open: F(2,12] (faithful mode)"),
+    "bound_expressions": ("ok", "a time bound written as an expression of symbols kept: G[T,T + delta] (faithful mode)"),
+    "powers": ("ok", "a power with an integer exponent kept: x^2, (x - 1)^2, |x|^2 (faithful mode)"),
 }
+
+MODES = ("stl-nl", "faithful")
+FAITHFUL_RULES = {"real_bounds", "open_intervals", "bound_expressions", "powers"}
+# Rules that keep the formula in the stl-nl mode but change its meaning: in the faithful mode they reject it
+FAITHFUL_REJECTED = {
+    "overline_operator": "an operator with a line over it is a variant of the paper (averaged, marked, ...) with its own semantics, which the plain operator would lose",
+    "close_parentheses": "brackets left open at the end: the formula may have been cut, and the description may be about the part that is missing",
+}
+
+
+# What a rule that still rejects does in the faithful mode, where it differs from RULES
+FAITHFUL_DESCRIPTIONS = {
+    "power": "a superscript that is neither an integer exponent nor part of a name (\\rho^{\\varphi}, [1,1]^T, x^{(j)}, 30^\\circ), or an integer superscript on a Boolean atom (\\pi^8 \\vee \\pi^9: a label, not a power)",
+}
+
+
+def status(rule: str, mode: str = "stl-nl") -> str:
+    """What a formula becomes when `rule` fires in `mode`: ok, needs_review or rejected."""
+    return "rejected" if mode == "faithful" and rule in FAITHFUL_REJECTED else RULES[rule][0]
+
+
+def description(rule: str, mode: str = "stl-nl") -> str:
+    """What `rule` does in `mode` (for a rule that rejects, why)."""
+    if mode == "faithful":
+        return FAITHFUL_REJECTED.get(rule) or FAITHFUL_DESCRIPTIONS.get(rule) or RULES[rule][1]
+    return RULES[rule][1]
 
 MAX_BOUND = 2**31 - 1
 RANDOM_BOUND_RANGE = (0, 100)
@@ -94,15 +131,20 @@ class Rejected(Exception):
     """The formula can't be represented: `rule` is the reason, `detail` the construct (e.g. the unknown command)."""
 
     def __init__(self, rule: str, detail: str = ""):
-        assert RULES[rule][0] == "rejected", rule
+        assert RULES[rule][0] == "rejected" or rule in FAITHFUL_REJECTED, rule
         super().__init__(f"{rule}: {detail}" if detail else rule)
         self.rule, self.detail = rule, detail
 
 
 class Trace:
-    """What happens to one formula: the rules that fire (in order, once each), the review reasons, the substitutions."""
+    """
+    What happens to one formula: the rules that fire (in order, once each), the review reasons, the substitutions. In
+    the faithful mode a rule of FAITHFUL_REJECTED rejects the formula as it fires.
+    """
 
-    def __init__(self):
+    def __init__(self, mode: str = "stl-nl"):
+        assert mode in MODES, mode
+        self.mode = mode
         self.rules: list[str] = []
         self.reviews: list[str] = []
         self.substitutions: dict[str, int] = {}
@@ -110,6 +152,9 @@ class Trace:
 
     def fire(self, rule: str):
         assert rule in RULES, rule
+        assert self.mode == "faithful" or rule not in FAITHFUL_RULES, rule
+        if self.mode == "faithful" and rule in FAITHFUL_REJECTED:
+            raise Rejected(rule)
         if rule not in self.rules:
             self.rules.append(rule)
 
@@ -155,6 +200,8 @@ def _value(node, values: dict) -> Fraction:
     if node.kind == "abs":
         return abs(_value(node.args[0], values))
     left, right = (_value(a, values) for a in node.args)
+    if node.kind == "pow":
+        return left ** int(right)
     if node.kind == "mul":
         return left * right
     if node.kind == "div":
@@ -198,8 +245,12 @@ def resolve_bounds(root, trace: Trace, rng):
     inf. A symbol alone in a bound stays a parameter (G[0,T]). The symbols that can't (in a bound expression such as
     [t, t+5], which stl-nl doesn't have, or also used as a signal, as in G[0,T] (x < T), which it forbids) get random
     integers: the same symbol the same value, also where it is compared. Open intervals are closed, real bounds rounded
-    outward. The nodes are changed in place; each interval gets `lower` and `upper`.
+    outward. The nodes are changed in place; each interval gets `lower` and `upper`. In the faithful mode the bounds
+    are kept as written instead (keep_bounds).
     """
+    if trace.mode == "faithful":
+        keep_bounds(root, trace)
+        return
     intervals = [n.interval for n in _walk(root) if n.interval is not None]
     bounds = [b for i in intervals for b in (i.lo, i.hi)]
     in_bounds = set().union(*map(_symbols, bounds))
@@ -236,6 +287,53 @@ def resolve_bounds(root, trace: Trace, rng):
             trace.rounded.append([[str(b) if x is None else _number_text(x) for x, b in zip(exact, resolved)],
                                   [str(b) for b in resolved]])
         interval.lower, interval.upper = lower, upper
+        interval.lo_open = interval.hi_open = False
+
+
+def _kept_bound(node, trace: Trace):
+    """
+    A bound of the faithful mode: math.inf; a number (an int, or a Fraction when it isn't an integer: real_bounds),
+    computed when it is an expression of numbers only (8-4 is 4); the name of a parameter; or else the expression
+    itself, a tree (bound_expressions).
+    """
+    if node.kind == "inf":
+        return math.inf
+    if not _symbols(node):
+        try:
+            value = _value(node, {})
+        except ZeroDivisionError:
+            raise Rejected("division", "by 0 in a time bound")
+        if value.denominator == 1:
+            return int(value)
+        trace.fire("real_bounds")
+        return value
+    if node.kind == "var":
+        trace.fire("parameter_bounds")
+        return node.value
+    trace.fire("bound_expressions")
+    return node
+
+
+def keep_bounds(root, trace: Trace):
+    """
+    The intervals of the faithful mode: the bounds as the paper writes them (_kept_bound), open or closed as written.
+    Only what has no meaning is rejected: a negative bound, a lower bound above the upper one.
+    """
+    for interval in (n.interval for n in _walk(root) if n.interval is not None):
+        lower, upper = _kept_bound(interval.lo, trace), _kept_bound(interval.hi, trace)
+        numbers = [b for b in (lower, upper) if isinstance(b, (int, Fraction)) and b != math.inf]
+        if any(b < 0 for b in numbers):
+            raise Rejected("negative_bound", f"[{interval_text(lower)},{interval_text(upper)}]")
+        if len(numbers) == 2 and lower > upper:
+            raise Rejected("empty_interval", f"[{interval_text(lower)},{interval_text(upper)}]")
+        if interval.lo_open or interval.hi_open:
+            trace.fire("open_intervals")
+        interval.lower, interval.upper = lower, upper
+
+
+def interval_text(bound) -> str:
+    """A bound in a message."""
+    return _number_text(bound) if isinstance(bound, Fraction) else str(bound)
 
 
 # ---------------------------------------------------------------- the symbols and their meanings

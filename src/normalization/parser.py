@@ -32,7 +32,8 @@ class Node:
     """
     A node of the tree. Formulas: true, false, atom (value: name), rel (value: operator; args: two expressions), not,
     and, or, imp, iff, G, F, X, U, R (interval: Bounds). Expressions: num (value: Fraction), var (value: name), add,
-    sub, mul, div, neg, abs; inf (only as the upper bound of an interval).
+    sub, mul, div, neg, abs, pow (args: the base and an integer num; faithful mode only); inf (only as the upper bound
+    of an interval).
     """
     kind: str
     args: list = field(default_factory=list)
@@ -248,6 +249,8 @@ class Parser:
             self.take()
             return Node("true" if t.value else "false")
         if t.kind == "ID":
+            if self.peek_kind(1) == "CARET":  # pi^8 \vee pi^9: a label, not a number raised to a power
+                raise Rejected("power", f"{t.value}^{self.peek(2).text()} on a Boolean atom")
             self.take()
             return Node("atom", value=self.name(t))
         self.fail()
@@ -315,7 +318,10 @@ class Parser:
         return node
 
     def arith_term(self, fold: bool = True) -> Node:
-        """A number, a name, a parenthesized expression or an absolute value; with `fold`, n/d of integers is one number."""
+        """
+        A number, a name, a parenthesized expression or an absolute value, with its power if it has one (faithful mode:
+        a power binds tighter than anything, -x^2 is -(x^2)); with `fold`, n/d of integers is one number.
+        """
         t = self.peek()
         if t is None:
             self.fail()
@@ -353,6 +359,9 @@ class Parser:
             raise Rejected("infinity", "\\infty")
         else:
             self.fail()
+        while self.peek_kind() == "CARET":
+            self.take()
+            node = Node("pow", [node, Node("num", value=self.expect("NUM").value)])
         return node
 
     # ------------------------------------------------------------ intervals

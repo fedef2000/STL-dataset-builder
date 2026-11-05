@@ -12,12 +12,14 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from config import STLGEN_BIN
+from src.normalization.description import normalize_description
 from src.normalization.emit import number
 from src.normalization.latex import source_macros
 from src.normalization.normalize import normalize
-from src.normalization.rules import RULES
+from src.normalization.rules import FAITHFUL_REJECTED, FAITHFUL_RULES, RULES, status
 from src.normalization.select import select
 from src.normalization.skeleton import skeleton
+from src.normalization.stlgen_ast import formula as stlgen_ast
 from src.normalization.validate import check
 
 MACROS = source_macros(r"""
@@ -56,6 +58,7 @@ OK_CASES = [
     (r"(\Diamond_{[0,5]} a) \leftrightarrow (\lozenge_{[0,5]} b)", "(F[0,5] a) <-> (F[0,5] b)", "latex_ops"),
     (r"\bigcirc a", "X a", "latex_ops"),
     (r"\Box_{[0,5]} (x \leq 3 \wedge y \geq 2 \wedge z \neq 1)", "G[0,5] ((x <= 3) && (y >= 2) && (z != 1))", "latex_ops"),
+    (r"\Box_{[0,5]} (x \leqslant 3 \wedge y \geqslant 2)", "G[0,5] ((x <= 3) && (y >= 2))", "latex_ops"),
     (r"\Diamond_{[0,5]} \top", "F[0,5] true", "bool_constants"),
     (r"\Diamond_{[0,5]} \texttt{True}", "F[0,5] true", "bool_constants"),
     (r"\Box_{[0,5]}[a \wedge b]", "G[0,5] (a && b)", "group_brackets"),
@@ -272,6 +275,7 @@ def test_record_filters():
 
 def test_every_rule_is_tested():
     tested = ({c[2] for c in OK_CASES} | {c[2] for c in RECORDED_CASES} | {c[1] for c in REJECTED_CASES}
+              | {c[2] for c in FAITHFUL_CASES} | {c[1] for c in FAITHFUL_REJECTED_CASES}
               | {"random_symbolic_bounds", "other_logic", "connective_at_edge", "bounds_unsatisfiable",
                  "placeholder_subformula", "ambiguous_scope"})
     # stlgen_error is the check of step 7, after the normalization (test_stlgen_accepts_every_ok_case)
@@ -356,3 +360,143 @@ def test_stlgen_accepts_every_ok_case():
         assert error is None, (formula, expected, error)
     parsed, error = check("G [0,5] a", STLGEN_BIN)
     assert parsed is None and "parse error" in error
+
+
+
+# ---------------------------------------------------------------- the faithful mode (paired formulas)
+
+def faithful(formula, **kwargs):
+    return run(formula, mode="faithful", **kwargs)
+
+
+# (formula, the result in the faithful mode, the rule that must fire): what the stl-nl mode would change stays
+FAITHFUL_CASES = [
+    (r"\Box_{[0.2,0.4]} p", "G[0.2,0.4] p", "real_bounds"),
+    (r"\Box_{[1/3, 2]} p", "G[1/3,2] p", "real_bounds"),
+    (r"\Diamond_{(1,2)} p", "F(1,2) p", "open_intervals"),
+    (r"\Diamond_{[0,10)} p", "F[0,10) p", "open_intervals"),
+    (r"\mathbf{F}_{(5,\infty)} p", "F(5,inf] p", "open_intervals"),
+    (r"\mathbf{F}_{< 5}p", "F[0,5) p", "open_intervals"),
+    (r"\Box_{[T, T+\delta]} p", "G[T,T + delta] p", "bound_expressions"),
+    (r"\Box_{[0,T]} (x < T)", "G[0,T] (x < T)", "parameter_bounds"),
+    (r"\Box_{[0,8-4]} p", "G[0,4] p", None),
+    (r"\Box_{[0,5]} (x-1)^2 < 1", "G[0,5] ((x - 1)^2 < 1)", "powers"),
+    (r"G_{[0,2]}(x_4^2 + x_5^2 > 1.5^2)", "G[0,2] (x_4^2 + x_5^2 > 1.5^2)", "powers"),
+    (r"\Box_{[0,5]} \Vert x \Vert_{2}^2 \le 1", "G[0,5] (|x|^2 <= 1)", "powers"),
+    (r"\Box_{[0,5]} -x^2 > -3", "G[0,5] ((0 - x^2) > -3)", "powers"),
+    (r"\Box_{[0,5]} x^{-1} > 3", "G[0,5] (x^(-1) > 3)", "powers"),
+    (r"\Box_{[0,5]} \phi^{\rm{path}}", "G[0,5] phi_path", "index_names"),
+]
+
+
+@pytest.mark.parametrize("formula,expected,rule", FAITHFUL_CASES)
+def test_faithful(formula, expected, rule):
+    result = faithful(formula)
+    assert (result.status, result.normalized) == ("ok", expected), result.reasons
+    if rule:
+        assert rule in result.rules
+
+
+FAITHFUL_REJECTED_CASES = [
+    (r"\overline{\Diamond}_{[0,10]} p", "overline_operator"),
+    (r"\Box_{[0,20]}\big((gear==4 \land throttle > 45", "close_parentheses"),
+    (r"\Diamond_{[0, 15]} (\pi^8 \vee \pi^9)", "power"),          # an atom with a superscript: a label
+    (r"G_{[10,15]}(\|e - [1,1]^T\| \leq 3)", "power"),           # a transpose
+    (r"\Box_{[0,5]} x^{(j)} > 0", "power"),
+    (r"\Box_{[0.5,0.25]} p", "empty_interval"),
+    (r"\Box_{[-1,0]} p", "negative_bound"),
+]
+
+
+@pytest.mark.parametrize("formula,rule", FAITHFUL_REJECTED_CASES)
+def test_faithful_rejected(formula, rule):
+    result = faithful(formula)
+    assert result.status == "rejected" and result.reasons[0].startswith(rule), result.reasons
+
+
+def test_rules_of_the_faithful_mode():
+    # The rules that change the meaning reject in the faithful mode only
+    assert {status(r, "faithful") for r in FAITHFUL_REJECTED} == {"rejected"}
+    assert {status(r) for r in FAITHFUL_REJECTED} == {"ok"}
+    # The rules of the faithful mode never fire in the stl-nl mode: the same formulas are changed instead
+    for formula, _, _ in FAITHFUL_CASES:
+        assert not FAITHFUL_RULES & set(run(formula).rules), formula
+
+
+def test_faithful_pattern():
+    # Bounds are # whatever they are, the brackets are kept, a power's exponent is a number
+    assert faithful(r"\Diamond_{(0,T+1]} (x^2 < 2.5)").pattern == "F(#,#] (a^# < #)"
+    assert faithful(r"\Box_{[0,T]} (x < T)").pattern == "G[#,#] (a < b)"
+
+
+def test_faithful_names():
+    # The names of the formula, for its description: signals, atoms, parameters
+    assert faithful(r"\Box_{[0,T]} (x < c) \wedge p").names == ["T", "c", "p", "x"]
+
+
+@pytest.mark.skipif(not STLGEN_BIN.is_file(), reason="stlgen of stl-nl not built")
+def test_converter_gives_stlgen_skeletons():
+    # Our tree as stlgen's AST gives the skeleton stlgen's own AST gives (step 7 checked it on every unpaired formula ok)
+    for formula, expected, _ in OK_CASES + [(r"\bigcirc a \leftrightarrow b", None, None),
+                                            (r"\Box_{[0,5]} -x > 0 \wedge |y| < 1", None, None)]:
+        result = run(formula)
+        parsed, error = check(result.normalized, STLGEN_BIN)
+        assert error is None, error
+        assert skeleton(stlgen_ast(result.tree)) == skeleton(parsed["ast"]), formula
+
+
+def test_faithful_skeleton():
+    def of(formula):
+        return skeleton(stlgen_ast(faithful(formula).tree))[0]
+    # Open, real and expression bounds are [#,#] as any finite bound: these have the skeleton of their stl-nl form
+    assert of(r"\Diamond_{(0,2.5]} p") == of(r"\Diamond_{[0,T+1)} p") == "F[#,#] φ"
+    assert of(r"\Box_{[0,5]} (x^2 > 1 \wedge x^2 > 1)") == "G[#,#] (φ && φ)"
+    assert of(r"\Box p") == "G[#,inf] φ"
+
+
+# ---------------------------------------------------------------- the descriptions of the paired formulas
+
+DESCRIPTION_MACROS = source_macros(r"\newcommand{\Trec}{\alpha}\newcommand{\speed}{v_{\mathrm{car}}}")
+
+
+def describe(text, names=(), macros=DESCRIPTION_MACROS):
+    return normalize_description(text, macros=macros, formula_names=set(names))
+
+
+DESCRIPTION_CASES = [
+    # math as in the formula: names, Greek letters, indices, macros, comparisons; a lone = stays
+    (r"while $\varphi_{1}$ holds, $x_1 \le 10$", "while varphi_1 holds, x_1 <= 10"),
+    (r"recover within time $\Trec$ and keep $\speed > 3$", "recover within time alpha and keep v_car > 3"),
+    (r"at $t=22.5$ the value $\dot{\psi} \leq 0.2$", "at t = 22.5 the value psi_dot <= 0.2"),
+    (r"$\Diamond_{[0,5]} p$ and $\mathbf{G}_{\le 3}(a \wedge \neg b)$", "F[0,5] p and G[0,3] (a && !b)"),
+    (r"$\phi_1:=F_{[0,\infty)}\psi_1$", "phi_1 := F[0,inf] psi_1"),
+    (r"in $[0, 15]$ or $x \in (12, 17)$, for $A_i, B_i$", "in [0,15] or x in (12,17), for A_i, B_i"),
+    (r"$|x - y| \le 0.2$ and $-4\le x_1\le -2$ and $x_1(t) > 0$", "|x - y| <= 0.2 and -4 <= x_1 <= -2 and x_1 > 0"),
+    (r"in $99\%$ of the cases, \(x > 2\)", "in 99% of the cases, x > 2"),
+    # text-mode LaTeX made plain; math outside $...$ read as math
+    (r"\emph{always} ``safe''~speed\,\speed{} below \varphi", 'always "safe" speed v_car below varphi'),
+    # Unicode of PDFs
+    (r"if for all time 0≤t <2, q(t) > −1 and φ1 holds", "if for all time 0<=t <2, q(t) > -1 and phi_1 holds"),
+    # cut inside math by the extraction
+    (r"\varphi_2$ requires $O$ until $A$", "varphi_2 requires O until A"),
+]
+
+
+@pytest.mark.parametrize("text,expected", DESCRIPTION_CASES)
+def test_description(text, expected):
+    assert describe(text).normalized == expected
+
+
+def test_description_uses_the_formula_names():
+    # φ is varphi when the formula writes varphi; a signal G is G_sig when the formula renamed it
+    assert describe("φ1 holds", names=["varphi_1"]).normalized == "varphi_1 holds"
+    assert describe(r"$G > 2$", names=["G_sig"]).normalized == "G_sig > 2"
+    d = describe(r"$x > 2$ at time $t$", names=["x"])
+    assert d.names_not_in_formula == ["t"]
+
+
+def test_description_keeps_what_it_cannot_convert():
+    d = describe(r"$(p, t) \models \varphi$ (see Eq.~\eqref{eq:x}), \frobnicate")
+    assert d.normalized == r"$(p, t) \models \varphi$ (see Eq. \eqref{eq:x}), \frobnicate"
+    assert d.unreadable == [{"span": r"$(p, t) \models \varphi$", "reason": r"semantics_definition: \models"}]
+    assert d.references == [r"\eqref{eq:x}"] and d.latex_left == [r"\frobnicate"]

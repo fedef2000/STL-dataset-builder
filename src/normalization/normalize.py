@@ -1,7 +1,8 @@
 """
 The normalization of one formula, stage by stage: the record's filters, the paper's macros expanded, the tokens, the
-tree, the bounds and symbols, the text in the grammar of stl-nl. The check with stlgen is done by the caller
-(scripts/07_normalize_formulas.py), as it runs a program per formula.
+tree, the bounds and symbols, the text in the grammar of stl-nl (or, in the faithful mode, in that grammar with the
+paper's bounds and powers kept: rules.py). The check with stlgen is done by the caller (run.py), as it runs a program
+per formula.
 """
 import random
 from dataclasses import dataclass, field
@@ -10,7 +11,7 @@ from src.normalization import emit
 from src.normalization.latex import Macro, expand, tokenize
 from src.normalization.lexer import KNOWN_COMMANDS, PROTECTED_COMMANDS, lex
 from src.normalization.parser import parse
-from src.normalization.rules import PLACEHOLDER_PATTERN, Rejected, Trace, check_symbols, resolve_bounds
+from src.normalization.rules import PLACEHOLDER_PATTERN, Rejected, Trace, check_symbols, resolve_bounds, _walk
 
 CONNECTIVE_FLAG = "the formula ends or starts with a connective"
 
@@ -56,14 +57,16 @@ class Result:
     substitutions: dict = field(default_factory=dict)
     rounded: list = field(default_factory=list)
     pattern: str | None = None     # the formula with numbers and names hidden (emit.pattern)
+    tree: object = None              # the parsed tree (parser.Node), for the skeleton of the faithful mode
+    names: list[str] = field(default_factory=list)  # the signals, atoms and parameters of the normalized formula
 
 
-def symbol_names(variables: dict[str, str], macros: dict[str, list[Macro]]) -> dict[str, str]:
+def symbol_names(variables: dict[str, str], macros: dict[str, list[Macro]], mode: str = "stl-nl") -> dict[str, str]:
     """The meanings of the variables by their normalized names (the LaTeX keys read as the formula is)."""
     names = {}
     for key, meaning in variables.items():
         try:
-            tokens = lex(expand(tokenize(key), macros, PROTECTED_COMMANDS, Trace()), Trace())
+            tokens = lex(expand(tokenize(key), macros, PROTECTED_COMMANDS, Trace(mode)), Trace(mode))
         except Rejected:
             continue
         if len(tokens) == 1 and tokens[0].kind == "ID":
@@ -73,12 +76,13 @@ def symbol_names(variables: dict[str, str], macros: dict[str, list[Macro]]) -> d
 
 def normalize(formula: str, *, record_id: str = "", seed: str = "0", macros: dict[str, list[Macro]] | None = None,
               variables: dict[str, str] | None = None, other_logic: str | None = None,
-              flags: list[str] = ()) -> Result:
+              flags: list[str] = (), mode: str = "stl-nl") -> Result:
     """
     The formula in the grammar of stl-nl, and what happened to it. `seed` and `record_id` set the random values of
-    the symbolic bounds (the same record gets the same values on every run, whatever the other records).
+    the symbolic bounds (the same record gets the same values on every run, whatever the other records). `mode`:
+    "stl-nl" or "faithful" (rules.py).
     """
-    trace = Trace()
+    trace = Trace(mode)
     macros = with_fallback(macros or {})
     try:
         if other_logic:
@@ -86,7 +90,7 @@ def normalize(formula: str, *, record_id: str = "", seed: str = "0", macros: dic
         if any(f.startswith(CONNECTIVE_FLAG) for f in flags):
             raise Rejected("connective_at_edge")
         tokens = lex(expand(tokenize(formula), macros, PROTECTED_COMMANDS, trace), trace)
-        meanings = symbol_names(variables or {}, macros)
+        meanings = symbol_names(variables or {}, macros, mode)
         formula_names = {n for n, m in meanings.items() if PLACEHOLDER_PATTERN.search(m)}
         root = parse(tokens, trace, formula_names)
         resolve_bounds(root, trace, random.Random(f"{seed}:{record_id}"))
@@ -97,4 +101,7 @@ def normalize(formula: str, *, record_id: str = "", seed: str = "0", macros: dic
         trace.rules.append(rejected.rule)
         return Result("rejected", None, trace.rules, [reason], trace.substitutions, trace.rounded)
     status = "needs_review" if trace.reviews else "ok"
-    return Result(status, text, trace.rules, trace.reviews, trace.substitutions, trace.rounded, pattern)
+    names = sorted({n.value for n in _walk(root) if n.kind in ("var", "atom")}
+                   | {b for n in _walk(root) if n.interval is not None
+                      for b in (n.interval.lower, n.interval.upper) if isinstance(b, str)})
+    return Result(status, text, trace.rules, trace.reviews, trace.substitutions, trace.rounded, pattern, root, names)

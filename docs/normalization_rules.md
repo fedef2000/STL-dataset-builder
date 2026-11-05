@@ -1,14 +1,18 @@
-# Normalization of the unpaired formulas for `stl-nl`: rules
+# Normalization of the formulas into the syntax of `stl-nl`: rules
 
-Input: `data/dataset/stl_formulas_unpaired.jsonl` (6,592 records).
-Output: `data/normalized/` (tracked), with one `.stl` file per accepted formula.
+Inputs (since 2026-11-05 both, so that the final dataset has every formula in one syntax):
+
+* `data/dataset/stl_formulas_unpaired.jsonl` (6,592 records, no requirement): mode **stl-nl**. The formulas become the input of stl-nl, which writes their descriptions: they must be in its grammar, and losing the paper's exact meaning is acceptable, as the description is written from our formula. Output: `data/normalized/unpaired/`, with one `.stl` file per formula kept.
+* `data/dataset/stl_dataset.jsonl` (3,255 records with the paper's requirement): mode **faithful**. These go to fine-tuning with the paper's description, so they must keep the meaning it describes: same syntax, with the bounds and powers kept as the paper writes them even where stl-nl's grammar doesn't have them, and the rules that change the meaning reject the formula. Their descriptions are written to match the formula. Output: `data/normalized/paired/`. See *The faithful mode* and *Descriptions* at the end.
+
+Everything below applies to both modes unless *The faithful mode* says otherwise.
 Spec: `NORMALIZER_BRIEF.md`. Target grammar: `stl-nl`, `rust/stlgen/src/parser.rs`.
 Code: `src/normalization/`, run by `scripts/07_normalize_formulas.py`. Tests: `tests/test_normalization.py`, with at least one case per rule.
 
 Every record ends with one status:
 
-* `ok`: normalized, accepted by `stlgen`, written to `data/normalized/stl/`.
-* `needs_review`: normalized as far as the agreed rules allow, but with a choice we haven't approved. Since 2026-10-19 no rule has this status (every choice was approved), so the folder isn't written; the status stays for a future rule that may need it. Written to `data/normalized/needs_review/` (also checked with `stlgen`), so that approving a policy later only means moving files.
+* `ok`: normalized; unpaired: accepted by `stlgen`, written to `data/normalized/unpaired/stl/`; paired: written to `data/normalized/paired/stl_dataset.jsonl`.
+* `needs_review`: normalized as far as the agreed rules allow, but with a choice we haven't approved. Since 2026-10-19 no rule has this status (every choice was approved), so the folder isn't written; the status stays for a future rule that may need it. Written to `data/normalized/unpaired/needs_review/` (also checked with `stlgen`), so that approving a policy later only means moving files.
 * `rejected`: can't be represented. The reason says why.
 
 Each rule has a name (the list is `RULES` in `src/normalization/rules.py`). The manifest lists the rules that fired for each record, so every change can be traced. In the examples, `→` shows the result of that rule alone. A rejected formula gets the first rule that rejects it.
@@ -42,7 +46,7 @@ Each rule has a name (the list is `RULES` in `src/normalization/rules.py`). The 
 
 | Rule | Example |
 |---|---|
-| `latex_ops` | the brief's table: `\Box` `\square` `\always` `□` → `G`; `\Diamond` `\lozenge` `\diamondsuit` `\eventually` `◇` → `F`; `\until` → `U`; `\bigcirc` → `X`; the letters `G` `F` `U` `R` (bare or in a font command: `\mathbf{G}`, `\mathcal{U}`, `\mathsf{F}`) are the operators when an interval follows; a bare `X` before an operand is next; `\neg` `\lnot` `¬` → `!`; `\wedge` `\land` `∧` → `&&`; `\vee` `\lor` `∨` → `\|\|`; `\rightarrow` `\Rightarrow` `\implies` `\to` `→` `⇒` → `->`; `\leftrightarrow` `\Leftrightarrow` `\iff` `↔` `⇔` → `<->`; `\leq` `\le` `≤` → `<=`; `\geq` `\ge` `≥` → `>=`; `\neq` `\ne` `≠` → `!=`; `\lvert…\rvert`, `\vert`, `\left\|…\right\|` → `\|…\|`; `−` (Unicode minus) → `-`. The ASCII forms `&&`, `\|\|`, `!`, `->`, `<->`, `<=`, `>=`, `==`, `!=` are kept. |
+| `latex_ops` | the brief's table: `\Box` `\square` `\always` `□` → `G`; `\Diamond` `\lozenge` `\diamondsuit` `\eventually` `◇` → `F`; `\until` → `U`; `\bigcirc` → `X`; the letters `G` `F` `U` `R` (bare or in a font command: `\mathbf{G}`, `\mathcal{U}`, `\mathsf{F}`) are the operators when an interval follows; a bare `X` before an operand is next; `\neg` `\lnot` `¬` → `!`; `\wedge` `\land` `∧` → `&&`; `\vee` `\lor` `∨` → `\|\|`; `\rightarrow` `\Rightarrow` `\implies` `\to` `→` `⇒` → `->`; `\leftrightarrow` `\Leftrightarrow` `\iff` `↔` `⇔` → `<->`; `\leq` `\le` `\leqslant` `≤` → `<=`; `\geq` `\ge` `\geqslant` `≥` → `>=` (`\leqslant`, `\geqslant` since 2026-11-05); `\neq` `\ne` `≠` → `!=`; `\lvert…\rvert`, `\vert`, `\left\|…\right\|` → `\|…\|`; `−` (Unicode minus) → `-`. The ASCII forms `&&`, `\|\|`, `!`, `->`, `<->`, `<=`, `>=`, `==`, `!=` are kept. |
 | `bool_constants` | `\top` `\mathbf{true}` `True` `\texttt{TRUE}` → `true`; `\bot` `\mathbf{false}` → `false` (a word true or false in any case is always the constant, never a signal) |
 | `group_brackets` | `[` `]` and `\{` `\}` used as parentheses → `(` `)`: `\Box_{[0,5]}[a \wedge b]` → `G[0,5] (a && b)`. A `[a,b]` right after an operator is its interval, not a group. |
 
@@ -69,14 +73,14 @@ Each rule has a name (the list is `RULES` in `src/normalization/rules.py`). The 
 | `index_names` | `x_{1}`, `x_1` → `x_1`; `v_{max}` → `v_max`; `x_{i,j}` → `x_i_j`; `\mu^{h}` → `mu_h` (a superscript of letters is part of the name; of digits it is a `power`). Font commands in the script are ignored: `\mu_\text{inv}` (no braces), `\phi_{\operatorname{Obs}_1}`, `\phi^{\rm{path}}`, `\mathbb`, ... (since 2026-10-20). Consecutive letters are one name (`gear`, `rpm`), as authors mean them. |
 | `multiword_names` | `\text{Trust Increase}` → `Trust_Increase` |
 | `accent_names` | `\dot{x}` → `x_dot`; `\bar{x}`, `\overline{x}` → `x_bar`; `\underline{x}` → `x_under`; `\hat{x}` → `x_hat`; `\tilde{x}` → `x_tilde`; `x'`, `x^\prime` → `x_prime` (`\overline` and `\underline` on a name since 2026-10-20: `v \le \overline{v}` keeps two names) |
-| `overline_operator` | `\overline{\Diamond}_{[0,10]} p` → `F[0,10] p`; also on `\square`, `\mathcal{U}`, `\mathsf{G}`, ... (and `\underline`). Papers use the line for a variant of the operator: the averaged operators of AvSTL, the marked operators of a tableau. The variant is read as the plain operator: the meaning may change, the pattern stays (decided on 2026-10-20). `\overline` on anything other than a name or an operator stays `unknown_command`. |
+| `overline_operator` | `\overline{\Diamond}_{[0,10]} p` → `F[0,10] p`; also on `\square`, `\mathcal{U}`, `\mathsf{G}`, ... (and `\underline`). Papers use the line for a variant of the operator: the averaged operators of AvSTL, the marked operators of a tableau. The variant is read as the plain operator: the meaning may change, the pattern stays (decided on 2026-10-20). `\overline` on anything other than a name or an operator stays `unknown_command`. Paired formulas: rejected (*The faithful mode*). |
 | `current_time_index` | `x(t)`, `x[t]`, `x_t` → `x` (only the letter `t`, the evaluation time) |
 | `reserved_names` | a signal named `G`, `F`, `X`, `U` or `R` → `G_sig`, ...: `F > 3` → `F_sig > 3`; `X(t)` → `X_sig` |
 | `frac_numbers` | `\frac{1}{3}` → `1/3` (integer literals; any other `\frac` is a division, see `products_and_divisions`) |
 | `number_forms` | `.5` → `0.5`; `5.` → `5`; `1e-3` → `0.001` (exact) |
 | `negation_minus` | `-x > 0` → `(0 - x) > 0`; `-3` stays a literal |
 | `products_and_divisions` | `a \cdot x`, `a \times x`, `a \ast x`, `a * x` → `a * x`; a number written against a name, a Greek letter or a parenthesis: `2x` → `2 * x`, `0.75r` → `0.75 * r`, `2(x+y)` → `2 * (x + y)`; `x / y` → `x / y`; `\frac{x - y}{y}` → `(x - y) / y`. `*` and `/` bind tighter than `+` and `-`, left to right, as in `stl-nl`, which has them since 2026-10-27 (stl-nl `4a6571a`). After a `/`, a fraction is parenthesized (`x / (1/3)`), as `stl-nl` reads `x / 1/3` as `(x / 1) / 3`. Decided on 2026-11-05. |
-| `norm_as_abs` | `\|x - y\|`, `\lVert x \rVert`, `\Vert x \Vert` → `\|x - y\|`. The norm's subscript (`\|x\|_2`, `\|x\|_\infty`, `\Vert x\Vert_{P_1}`) and a square after it (`\|x\|^2`) are dropped. The meaning changes, the pattern (a size compared with a number) stays: decided on 2026-10-20, as the description is written from our formula. Other powers of a norm stay `power`. |
+| `norm_as_abs` | `\|x - y\|`, `\lVert x \rVert`, `\Vert x \Vert` → `\|x - y\|`. The norm's subscript (`\|x\|_2`, `\|x\|_\infty`, `\Vert x\Vert_{P_1}`) and a square after it (`\|x\|^2`) are dropped. The meaning changes, the pattern (a size compared with a number) stays: decided on 2026-10-20, as the description is written from our formula. Other powers of a norm stay `power`. Paired formulas: the square is kept (*The faithful mode*). |
 | `function_as_name` | a name followed by `(...)` or `[...]` whose arguments are only names and non-negative integers becomes one name, the function and its arguments joined with `_`: `\mathrm{Reg}(4,4)` → `Reg_4_4`; `behind(p_s, p_{uas})` → `behind_p_s_p_uas`; `h_4(\beta_2(\mathbf{x}))` → `h_4_beta_2_x` (the inner call first); `\phi[\theta]` → `phi_theta`. It can be a proposition (`F[0,10] Reg_4_4`) or a signal (`tau_p_P_A <= 24.5`). The arguments stay in the name so that different calls stay different atoms (`Reg(4,4) && Reg(3,3)` is not `a && a`). Decided on 2026-10-20. Anything else in the brackets (an operator, a formula, an expression, a real number) is `function`. |
 | `placeholder_subformula` | `\varphi_1 \mathcal{U}_{[a,b]} \varphi_2` where `variables` calls `\varphi_1` a "(sub)formula" or "specification": kept as the atom `varphi_1` with no flag (decided on 2026-10-19: the subformula can't be rebuilt). The rule is only recorded in the manifest, so these formulas can be found. |
 
@@ -118,7 +122,7 @@ A recursive-descent parser with the precedence levels of the brief (unary → U/
 |---|---|---|
 | `strip_label` | ok | `\psi_2 = \square_{[0,20]}(…)`, `\phi := …`, `u_4: …`, `\text{AT19}:\; …` → the formula after the name. Always with `:=` or `:`. With `=` only when the name is a formula name (`\phi`, `\varphi`, `\psi`, `\Phi`, `\Psi` with any subscript, or a name the paper's `variables` call a formula) or an operator follows the `=` (in `gear = 4 \wedge …` the `=` is a comparison). |
 | `strip_trailing_punct` | ok | a final `,` `.` `;` is removed |
-| `close_parentheses` | ok | brackets still open at the end are closed: `\Box_{[0,20]}\big((gear==4 \land throttle > 45` → `G[0,20] ((gear == 4) && (throttle > 45))`. Some are a `)` the paper misses; others are formulas cut by the extraction (the equation goes on in another row), and the result is their first part. Accepted, as the description is written from our formula (decided on 2026-10-20); only recorded in the manifest, so they can be found. Not applied when a bracket closes one never opened. |
+| `close_parentheses` | ok | brackets still open at the end are closed: `\Box_{[0,20]}\big((gear==4 \land throttle > 45` → `G[0,20] ((gear == 4) && (throttle > 45))`. Some are a `)` the paper misses; others are formulas cut by the extraction (the equation goes on in another row), and the result is their first part. Accepted, as the description is written from our formula (decided on 2026-10-20); only recorded in the manifest, so they can be found. Not applied when a bracket closes one never opened. Paired formulas: rejected (*The faithful mode*). |
 | `operator_alone` | rejected | a temporal operator with no operand: `\Theta_1 = F_{[a,b]}`, `\textbf{U}_{[t_1,t_2]}` (only operators), or an operator at the end (`G_{[0,5]} p \wedge F_{[0,3]}`) |
 | `ambiguous_scope` | ok | `\Box_{[0,10]} a \wedge b`: a temporal operator whose operand isn't parenthesized, followed by `&&`, `\|\|`, `->`, `<->`, `U` or `R`. Read with the standard reading `(G[0,10] a) && b` (decided on 2026-10-19, after seeing that most are like `\Box_{[0,40]}p_1\wedge\Box_{[0,30]}(p_4)`), and only recorded in the manifest. |
 
@@ -138,13 +142,20 @@ Each formula goes through `stlgen import` alone, in a temporary directory, becau
 
 ```
 data/normalized/
-├── stl/f00001.stl ...            # status ok and selection kept (the input of stl-nl), numbered in input order
-├── needs_review/r00001.stl ...   # status needs_review (not written while no rule has it)
-├── manifest.jsonl                # one line per input record
-└── report.md                     # counts by status, the rejection reasons, the most frequent unknown commands and patterns, each with an example, the skeletons, and the selection
+├── unpaired/
+│   ├── stl/f00001.stl ...            # status ok and selection kept (the input of stl-nl), numbered in input order
+│   ├── needs_review/r00001.stl ...   # status needs_review (not written while no rule has it)
+│   ├── manifest.jsonl                # one line per input record
+│   ├── report.md                     # counts by status, the rejection reasons, the most frequent unknown commands and patterns, each with an example, the skeletons, and the selection
+│   └── translations.csv              # written by scripts/inspect_normalization.py, to check the formulas kept by eye
+└── paired/
+    ├── stl_dataset.jsonl             # the records of step 6 whose formula is ok, with the normalized formula and descriptions
+    ├── manifest.jsonl                # one line per input record, as for unpaired, with the passages of the formulas ok
+    ├── translations.csv              # written by scripts/inspect_normalization.py: one row per passage, formula and text, original and normalized
+    └── report.md                     # as for unpaired, without the selection, with what goes beyond stl-nl's grammar and how the descriptions were written
 ```
 
-A manifest line: `id`, `status`, `file` (or null), `reasons`, `rules` (those that fired), `original`, `normalized`, `pattern` and `skeleton` (see below), `stl` (stlgen's canonical text), `substitutions` (e.g. `{"T": 37}`), `rounded` (e.g. `[[["0.2","0.4"],["0","1"]]]`), `over_limits`, `bounds`, `source_type`, `selection` and `duplicate_of` (see *Selection for stl-nl*).
+A manifest line: `id`, `status`, `file` (or null), `reasons`, `rules` (those that fired), `original`, `normalized`, `pattern` and `skeleton` (see below), `stl` (stlgen's canonical text), `substitutions` (e.g. `{"T": 37}`), `rounded` (e.g. `[[["0.2","0.4"],["0","1"]]]`), `over_limits`, `bounds`, `source_type`, `selection` and `duplicate_of` (see *Selection for stl-nl*). In the paired manifest `stl` is null and `over_limits` empty (no stlgen), `selection` is null (no selection), and the formulas ok have `requirements` (see *Descriptions*).
 
 ## Patterns
 
@@ -183,3 +194,46 @@ Not every formula ok goes to stl-nl (decided on 2026-10-21; `src/normalization/s
 
 The duplicates are left out first, then the cap is applied to the rest. When a pattern has more formulas than the cap, they are taken from its papers in turn (one from each paper, then a second, ...), with the papers and the formulas of each in random order, so that the names and contexts vary. The seed of a pattern is `<--seed>:<pattern>`: a rerun picks the same, and a change to one pattern doesn't change the others. A duplicate's `duplicate_of` may be a formula left out by the cap. The report section *Selection for stl-nl* counts each and lists the patterns that are cut.
 
+
+
+## The faithful mode (paired formulas)
+
+Decided on 2026-11-05. The paired formulas don't go to stl-nl: they keep the paper's description, which goes with them to fine-tuning, so the formula must keep the meaning that description gives it. The faithful mode (`Trace.mode == "faithful"`; `normalize(..., mode="faithful")`) is the same normalizer, with these differences:
+
+| What | stl-nl mode | faithful mode | Rule (faithful) |
+|---|---|---|---|
+| A bound that isn't an integer | rounded outward: `[0,2.5]` → `[0,3]` (`round_bounds_outward`) | kept: `F[0,2.5]`; an expression of numbers only is computed (`[0,8-4]` → `[0,4]`), a fraction stays `1/3` | `real_bounds` |
+| An open or half-open interval | closed: `(2,12]` → `[2,12]` (`close_open_interval`) | kept: `F(2,12]`, `G[0,5)`, `G_{<5}` → `G[0,5)`; an infinite upper bound is always `inf]` | `open_intervals` |
+| A bound that is an expression of symbols, or a symbol also used as a signal | random integers (`random_symbolic_bounds`) | kept: `G[T,T + delta]`, `G[0,T] (x < T)` | `bound_expressions` (a symbol alone: `parameter_bounds`) |
+| A power with an integer exponent | rejected (`power`) | kept: `x^2`, `(x_e - 0.3)^2`, `0.5^2`, `x^(-1)`, `\|x\|^2`; `\pi^8` as the paper writes it (in a comparison) | `powers` |
+| The square of a norm | dropped (`norm_as_abs`) | kept: `\|x\|_2^2` → `\|x\|^2` (the subscript is still dropped) | `powers` |
+| `overline_operator` | ok: the variant read as the plain operator | **rejected**: the variant (averaged, marked, ...) has its own semantics | `overline_operator` |
+| `close_parentheses` | ok: the first part of a cut formula | **rejected**: the description may be about the part that is missing | `close_parentheses` |
+
+What doesn't change: every other rule (macros, names, `[0,inf]` for an operator without interval, `ambiguous_scope`, which is the standard precedence, `x(t)` → `x`, products, ...). A negative bound and a lower bound above the upper one are still rejected (`negative_bound`, `empty_interval`). `bounds_unsatisfiable`, `bound_too_large` and `stlgen_error` don't apply.
+
+Powers: the exponent must be an integer (with a sign). A letter superscript on a name is still part of the name (`x^{max}` → `x_max`, `index_names`), as in the stl-nl mode. Rejected `power`: other superscripts (`\rho^{\varphi}`, a transpose `[1,1]^T`, `x^{(j)}`, `30^\circ`) and an integer superscript on a Boolean atom (`\pi^8 \vee \pi^9`: a label, which a power can't be). A power binds tighter than anything (`-x^2` is `-(x^2)`) and is written without parentheses around it: `x_4^2 + x_5^2 > 1.5^2`.
+
+**Grammar of the paired formulas.** stl-nl's grammar with four additions: `(` or `)` for an open end of an interval; a bound that is a decimal or a fraction (`2.5`, `1/3`); a bound that is an arithmetic expression of numbers and names (`T + delta`, `l - 2`, `|s|`); `^` followed by an integer (in parentheses if negative) after a name, a number, `|...|` or a parenthesized expression. Every other formula ok is in stl-nl's grammar.
+
+**No stlgen.** stlgen can't parse the four additions, so the paired formulas are checked only by the normalizer's parser. Their skeleton comes from their own tree: `src/normalization/stlgen_ast.py` writes it as the AST stlgen would give (`X a` as `F[1,1] a`, `a <-> b` as `(a && b) || (!a && !b)`, `-x` as `0 - x`, as stlgen does), and `skeleton.py` gets one addition, the power. On 2026-11-05 this gave the same skeleton as stlgen's AST for all 2,317 unpaired formulas ok (test: `test_converter_gives_stlgen_skeletons`). The skeleton writes every finite interval `[#,#]`, open or not; the pattern keeps the brackets: `F(#,#] a`.
+
+The report section *Beyond the grammar of stl-nl* counts the formulas that use each addition.
+
+## Descriptions
+
+Each requirement passage of a paired formula ok is written to match the normalized formula (`src/normalization/description.py`, decided on 2026-11-05): plain text, as stl-nl writes its descriptions, with every symbol written as the formula writes it. The dataset gets the result in `requirements[i].normalized`; `text` stays as the paper writes it.
+
+| What | Example | Result |
+|---|---|---|
+| Math (`$...$`, `$$...$$`, `\(...\)`, `\[...\]`): the paper's macros, then the lexer of the formula, the tokens written back one by one (no tree, no parentheses added) | `while $\varphi_{1}$ holds, $x_1 \le 10$` | `while varphi_1 holds, x_1 <= 10` |
+| A lone `=` stays `=` (it is prose) | `$t=22.5$` | `t = 22.5` |
+| A paper macro | `within time $\Trec$` (`\Trec` is `\alpha`) | `within time alpha` |
+| Operators and intervals | `$\mathbf{G}_{\le 3}(a \wedge \neg b)$`, `$[0, 15]$` | `G[0,3] (a && !b)`, `[0,15]` |
+| The renames of the formula | `$X(t) > 2$` when the formula has `X_sig` | `X_sig > 2` |
+| A math command outside `$...$` | `below \varphi` | `below varphi` |
+| Text-mode LaTeX | `\emph{always} ``safe''~speed`, `$99\%$` | `always "safe" speed`, `99%` |
+| Unicode of PDFs: Greek letters (with the formula's variant: `varphi` if the formula writes it), `≤ ≥ ≠ − ∞ □ ◇ ¬ ∧ ∨` | `0≤t <2, q(t) > −1 and φ1 holds` | `0<=t <2, q(t) > -1 and phi_1 holds` |
+| A passage cut inside math (an odd number of `$`, no space before the first) | `\varphi_2$ requires $O$` | `varphi_2 requires O` |
+
+What can't be converted is left as written and recorded in the manifest, to count it before deciding what to do with it (decided on 2026-11-05: nothing is dropped for it yet): `unreadable` (a math span the lexer can't read, with the rule that stops it: `$(p,t) \models \varphi$`, `$\forall t$`), `references` (`\ref`, `\eqref`, `\cite`, ...), `latex_left` (any other command). `names_not_in_formula` lists the names of the description that the formula doesn't have: many are normal (the time `t`, a region named in the text), others are a symbol written differently (the formula's `v` where the description says `v_min`). The report section *Descriptions* counts all of these.

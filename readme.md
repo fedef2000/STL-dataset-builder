@@ -1,6 +1,6 @@
 # NL-to-STL Dataset Builder
 
-A modular, resumable pipeline that builds a dataset of **(Natural Language Requirement, Signal Temporal Logic Formula)** pairs from the Cyber-Physical Systems (CPS) and formal verification literature. It discovers academic papers on Signal Temporal Logic (STL), downloads their LaTeX sources or PDFs, audits their licences, finds the STL formulas in them, has language models extract the requirement each formula states, and builds the dataset from their answers. The formulas without a requirement are normalized into the input of `stl-nl`, a tool that writes natural-language descriptions of STL formulas.
+A modular, resumable pipeline that builds a dataset of **(Natural Language Requirement, Signal Temporal Logic Formula)** pairs from the Cyber-Physical Systems (CPS) and formal verification literature. It discovers academic papers on Signal Temporal Logic (STL), downloads their LaTeX sources or PDFs, audits their licences, finds the STL formulas in them, has language models extract the requirement each formula states, and builds the dataset from their answers. Finally every formula is normalized into one STL syntax, that of `stl-nl`: the formulas without a requirement become the input of `stl-nl`, a tool that writes natural-language descriptions of STL formulas, and the paired ones, with their descriptions, are written in the same syntax for fine-tuning.
 
 | Step | Script | What it does | Writes |
 |---|---|---|---|
@@ -10,7 +10,7 @@ A modular, resumable pipeline that builds a dataset of **(Natural Language Requi
 | 4 | `04_estimate_formulas.py` | Counts and locates the STL formulas of each paper | `data/corpus.json` |
 | 5 | `05_extract_requirements.py` | Two models (a third on their disagreements) give the requirement of each formula | `data/processed/extractions/` |
 | 6 | `06_build_dataset.py` | Builds the dataset from the answers of step 5: the formulas with a requirement, and those without | `data/dataset/` |
-| 7 | `07_normalize_formulas.py` | Normalizes the formulas without a requirement into the STL grammar of `stl-nl` | `data/normalized/` |
+| 7 | `07_normalize_formulas.py` | Normalizes every formula into the STL syntax of `stl-nl`: the unpaired ones as its input, the paired ones (and their descriptions) for fine-tuning | `data/normalized/` |
 
 **Current state:** all seven steps are implemented. The corpus, the dataset and the normalized formulas are tracked in git (`data/corpus.json`, `data/dataset/`, `data/normalized/`); the downloaded papers and the answers of step 5 are not (`data/raw/`, `data/processed/`).
 
@@ -32,11 +32,17 @@ STL_dataset_builder/
 │   │   ├── stl_formulas_unpaired.jsonl # One record per formula without a requirement
 │   │   ├── excluded.jsonl             # The formulas left out of both, and why
 │   │   └── stats.md                   # What the dataset holds
-│   ├── normalized/                    # The unpaired formulas as input of stl-nl, built by step 7 - tracked in git
-│   │   ├── stl/                       # One .stl file per formula kept for stl-nl (f00001.stl ...)
-│   │   ├── manifest.jsonl             # One line per input formula: status, reasons, rules, original and normalized text, pattern, skeleton, selection
-│   │   ├── report.md                  # Counts by status, rejection reason, pattern, skeleton and selection, with examples
-│   │   └── translations.csv           # The formulas kept, original next to normalized (inspect_normalization.py; not tracked)
+│   ├── normalized/                    # The formulas in the syntax of stl-nl, built by step 7 - tracked in git
+│   │   ├── unpaired/                  # The formulas without a requirement, as input of stl-nl
+│   │   │   ├── stl/                   # One .stl file per formula kept for stl-nl (f00001.stl ...)
+│   │   │   ├── manifest.jsonl         # One line per input formula: status, reasons, rules, original and normalized text, pattern, skeleton, selection
+│   │   │   ├── report.md              # Counts by status, rejection reason, pattern, skeleton and selection, with examples
+│   │   │   └── translations.csv       # The formulas kept, original next to normalized (inspect_normalization.py)
+│   │   └── paired/                    # The formulas with a requirement, for fine-tuning
+│   │       ├── stl_dataset.jsonl      # The records of step 6 whose formula is ok, with the normalized formula and descriptions
+│   │       ├── manifest.jsonl         # One line per input formula, with the passages of the formulas ok
+│   │       ├── report.md              # Counts by status, rejection reason, pattern, skeleton; beyond stl-nl's grammar; descriptions
+│   │       └── translations.csv       # One row per passage: formula and text, original next to normalized (inspect_normalization.py)
 │   ├── logs/                          # (gitignored)
 │   │   └── pipeline.log               # Timestamped log of the download step
 │   ├── raw/                           # (gitignored)
@@ -68,15 +74,19 @@ STL_dataset_builder/
 │   │   ├── pdf_context.py             # What the model reads for a PDF: one region per page, with its image
 │   │   ├── dataset.py                 # Turns the records of step 5 into the records of the dataset
 │   │   └── records.py                 # One record per formula: the answers side by side, their agreement, the tie-breaker's verdict
-│   └── normalization/                 # The formulas in the STL grammar of stl-nl (rules: docs/normalization_rules.md)
+│   └── normalization/                 # The formulas in the STL syntax of stl-nl (rules: docs/normalization_rules.md)
 │       ├── latex.py                   # TeX tokens; the paper's macros, read from its sources and expanded
 │       ├── lexer.py                   # TeX tokens -> STL tokens: operators and intervals, names, numbers
 │       ├── parser.py                  # STL tokens -> tree (stl-nl's precedence); labels, definitions, ambiguous scope
-│       ├── rules.py                   # The named rules; time bounds (parameters, random values, closing, rounding); symbol checks
+│       ├── rules.py                   # The named rules and the two modes (stl-nl, faithful); time bounds; symbol checks
 │       ├── emit.py                    # Tree -> text in the grammar of stl-nl, fully parenthesized; its pattern
 │       ├── validate.py                # The check with stlgen, the parser of stl-nl
 │       ├── normalize.py               # One formula through all the stages
 │       ├── skeleton.py                # The skeleton of a formula, as stl-nl's formula_patterns.py computes it
+│       ├── stlgen_ast.py              # Tree -> the AST stlgen would give, for the skeleton of the paired formulas
+│       ├── description.py             # A requirement passage written to match its normalized formula
+│       ├── run.py                     # A file of records through the normalization: the manifest lines
+│       ├── report.py                  # The report of a run (report.md)
 │       └── select.py                  # The formulas for stl-nl: duplicates and the cap per pattern left out
 │
 ├── docs/
@@ -91,9 +101,9 @@ STL_dataset_builder/
     ├── 04_estimate_formulas.py        # Step 4: Estimate the STL formula yield per paper
     ├── 05_extract_requirements.py     # Step 5: Extract the requirements with two models, a third on their disagreements
     ├── 06_build_dataset.py            # Step 6: Build the dataset file from the answers of step 5
-    ├── 07_normalize_formulas.py       # Step 7: Normalize the unpaired formulas into the input of stl-nl
+    ├── 07_normalize_formulas.py       # Step 7: Normalize every formula into the syntax of stl-nl (unpaired and paired)
     ├── inspect_extractions.py         # Prints the undecided formulas and the answers that failed a check, to read
-    ├── inspect_normalization.py       # Writes the formulas kept by step 7 as a CSV, to check the translation by eye
+    ├── inspect_normalization.py       # Writes the formulas of step 7 as CSV files (unpaired, paired), to check the translation by eye
     ├── migrate_corpus_lookups.py      # One-off: rebuilt the enrichment lookups of the corpus from the log (already run)
     └── eval/
         ├── build_eval_set.py          # Checks the labels against the LaTeX sources and writes the evaluation set
@@ -590,9 +600,14 @@ A record (the same in both files):
 |---|---|
 | `--licenses TIER ...` | Also writes copies of both files with only the records of these licence tiers (`permissive_cc`, `restricted_cc`, `custom_or_arxiv`, `unspecified`). |
 
-### Step 7: Normalize the Unpaired Formulas for stl-nl
+### Step 7: Normalize the Formulas into the Syntax of stl-nl
 
-Turns the formulas of `data/dataset/stl_formulas_unpaired.jsonl` into the input of `stl-nl`, a tool that writes natural-language descriptions of STL formulas: one formula per `.stl` file, in its STL grammar (bounded discrete time, closed integer intervals, every operand parenthesized). No model is called. Each formula goes through named rules, listed with an example each in `docs/normalization_rules.md`:
+Writes every formula of step 6 in one STL syntax, that of `stl-nl`, so that the final dataset has all its formulas written the same way. The two files of step 6 are normalized in the same run, with the same rules, each in its mode:
+
+* **unpaired** (`data/dataset/stl_formulas_unpaired.jsonl`, mode `stl-nl`): the formulas become the input of `stl-nl`, described below.
+* **paired** (`data/dataset/stl_dataset.jsonl`, mode `faithful`): the formulas keep the paper's requirement and go to fine-tuning with it, so they must keep the meaning it describes. Same rules, except that the bounds stay as the paper writes them (`F[0,2.5]`, `F(2,12]`, `G[T,T + delta]`), powers with an integer exponent stay (`x^2`), and the two rules that would change the meaning (an operator with a line over it read as the plain one, a cut formula closed) reject the formula. So these formulas may go beyond `stl-nl`'s grammar (four additions, listed in `docs/normalization_rules.md`) and are not checked with `stlgen`; their skeleton comes from their own tree. Each requirement passage is written to match its formula: plain text, every symbol as the formula writes it (`$\varphi_{1}$` → `varphi_1`, the paper's macros expanded, `\emph{...}` and Unicode made plain); what can't be converted is left as written and counted in the report. All the formulas ok are kept, with no selection.
+
+For the unpaired formulas, step 7 turns `data/dataset/stl_formulas_unpaired.jsonl` into the input of `stl-nl`, a tool that writes natural-language descriptions of STL formulas: one formula per `.stl` file, in its STL grammar (bounded discrete time, closed integer intervals, every operand parenthesized). No model is called. Each formula goes through named rules, listed with an example each in `docs/normalization_rules.md`:
 
 * the paper's own macros are expanded from its LaTeX sources (PDF formulas are already in standard notation);
 * the formula is cut into tokens (LaTeX operators to STL tokens, Greek letters and subscripts to names, intervals attached to their operators) and parsed with the precedence of `stl-nl`;
@@ -602,7 +617,11 @@ Turns the formulas of `data/dataset/stl_formulas_unpaired.jsonl` into the input 
 A formula is `ok` or `rejected` (definitions of the semantics, of a grammar or of an operator, powers, functions, quantifiers, unknown commands, ...): a construct no rule covers is rejected with its reason. Some rules change the paper's meaning to keep a valid formula (random values for some bounds, a norm read as an absolute value, a call such as `Reg(4,4)` read as the name `Reg_4_4`, ...): the description `stl-nl` writes is of our formula, not the paper's. `docs/normalization_rules.md` says which, and when each was decided. Of the formulas `ok`, those with the same normalized text as an earlier one are left out, and at most 10 of each pattern go to `stl-nl`, taken from the papers in turn.
 
 ```bash
+# Both files
 python scripts/07_normalize_formulas.py
+
+# Only one of them (the paired formulas don't need stlgen)
+python scripts/07_normalize_formulas.py --only paired
 
 # Other random values for the bounds that can't stay symbolic
 python scripts/07_normalize_formulas.py --seed 1
@@ -614,20 +633,24 @@ python scripts/07_normalize_formulas.py --max-per-pattern 0
 python scripts/07_normalize_formulas.py --show-rejected
 python scripts/07_normalize_formulas.py --show-rejected function
 python scripts/07_normalize_formulas.py --show-rejected "unknown_command: \overline" --limit 0
+python scripts/07_normalize_formulas.py --show-rejected --only paired
 
-# The formulas kept, original next to normalized and pattern, to check them by eye: data/normalized/translations.csv
+# To check the translation by eye, as CSV: data/normalized/unpaired/translations.csv (the formulas kept for stl-nl:
+# original, normalized, pattern) and data/normalized/paired/translations.csv (one row per requirement passage of a
+# paired formula ok: original, normalized, text original, text normalized)
 python scripts/inspect_normalization.py
+python scripts/inspect_normalization.py --only paired
 ```
 
-It needs the `stlgen` binary of `stl-nl`, built with `cargo build --release --locked --manifest-path rust/stlgen/Cargo.toml` in the `stl-nl` repository. By default it is looked for in a checkout of `stl-nl` next to this one (`../stl-nl/rust/stlgen/target/release/stlgen`); set `STLGEN_BIN` in `.env` or pass `--stlgen` for another place. It writes, in `data/normalized/`: `stl/` (the formulas kept for `stl-nl`; the `.stl` files of an earlier run are replaced; they are numbered in input order, so a file's number can change from one run to another, and `manifest.jsonl` says which record each file is), `manifest.jsonl` (one line per input formula: `id`, `status`, `file`, `reasons`, `rules` that fired, `original`, `normalized`, `pattern` (the normalized text with the numbers written `#` and the names renamed `a`, `b`, ... in order, so that formulas differing only in numbers and names share it), `skeleton` (the coarser grouping of stl-nl's `scripts/formula_patterns.py`: the temporal and Boolean structure, each condition a Greek letter, as in `G[#,#] (φ -> F[#,#] ψ)`), `stl` as `stlgen` prints it back, `substitutions` of the symbolic bounds given random values, `rounded` bounds, `over_limits` of `stl-nl`'s selection, `selection`: `kept`, `duplicate` (with the first one's id in `duplicate_of`) or `pattern_cap` for the formulas ok) and `report.md`. The same input and seed give the same files.
+It needs the `stlgen` binary of `stl-nl`, built with `cargo build --release --locked --manifest-path rust/stlgen/Cargo.toml` in the `stl-nl` repository. By default it is looked for in a checkout of `stl-nl` next to this one (`../stl-nl/rust/stlgen/target/release/stlgen`); set `STLGEN_BIN` in `.env` or pass `--stlgen` for another place (only the unpaired formulas need it). It writes, in `data/normalized/unpaired/`: `stl/` (the formulas kept for `stl-nl`; the `.stl` files of an earlier run are replaced; they are numbered in input order, so a file's number can change from one run to another, and `manifest.jsonl` says which record each file is), `manifest.jsonl` (one line per input formula: `id`, `status`, `file`, `reasons`, `rules` that fired, `original`, `normalized`, `pattern` (the normalized text with the numbers written `#` and the names renamed `a`, `b`, ... in order, so that formulas differing only in numbers and names share it), `skeleton` (the coarser grouping of stl-nl's `scripts/formula_patterns.py`: the temporal and Boolean structure, each condition a Greek letter, as in `G[#,#] (φ -> F[#,#] ψ)`), `stl` as `stlgen` prints it back, `substitutions` of the symbolic bounds given random values, `rounded` bounds, `over_limits` of `stl-nl`'s selection, `selection`: `kept`, `duplicate` (with the first one's id in `duplicate_of`) or `pattern_cap` for the formulas ok) and `report.md`. In `data/normalized/paired/`: `stl_dataset.jsonl` (the records of step 6 whose formula is ok, each with `normalized`, `pattern` and `skeleton` after `formula`, which stays the paper's LaTeX, and `normalized` after the `text` of each requirement), `manifest.jsonl` (as above, with no `stl` and no selection, and for the formulas ok their `requirements`: each passage's `text`, `normalized`, and what was left as written: `unreadable` math, `references`, `latex_left`, `names_not_in_formula`) and `report.md` (as above, without the selection, with the formulas that go beyond `stl-nl`'s grammar and the counts of the descriptions). The same input and seed give the same files.
 
 | Flag | What it does |
 |---|---|
-| `--input FILE` | Another file of dataset records (default `data/dataset/stl_formulas_unpaired.jsonl`). |
+| `--only NAME` | Normalize only `unpaired` or `paired` (default: both). With `--show-rejected`, the manifest to read (default `unpaired`). |
 | `--seed S` | The seed of the random values of the bounds that can't stay symbolic, and of the choice per pattern (default `0`); each record's values depend only on the seed and its id. |
 | `--stlgen PATH` | The `stlgen` binary (default `STLGEN_BIN`). |
 | `--max-per-pattern K` | At most `K` formulas of each pattern go to `stl-nl` (default `10`, `0` for no cap), taken from the papers in turn, at random with `--seed`. |
-| `--show-rejected [REASON]` | Doesn't normalize: reads `manifest.jsonl` of the last run and prints the rejected formulas whose reason starts with `REASON` (a rule, as `function`, or a rule and what it found, as `"unknown_command: \overline"`), each with its id, original, the part the rule found and the rules applied before. A random sample drawn with `--seed`, since the manifest is ordered by paper. Without `REASON`, the reasons with their counts. |
+| `--show-rejected [REASON]` | Doesn't normalize: reads `manifest.jsonl` of the last run (unpaired, or paired with `--only paired`) and prints the rejected formulas whose reason starts with `REASON` (a rule, as `function`, or a rule and what it found, as `"unknown_command: \overline"`), each with its id, original, the part the rule found and the rules applied before. A random sample drawn with `--seed`, since the manifest is ordered by paper. Without `REASON`, the reasons with their counts. |
 | `--limit N` | With `--show-rejected`: how many formulas to print (default `10`, `0` for all). |
 
 The rules are tested with `python -m pytest tests` (needs `pytest`); the test that runs `stlgen` is skipped when it isn't built.
