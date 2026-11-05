@@ -1,23 +1,14 @@
 # STL dataset: statistics
 
-3,255 records (one per formula with a requirement), with 3,507 requirement passages.
+3,253 records (one per formula with a requirement), with 3,505 requirement passages.
 
 
-
-| Construct of another logic | Records | Share |
-|---|---|---|
-| none found | 3,094 | 95.1% |
-| past-time | 92 | 2.8% |
-| spatial-or-description | 35 | 1.1% |
-| probabilistic | 29 | 0.9% |
-| branching-time | 4 | 0.1% |
-| strategic | 1 | 0.0% |
 
 | Kind of requirement passage | Passages | Share |
 |---|---|---|
 | specific | 2,651 | 75.6% |
 | generic | 687 | 19.6% |
-| unclear | 169 | 4.8% |
+| unclear | 167 | 4.8% |
 
 | Kind | Meaning | Example |
 |---|---|---|
@@ -27,15 +18,15 @@
 
 | Licence tier | Records | Share |
 |---|---|---|
-| custom_or_arxiv | 1,712 | 52.6% |
+| custom_or_arxiv | 1,710 | 52.6% |
 | permissive_cc | 982 | 30.2% |
 | unspecified | 300 | 9.2% |
 | restricted_cc | 261 | 8.0% |
 
 | Licence | Records | Share |
 |---|---|---|
-| arxiv-nonexclusive | 1,649 | 50.7% |
-| cc-by | 955 | 29.3% |
+| arxiv-nonexclusive | 1,647 | 50.6% |
+| cc-by | 955 | 29.4% |
 | none | 300 | 9.2% |
 | cc-by-nc-nd | 141 | 4.3% |
 | cc-by-nc-sa | 117 | 3.6% |
@@ -46,12 +37,12 @@
 
 | Domain | Records | Share |
 |---|---|---|
-| generic | 1,302 | 40.0% |
+| generic | 1,300 | 40.0% |
 | mobile robotics | 644 | 19.8% |
 | automotive | 505 | 15.5% |
 | aerial robotics | 214 | 6.6% |
 | smart city | 127 | 3.9% |
-| robotic manipulation | 96 | 2.9% |
+| robotic manipulation | 96 | 3.0% |
 | epidemiology | 68 | 2.1% |
 | industrial machinery | 54 | 1.7% |
 | aviation | 53 | 1.6% |
@@ -68,39 +59,30 @@
 
 | Filter | Records | Papers |
 |---|---|---|
-| all records | 3,255 | 730 |
+| all records | 3,253 | 730 |
 | ... with a specific passage | 2,455 | 664 |
-| ... and no `other_logic` | 2,315 | 642 |
 
 | Licence tier of the cleanest set | Records | Share |
 |---|---|---|
-| custom_or_arxiv | 1,248 | 53.9% |
-| permissive_cc | 668 | 28.9% |
-| unspecified | 221 | 9.5% |
-| restricted_cc | 178 | 7.7% |
+| custom_or_arxiv | 1,296 | 52.8% |
+| permissive_cc | 735 | 29.9% |
+| unspecified | 236 | 9.6% |
+| restricted_cc | 188 | 7.7% |
 
 ## Formulas without a requirement
 
-6,592 formulas that the models agree have no requirement (`stl_formulas_unpaired.jsonl`): records with no passages.
-
-| Construct of another logic | Records | Share |
-|---|---|---|
-| none found | 6,317 | 95.8% |
-| past-time | 222 | 3.4% |
-| spatial-or-description | 33 | 0.5% |
-| probabilistic | 14 | 0.2% |
-| strategic | 6 | 0.1% |
+6,594 formulas that the models agree have no requirement (`stl_formulas_unpaired.jsonl`): records with no passages.
 
 | Licence tier | Records | Share |
 |---|---|---|
-| custom_or_arxiv | 3,410 | 51.7% |
+| custom_or_arxiv | 3,412 | 51.7% |
 | permissive_cc | 2,005 | 30.4% |
 | restricted_cc | 606 | 9.2% |
 | unspecified | 571 | 8.7% |
 
 | Domain | Records | Share |
 |---|---|---|
-| generic | 5,158 | 78.2% |
+| generic | 5,160 | 78.3% |
 | automotive | 548 | 8.3% |
 | mobile robotics | 411 | 6.2% |
 | industrial machinery | 69 | 1.0% |
