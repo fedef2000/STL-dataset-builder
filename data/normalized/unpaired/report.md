@@ -6,9 +6,9 @@ From `data/dataset/stl_formulas_unpaired.jsonl` (6592 formulas), with the rules 
 
 | Status | Formulas | Share |
 |---|---|---|
-| ok | 2317 | 35.1% |
+| ok | 2318 | 35.2% |
 | needs_review | 0 | 0.0% |
-| rejected | 4275 | 64.9% |
+| rejected | 4274 | 64.8% |
 
 ## Why formulas are rejected
 
@@ -17,7 +17,7 @@ Each formula is counted under the first rule that rejects it: a single construct
 | Rule | Formulas | Why it is rejected |
 |---|---|---|
 | semantics_definition | 610 | a definition of the semantics (\models, \vDash): it says when a signal satisfies a formula, it is not a formula itself |
-| unknown_command | 578 | a LaTeX command the paper doesn't define and the normalizer has no translation for (it is not an STL operator, connective, comparison, font or spacing command): its meaning is unknown, so the whole formula is rejected even if the rest is valid STL |
+| unknown_command | 577 | a LaTeX command the paper doesn't define and the normalizer has no translation for (it is not an STL operator, connective, comparison, font or spacing command): its meaning is unknown, so the whole formula is rejected even if the rest is valid STL |
 | function | 464 | a function applied to something (rho(G_{[a,b]} phi,t), x(t+1), \max, \min, \log, ...): stl-nl has no functions (a call on names and integers only, Reg(4,4), is kept as one name) |
 | power | 447 | a power or a superscript that isn't a name (x^2, \rho^{\varphi}): stl-nl has no powers |
 | parse_error | 418 | a construct the parser can't read (a subscript where none can go, an unexpected symbol, unbalanced brackets): it is never guessed |
@@ -46,7 +46,7 @@ Up to 3 formulas per rule, from different papers and showing different cases of 
 | `\tau\vDash \Box_{[u,v]} \varphi` | `\vDash` says when a signal satisfies a formula: this defines the meaning of an operator |
 | `\vdash C: \Box_{[0,1]} c: \Box_{[0,1]}p` | `\vdash` says when a signal satisfies a formula: this defines the meaning of an operator |
 
-**unknown_command** (578 formulas): a LaTeX command the paper doesn't define and the normalizer has no translation for (it is not an STL operator, connective, comparison, font or spacing command): its meaning is unknown, so the whole formula is rejected even if the rest is valid STL.
+**unknown_command** (577 formulas): a LaTeX command the paper doesn't define and the normalizer has no translation for (it is not an STL operator, connective, comparison, font or spacing command): its meaning is unknown, so the whole formula is rejected even if the rest is valid STL.
 
 | Example | Why |
 |---|---|
@@ -213,7 +213,7 @@ Candidates for a new rule. Many come from the paper's macros: its definition of 
 
 The pattern of a formula is its normalized text with every number written # and the names renamed a, b, ... in the order they appear (a name used twice keeps its letter; operators and comparisons are kept). Formulas that differ only in their numbers and names have the same pattern. The manifest has the pattern of each formula (`pattern`); the example is the shortest formula of each pattern.
 
-2317 formulas kept have 680 patterns; 462 of them have one formula only. The 30 most common cover 1264 formulas (55%).
+2318 formulas kept have 681 patterns; 463 of them have one formula only. The 30 most common cover 1264 formulas (55%).
 
 | Pattern | Formulas | Share | Example |
 |---|---|---|---|
@@ -254,10 +254,10 @@ The skeleton of a formula is its temporal and Boolean structure, as stl-nl's `sc
 
 | Level, formulas | Formulas | Distinct | Seen once | Top 10 cover |
 |---|---|---|---|---|
-| Skeleton, ok | 2317 | 429 | 281 | 60.3% |
-| Skeleton, kept for stl-nl | 1200 | 429 | 303 | 35.2% |
-| Pattern, ok | 2317 | 680 | 462 | 42.6% |
-| Pattern, kept for stl-nl | 1200 | 680 | 508 | 8.3% |
+| Skeleton, ok | 2318 | 429 | 280 | 60.3% |
+| Skeleton, kept for stl-nl | 1201 | 429 | 302 | 35.2% |
+| Pattern, ok | 2318 | 681 | 463 | 42.5% |
+| Pattern, kept for stl-nl | 1201 | 681 | 509 | 8.3% |
 
 | Skeleton | Formulas ok | Share | Kept for stl-nl | Example |
 |---|---|---|---|---|
@@ -298,7 +298,7 @@ Of the formulas ok, one with the same normalized text as an earlier one is left 
 
 | Selection | Formulas | Share of ok |
 |---|---|---|
-| kept | 1200 | 51.8% |
+| kept | 1201 | 51.8% |
 | duplicate | 567 | 24.5% |
 | pattern_cap | 550 | 23.7% |
 
