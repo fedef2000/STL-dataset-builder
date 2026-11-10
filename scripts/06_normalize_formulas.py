@@ -1,11 +1,11 @@
 """
-Step 6: normalizes the formulas of the dataset of step 5 into one STL syntax, that of stl-nl. Two inputs, each with
+Step 6: normalizes the formulas extracted by step 5 into one STL syntax, that of stl-nl. Two inputs, each with
 its mode (src/normalization/rules.py):
 
-- unpaired (data/dataset/stl_formulas_unpaired.jsonl, mode stl-nl): the formulas without a requirement become the input
+- unpaired (data/extracted/unpaired.jsonl, mode stl-nl): the formulas without a requirement become the input
   of stl-nl (one formula per .stl file, in its grammar), so that stl-nl can write natural-language descriptions of
   them. Each is checked with stlgen, the parser of stl-nl.
-- paired (data/dataset/stl_dataset.jsonl, mode faithful): the formulas with a requirement go to fine-tuning with the
+- paired (data/extracted/paired.jsonl, mode faithful): the formulas with a requirement go to fine-tuning with the
   paper's description, so they keep the meaning it describes: same syntax, but bounds and powers stay as the paper
   writes them (F[0,2.5], F(2,12], G[T,T + delta], x^2), beyond stl-nl's grammar, and the rules that would change the
   meaning reject the formula. Their descriptions are written to match the formula (src/normalization/description.py).
@@ -34,7 +34,7 @@ earlier run are replaced):
         manifest.jsonl                one line per input record: status, file, reasons, rules, original and normalized text
         report.md                     counts by status, reason and pattern, with examples
     data/normalized/paired/
-        stl_dataset.jsonl             the records of step 5 whose formula is ok, with `normalized`, `pattern`, `skeleton`
+        records.jsonl                 the records of step 5 whose formula is ok, with `normalized`, `pattern`, `skeleton`
                                       and, in each requirement, `normalized`: the text that matches the formula
         manifest.jsonl                as above, with the passages of the formulas ok and what couldn't be converted
         report.md                     as above, with what goes beyond stl-nl's grammar and how the descriptions were written
@@ -58,8 +58,8 @@ sys.stdout.reconfigure(encoding="utf-8")
 OUTPUT_DIR = DATA_DIR / "normalized"
 # name: (input, mode of the normalization, output folder)
 INPUTS = {
-    "unpaired": (DATA_DIR / "dataset" / "stl_formulas_unpaired.jsonl", "stl-nl", OUTPUT_DIR / "unpaired"),
-    "paired": (DATA_DIR / "dataset" / "stl_dataset.jsonl", "faithful", OUTPUT_DIR / "paired"),
+    "unpaired": (DATA_DIR / "extracted" / "unpaired.jsonl", "stl-nl", OUTPUT_DIR / "unpaired"),
+    "paired": (DATA_DIR / "extracted" / "paired.jsonl", "faithful", OUTPUT_DIR / "paired"),
 }
 FOLDERS = {"ok": ("stl", "f"), "needs_review": ("needs_review", "r")}
 
@@ -115,7 +115,7 @@ def run(name: str, args):
     else:
         for line in lines:
             line["selection"] = None  # no selection: every pair is kept
-        write_lines(output / "stl_dataset.jsonl",
+        write_lines(output / "records.jsonl",
                     [paired_record(r, l) for r, l in zip(records, lines) if l["status"] == "ok"])
     write_lines(output / "manifest.jsonl", lines)
     text = report(lines, mode=mode, source=str(source.relative_to(BASE_DIR)), seed=args.seed,

@@ -2,8 +2,8 @@
 
 Inputs (since 2026-11-05 both, so that the final dataset has every formula in one syntax):
 
-* `data/dataset/stl_formulas_unpaired.jsonl` (6,592 records, no requirement): mode **stl-nl**. The formulas become the input of stl-nl, which writes their descriptions: they must be in its grammar, and losing the paper's exact meaning is acceptable, as the description is written from our formula. Output: `data/normalized/unpaired/`, with one `.stl` file per formula kept.
-* `data/dataset/stl_dataset.jsonl` (3,255 records with the paper's requirement): mode **faithful**. These go to fine-tuning with the paper's description, so they must keep the meaning it describes: same syntax, with the bounds and powers kept as the paper writes them even where stl-nl's grammar doesn't have them, and the rules that change the meaning reject the formula. Their descriptions are written to match the formula. Output: `data/normalized/paired/`. See *The faithful mode* and *Descriptions* at the end.
+* `data/extracted/unpaired.jsonl` (6,594 records, no requirement): mode **stl-nl**. The formulas become the input of stl-nl, which writes their descriptions: they must be in its grammar, and losing the paper's exact meaning is acceptable, as the description is written from our formula. Output: `data/normalized/unpaired/`, with one `.stl` file per formula kept.
+* `data/extracted/paired.jsonl` (3,253 records with the paper's requirement): mode **faithful**. These go to fine-tuning with the paper's description, so they must keep the meaning it describes: same syntax, with the bounds and powers kept as the paper writes them even where stl-nl's grammar doesn't have them, and the rules that change the meaning reject the formula. Their descriptions are written to match the formula. Output: `data/normalized/paired/`. See *The faithful mode* and *Descriptions* at the end.
 
 Everything below applies to both modes unless *The faithful mode* says otherwise.
 Spec: `NORMALIZER_BRIEF.md`. Target grammar: `stl-nl`, `rust/stlgen/src/parser.rs`.
@@ -11,7 +11,7 @@ Code: `src/normalization/`, run by `scripts/06_normalize_formulas.py`. Tests: `t
 
 Every record ends with one status:
 
-* `ok`: normalized; unpaired: accepted by `stlgen`, written to `data/normalized/unpaired/stl/`; paired: written to `data/normalized/paired/stl_dataset.jsonl`.
+* `ok`: normalized; unpaired: accepted by `stlgen`, written to `data/normalized/unpaired/stl/`; paired: written to `data/normalized/paired/records.jsonl`.
 * `needs_review`: normalized as far as the agreed rules allow, but with a choice we haven't approved. Since 2026-10-19 no rule has this status (every choice was approved), so the folder isn't written; the status stays for a future rule that may need it. Written to `data/normalized/unpaired/needs_review/` (also checked with `stlgen`), so that approving a policy later only means moving files.
 * `rejected`: can't be represented. The reason says why.
 
@@ -148,7 +148,7 @@ data/normalized/
 │   ├── report.md                     # counts by status, the rejection reasons, the most frequent unknown commands and patterns, each with an example, the skeletons, and the selection
 │   └── translations.csv              # written by scripts/inspect_normalization.py, to check the formulas kept by eye
 └── paired/
-    ├── stl_dataset.jsonl             # the records of step 5 whose formula is ok, with the normalized formula and descriptions
+    ├── records.jsonl                 # the records of step 5 whose formula is ok, with the normalized formula and descriptions
     ├── manifest.jsonl                # one line per input record, as for unpaired, with the passages of the formulas ok
     ├── translations.csv              # written by scripts/inspect_normalization.py: one row per passage, formula and text, original and normalized
     └── report.md                     # as for unpaired, without the selection, with what goes beyond stl-nl's grammar and how the descriptions were written

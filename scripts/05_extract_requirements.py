@@ -1,10 +1,10 @@
 """
 Step 5: asks two models, through OpenRouter, for the requirement, domain and variables of every formula of the papers,
 and with --tie-break asks a third model about the formulas the two disagree on. Every answer is kept, and the models'
-answers are put to a vote: a requirement passage is kept when two models give it. Then builds the dataset from the
-vote.
+answers are put to a vote: a requirement passage is kept when two models give it. Then writes the extracted formulas
+from the vote.
 
-    python scripts/05_extract_requirements.py                         # the two models on every formula, the summary, the dataset
+    python scripts/05_extract_requirements.py                         # the two models on every formula, the summary, data/extracted/
     python scripts/05_extract_requirements.py --tie-break             # also the third model, on the disagreements
     python scripts/05_extract_requirements.py --no-calls              # the same from the stored answers: no model is called
     python scripts/05_extract_requirements.py --no-calls --licenses permissive_cc   # also copies with only these licence tiers
@@ -16,13 +16,13 @@ vote.
 Answers are stored as they arrive in data/processed/extractions/<latex|pdf>/<concrete|parametric>/answers.jsonl, so
 an interrupted run continues where it stopped. A run over the whole corpus also writes formulas.jsonl next to it: one
 record per formula, with the answer of every model and the outcome of the vote. A run over the whole corpus and every
-kind of formula (no --paper, --limit, --concrete, --parametric, --latex, --pdf) also writes the dataset, in
-data/dataset/, unless the budget stopped its calls:
+kind of formula (no --paper, --limit, --concrete, --parametric, --latex, --pdf) also writes the extracted formulas, in
+data/extracted/, unless the budget stopped its calls:
 
-    stl_dataset.jsonl             one record per formula with a requirement
-    stl_formulas_unpaired.jsonl   one record per formula the models agree has no requirement (no passages)
-    excluded.jsonl                the formulas left out of both, and why
-    stats.md                      what the dataset holds
+    paired.jsonl      one record per formula with a requirement
+    unpaired.jsonl    one record per formula the models agree has no requirement (no passages)
+    excluded.jsonl    the formulas left out of both, and why
+    stats.md          what the files hold
 """
 import argparse
 import collections
@@ -34,7 +34,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BASE_DIR))
 
 from src.storage import CorpusStore
-from src.extraction.dataset import DATASET_DIR, LICENSE_TIERS, write_dataset
+from src.extraction.dataset import EXTRACTED_DIR, LICENSE_TIERS, write_extracted
 from src.extraction.extractor import REASONING_LEVELS, build_messages
 from src.extraction.records import (AGREED, AGREEMENTS, DEFAULT_MODELS, DEFAULT_TIE_BREAKER, DISPUTED, VERDICTS, collect,
                                     kind_of, load_contexts, parse_model, store_files, write_formulas)
@@ -405,9 +405,9 @@ def main():
     parser.add_argument("--paper", action="append", help="Only this paper (repeatable); its answers are printed.")
     parser.add_argument("--limit", type=int, help="Only the first N papers.")
     parser.add_argument("--no-calls", action="store_true",
-                        help="Use only the stored answers: no model is called. The vote, the checks, the report, formulas.jsonl and the dataset are made again from them.")
+                        help="Use only the stored answers: no model is called. The vote, the checks, the report, formulas.jsonl and data/extracted/ are made again from them.")
     parser.add_argument("--licenses", nargs="+", choices=LICENSE_TIERS, metavar="TIER",
-                        help=f"Also write copies of the dataset with only the records of these licence tiers ({', '.join(LICENSE_TIERS)}).")
+                        help=f"Also write copies of paired.jsonl and unpaired.jsonl with only the records of these licence tiers ({', '.join(LICENSE_TIERS)}).")
     parser.add_argument("--details", action="store_true",
                         help="Print the report of each kind of formula with its technical tables: answers per model, failed checks, agreement, verdicts.")
     parser.add_argument("--dry-run", action="store_true", help="Print how many calls a run would make and about what they cost, and exit. With --paper, also print the prompts.")
@@ -447,21 +447,21 @@ def main():
     else:
         print_summary(results, labels, tie_label)
     if args.paper or args.limit:
-        print("formulas.jsonl and the dataset are not written for a selection of papers: only by a run over the whole corpus.")
+        print("formulas.jsonl and data/extracted/ are not written for a selection of papers: only by a run over the whole corpus.")
         return
     for result in results:
         print(f"One record per {result['name']} formula, with every answer and the outcome of the vote: {result['formulas_file']}")
     if len(kinds) < 2 or len(sources) < 2:
-        # The dataset needs every kind of formula at once: a formula repeated in a paper is kept once over all of them
-        print(f"The dataset is not written for a selection of kinds of formula: only by a run over all of them ({DATASET_DIR}).")
+        # data/extracted/ needs every kind of formula at once: a formula repeated in a paper is kept once over all of them
+        print(f"The extracted formulas are not written for a selection of kinds of formula: only by a run over all of them ({EXTRACTED_DIR}).")
     elif budget <= 0 and not args.no_calls:
-        # Some calls were not made: the dataset would lack their answers. The tracked dataset is left as it is
-        print(f"The budget stopped the calls: the dataset is not written ({DATASET_DIR}). Run again to continue.")
+        # Some calls were not made: the files would lack their answers. The tracked files are left as they are
+        print(f"The budget stopped the calls: the extracted formulas are not written ({EXTRACTED_DIR}). Run again to continue.")
     else:
         missing = sum(1 for result in results for r in result["records"] if r["requirement_agreement"] == "not answered")
         if missing:
-            print(f"{missing:,} formulas have no answer of a model yet: they are left out of the dataset as undecided.")
-        write_dataset([(result["bounds"], result["records"]) for result in results], store.papers, args.licenses)
+            print(f"{missing:,} formulas have no answer of a model yet: they are left out as undecided.")
+        write_extracted([(result["bounds"], result["records"]) for result in results], store.papers, args.licenses)
 
 
 if __name__ == "__main__":
