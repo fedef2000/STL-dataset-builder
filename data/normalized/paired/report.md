@@ -1,6 +1,6 @@
 # Normalized paired formulas
 
-From `data/dataset/stl_dataset.jsonl` (3253 formulas, each with the requirement the paper gives it), with the rules of `docs/normalization_rules.md` in the faithful mode: the meaning the requirement describes is kept, so the bounds and powers stay as the paper writes them, beyond the grammar of stl-nl, and the rules that would change the meaning reject the formula. These formulas don't go to stl-nl: they are checked by the normalizer's own parser only, not by stlgen.
+From `data/extracted/paired.jsonl` (3253 formulas, each with the requirement the paper gives it), with the rules of `docs/normalization_rules.md` in the faithful mode: the meaning the requirement describes is kept, so the bounds and powers stay as the paper writes them, beyond the grammar of stl-nl, and the rules that would change the meaning reject the formula. These formulas don't go to stl-nl: they are checked by the normalizer's own parser only, not by stlgen.
 
 ## By status
 

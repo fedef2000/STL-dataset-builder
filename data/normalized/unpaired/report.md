@@ -1,6 +1,6 @@
 # Normalized formulas for stl-nl
 
-From `data/dataset/stl_formulas_unpaired.jsonl` (6594 formulas), with the rules of `docs/normalization_rules.md` and the stlgen parser of stl-nl. Seed of the random values: `0`.
+From `data/extracted/unpaired.jsonl` (6594 formulas), with the rules of `docs/normalization_rules.md` and the stlgen parser of stl-nl. Seed of the random values: `0`.
 
 ## By status
 

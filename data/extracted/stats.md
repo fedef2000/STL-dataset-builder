@@ -1,6 +1,6 @@
-# STL dataset: statistics
+# Extracted formulas: statistics
 
-3,253 records (one per formula with a requirement), with 3,505 requirement passages.
+3,253 paired records (`paired.jsonl`, one per formula with a requirement), with 3,505 requirement passages.
 
 
 
@@ -71,7 +71,7 @@
 
 ## Formulas without a requirement
 
-6,594 formulas that the models agree have no requirement (`stl_formulas_unpaired.jsonl`): records with no passages.
+6,594 formulas that the models agree have no requirement (`unpaired.jsonl`): records with no passages.
 
 | Licence tier | Records | Share |
 |---|---|---|
@@ -100,7 +100,7 @@
 
 ## Left out
 
-Formulas with a requirement (or undecided) that are not in the dataset (`excluded.jsonl`):
+Formulas with a requirement (or undecided) that are not in `paired.jsonl` (`excluded.jsonl`):
 
 | Reason | Formulas |
 |---|---|
@@ -111,7 +111,7 @@ Formulas with a requirement (or undecided) that are not in the dataset (`exclude
 | the same formula as another formula, on another line of the PDF text | 47 |
 | the requirement is not in English | 2 |
 
-Formulas without a requirement that are not in `stl_formulas_unpaired.jsonl` (`excluded.jsonl`):
+Formulas without a requirement that are not in `unpaired.jsonl` (`excluded.jsonl`):
 
 | Reason | Formulas |
 |---|---|
