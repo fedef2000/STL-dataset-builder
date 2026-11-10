@@ -1,0 +1,186 @@
+"""
+Step 7: the final dataset. A judge (two models, a third on their disagreements) says of each paired description whether
+it describes its formula and how faithfully: correct, ambiguous, wrong, or no (it doesn't describe it).
+
+    python scripts/07_finalize_dataset.py --judge --trial 20    # 20 records only, and trial.md with every answer
+    python scripts/07_finalize_dataset.py --judge --dry-run     # the calls a full run would make, and their cost
+    python scripts/07_finalize_dataset.py --judge               # every record (at most --budget dollars), then the dataset
+    python scripts/07_finalize_dataset.py                       # the dataset from the stored answers: no model is called
+
+The dataset is written to data/dataset/paper-paper/ only when every description has a final label (no call missing,
+no disagreement left for the third model): pairs.jsonl (correct), pairs_ambiguous.jsonl, dropped.jsonl (wrong, no,
+undecided) and pairs.xlsx with one sheet each.
+
+The answers are kept in data/processed/judgments/answers.jsonl: a run makes only the calls not stored yet, and a
+stored answer is asked again only when what the model reads has changed (formula, descriptions, prompt).
+"""
+import argparse
+import collections
+import json
+import random
+import sys
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(BASE_DIR))
+
+from config import DATA_DIR
+from src.dataset.judge import ANSWERS_FILE, paper_items, read_answers, run_calls, usable, vote
+from src.dataset.sets import DATASET_DIR, paper_rows, write_set
+from src.extraction.records import DEFAULT_MODELS, DEFAULT_TIE_BREAKER, parse_model
+
+sys.stdout.reconfigure(encoding="utf-8")
+PAIRED_RECORDS = DATA_DIR / "normalized" / "paired" / "records.jsonl"
+TRIAL_FILE = ANSWERS_FILE.parent / "trial.md"
+
+
+def short(label: str) -> str:
+    return parse_model(label)[0].split("/")[-1]
+
+
+def trial_records(records: list[dict], n: int, seed: str = "trial") -> list[dict]:
+    """
+    n records at random, with some of the cases the judge must handle: a fifth with a generic passage (expected "no")
+    and a seventh with several passages (several descriptions in one call); the rest from all records.
+    """
+    rng = random.Random(seed)
+    shuffled = records[:]
+    rng.shuffle(shuffled)
+    generic = [r for r in shuffled if any(p["kind"] == "generic" for p in r["requirements"])][:max(1, n // 5)]
+    several = [r for r in shuffled if len(r["requirements"]) > 1 and r not in generic][:max(1, n // 7)]
+    chosen = generic + several
+    chosen += [r for r in shuffled if r not in chosen][:n - len(chosen)]
+    return sorted(chosen, key=lambda r: r["id"])
+
+
+def labels_of(stored: dict, label: str, item: dict) -> list[str | None]:
+    """One label per description of the item from one model, None for each when it has no usable answer."""
+    row = stored.get((*parse_model(label), item["set"], item["id"]))
+    return [j["label"] for j in row["judgments"]] if usable(row, item) else [None] * item["count"]
+
+
+def judge(items: list[dict], budget: float, workers: int, dry_run: bool) -> dict:
+    """The calls of both models, then of the third on the items with a disagreement. Returns the stored answers."""
+    first = [(*parse_model(label), item) for label in DEFAULT_MODELS for item in items]
+    stored = read_answers()
+    if dry_run:
+        print_plan(first, stored, len(items))
+        return stored
+    spent = run_calls(first, workers=workers, budget=budget)
+    stored = read_answers()
+    disputed = [i for i in items if any(None not in pair and pair[0] != pair[1]
+                                        for pair in zip(*(labels_of(stored, l, i) for l in DEFAULT_MODELS)))]
+    print(f"\nThe third model ({short(DEFAULT_TIE_BREAKER)}) on the {len(disputed)} records where the two differ:")
+    run_calls([(*parse_model(DEFAULT_TIE_BREAKER), item) for item in disputed], workers=workers, budget=budget - spent)
+    return read_answers()
+
+
+def print_plan(tasks: list[tuple], stored: dict, n_items: int):
+    """--dry-run: the calls still to make per model, priced at the average of the stored calls of that model."""
+    print(f"{n_items} records to judge")
+    total = 0.0
+    for label in DEFAULT_MODELS + [DEFAULT_TIE_BREAKER]:
+        model, reasoning = parse_model(label)
+        costs = [r["cost"] for k, r in stored.items() if k[:2] == (model, reasoning) and r.get("judgments")]
+        if label == DEFAULT_TIE_BREAKER:
+            keys = {item["id"]: item["key"] for m, r, item in tasks}
+            current = lambda m_r: sum(1 for k, row in stored.items() if k[:2] == m_r and keys.get(k[3]) == row["key"])
+            share = current((model, reasoning)) / max(1, current(parse_model(DEFAULT_MODELS[0])))
+            todo = round(n_items * share)
+            note = f" (on {share:.0%} of the records, as in the stored answers)"
+        else:
+            todo = sum(1 for m, r, item in tasks if (m, r) == (model, reasoning) and not usable(stored.get((m, r, item["set"], item["id"])), item))
+            note = ""
+        each = sum(costs) / len(costs) if costs else None
+        price = f"about ${each * todo:.2f}" if each is not None else "cost unknown: no stored answer to price it (run --trial first)"
+        total += each * todo if each is not None else 0
+        print(f"  {short(label):<24} {todo:>6} calls   {price}{note}")
+    print(f"  {'total':<24}               about ${total:.2f}")
+
+
+def summary(items: list[dict], stored: dict, records: dict) -> list[dict]:
+    """Prints the cost of each model and the final labels; returns one row per description, for trial.md."""
+    rows = []
+    for item in items:
+        first = [labels_of(stored, label, item) for label in DEFAULT_MODELS]
+        third = labels_of(stored, DEFAULT_TIE_BREAKER, item)
+        for n in range(item["count"]):
+            final, how = vote([first[0][n], first[1][n]], third[n])
+            rows.append({"item": item, "n": n, "labels": [first[0][n], first[1][n], third[n]], "final": final, "how": how})
+    print("\nCalls per model:")
+    for label in DEFAULT_MODELS + [DEFAULT_TIE_BREAKER]:
+        model, reasoning = parse_model(label)
+        # Only answers to the items as they are now (an answer to an older prompt doesn't count)
+        answers = [row for i in items if (row := stored.get((model, reasoning, i["set"], i["id"]))) and row["key"] == i["key"]]
+        cost = sum(a.get("cost", 0) for a in answers)
+        failed = sum(1 for a in answers if not a.get("judgments"))
+        seconds = [a["seconds"] for a in answers if "seconds" in a]
+        print(f"  {short(label):<24} {len(answers):>5} calls  {failed:>3} failed  ${cost:.4f} (${cost / max(1, len(answers)):.5f} per call)"
+              + (f"  {sum(seconds) / len(seconds):.1f} s per call" if seconds else ""))
+    agreed = sum(1 for r in rows if r["how"] == "agreed")
+    print(f"\nThe first two models agree on {agreed} of {len(rows)} descriptions ({agreed / max(1, len(rows)):.0%}).")
+    print("Final labels:")
+    for label, count in collections.Counter(r["final"] for r in rows).most_common():
+        print(f"  {label:<12} {count:>5}")
+    return rows
+
+
+def write_trial(rows: list[dict], stored: dict, records: dict, path: Path):
+    """trial.md: each description of the trial with its formula, the label and the problems each model gave."""
+    models = DEFAULT_MODELS + [DEFAULT_TIE_BREAKER]
+    out = ["# Judge trial", "",
+           "| Record | D | Kind | " + " | ".join(short(m) for m in models) + " | Final |",
+           "|---|---|---|" + "---|" * len(models) + "---|"]
+    for r in rows:
+        record = records[r["item"]["id"]]
+        out.append(f"| {record['id']} | D{r['n'] + 1} | {record['requirements'][r['n']]['kind']} | "
+                   + " | ".join(l or "" for l in r["labels"]) + f" | **{r['final']}** |")
+    for r in rows:
+        record = records[r["item"]["id"]]
+        passage = record["requirements"][r["n"]]
+        out += ["", f"## {record['id']} D{r['n'] + 1}: {r['final']} ({r['how']})", "",
+                f"- Formula: `{record['normalized']}`", f"- Description ({passage['kind']}): {passage['normalized']}", ""]
+        for label in models:
+            row = stored.get((*parse_model(label), r["item"]["set"], r["item"]["id"]))
+            if not usable(row, r["item"]):
+                continue
+            j = row["judgments"][r["n"]]
+            out.append(f"- **{short(label)}: {j['label']}**: {j['reason']}"
+                       + "".join(f"\n    - {p}" for p in j["problems"]))
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("\n".join(out) + "\n", encoding="utf-8")
+    print(f"\nEvery answer of the trial: {path}")
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--judge", action="store_true", help="judge the paired descriptions (calls the models), then write the dataset")
+    parser.add_argument("--trial", type=int, metavar="N", help="only N records, and write trial.md with every answer")
+    parser.add_argument("--dry-run", action="store_true", help="only print the calls a run would make and their cost")
+    parser.add_argument("--budget", type=float, default=10.0, help="dollars after which no new call is started (default 10)")
+    parser.add_argument("--workers", type=int, default=8, help="calls made at the same time (default 8)")
+    args = parser.parse_args()
+    if not args.judge and (args.trial or args.dry_run):
+        parser.error("--trial and --dry-run go with --judge")
+
+    records = [json.loads(line) for line in open(PAIRED_RECORDS, encoding="utf-8")]
+    chosen = trial_records(records, args.trial) if args.trial else records
+    items = paper_items(chosen)
+    stored = judge(items, args.budget, args.workers, args.dry_run) if args.judge else read_answers()
+    if args.dry_run:
+        return
+    by_id = {r["id"]: r for r in chosen}
+    rows = summary(items, stored, by_id)
+    if args.trial:
+        write_trial(rows, stored, by_id, TRIAL_FILE)
+        return
+    pending = sum(1 for r in rows if r["final"] in ("unjudged", "disputed"))
+    if pending:
+        print(f"\ndata/dataset/ not written: {pending} descriptions have no final label yet (run with --judge)")
+        return
+    folder = DATASET_DIR / "paper-paper"
+    counts = write_set(paper_rows(records, items, stored, DEFAULT_MODELS, DEFAULT_TIE_BREAKER), folder)
+    print(f"\nWritten {folder.relative_to(BASE_DIR)}/: " + ", ".join(f"{name}.jsonl {n}" for name, n in counts.items()) + ", pairs.xlsx")
+
+if __name__ == "__main__":
+    main()
