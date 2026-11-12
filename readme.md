@@ -720,7 +720,7 @@ Sets 2 and 3 come from runs of `stl-nl`, copied by hand into the set's `stlnl_ru
 | `stlnl_formula_id` | `stl-nl`'s id of the formula, a hash of its AST (sets 2 and 3) |
 | `pattern`, `skeleton` | As in step 6 (no pattern for set 3; the skeleton of sets 2 and 3 is computed from `stl-nl`'s AST) |
 | `judge` | `label`, `how` (agreed, decided by the third model, all three models differ) and `answers`: each model's label, reason and problems; `null` while the set isn't judged |
-| `signals` | Checks made without a model, recorded only, not filters: `numbers_missing` (the numbers of the formula the description doesn't state, as digits or as a word, compared as values) and `names_not_in_formula` (from step 6; set 1 only) |
+| `signals` | Checks made without a model, recorded only, not filters: `names_not_in_formula` (from step 6; set 1 only) |
 | `original_stl`, `original_nl` | The formula and the description as the paper writes them (LaTeX; `original_nl` set 1 only) |
 | `kind`, `domain`, `paper_id`, `license_tier`, `license`, `source_type` | From step 5 (set 3: only `domain`, from `stl-nl`) |
 | `stlnl_pattern_id` | The pattern `stl-nl` generated the formula from (set 3) |

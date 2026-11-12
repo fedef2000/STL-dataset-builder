@@ -18,8 +18,8 @@ with their AST) and pairs.jsonl (the descriptions). Every set is written as rows
     pattern       as in step 6 (sets 1 and 2; null for set 3), skeleton: as in step 6, from the AST for sets 2 and 3
     judge         the final label (correct, ambiguous, wrong, no, undecided), how it was reached, and each model's
                   answer; null while the set isn't judged
-    signals       checks made without a model, recorded only: numbers of the formula the description doesn't state,
-                  names of the description the formula doesn't have (set 1 only, from step 6)
+    signals       checks made without a model, recorded only: names of the description the formula doesn't have
+                  (set 1 only, from step 6)
     original_stl, original_nl   as the paper writes them (LaTeX), for checking (original_nl: set 1 only)
     kind, domain, paper_id, license_tier, license, source_type   from step 5 (set 3: only domain, from stl-nl)
     stlnl_pattern_id   the pattern stl-nl generated the formula from (set 3)
@@ -37,29 +37,6 @@ from src.normalization.skeleton import skeleton
 DATASET_DIR = DATA_DIR / "dataset"
 SET_1, SET_2, SET_3 = "set_1", "set_2", "set_3"
 STLNL_RUN = "stlnl_run"   # the folder of a set where the files of its stl-nl run are copied
-NUMBER = re.compile(r"(?<![\w.])-?\d+(?:\.\d+)?(?![\w.])")
-# In a description a unit may follow the number with no space: 30.85m, 200ms
-NL_NUMBER = re.compile(r"(?<![\w.])-?\d+(?:\.\d+)?(?!\d|\.\d)")
-NUMBER_WORDS = {"zero": "0", "one": "1", "two": "2", "three": "3", "four": "4", "five": "5", "six": "6", "seven": "7",
-                "eight": "8", "nine": "9", "ten": "10", "eleven": "11", "twelve": "12", "fifteen": "15", "twenty": "20",
-                "thirty": "30", "sixty": "60", "hundred": "100"}
-
-
-def numbers_missing(stl: str, nl: str) -> list[str]:
-    """
-    The numbers of the formula (bounds, thresholds) the description doesn't state, as digits or as a word up to
-    twenty and a few round ones ("two seconds" states 2), compared as values. 0 is left out: a lower bound 0 is "from now" in words.
-    """
-    stated = set(NL_NUMBER.findall(nl)) | {digit for word, digit in NUMBER_WORDS.items() if re.search(rf"\b{word}\b", nl, re.I)}
-    values = {abs(float(n)) for n in stated}   # compared as values: 3.0 states 3, 11.10 states 11.1
-    out = []
-    for n in NUMBER.findall(stl):
-        n = n.lstrip("-")
-        if float(n) != 0 and float(n) not in values and n not in out:
-            out.append(n)
-    return out
-
-
 def final_judgment(stored: dict, item: dict, n: int, models: list[str], tie_breaker: str) -> dict:
     """The final label of description n of an item, how it was reached, and each model's answer to it."""
     answers, labels = [], {}
@@ -88,8 +65,7 @@ def paper_rows(records: list[dict], items: list[dict], stored: dict, models: lis
                 "id": f"{r['id']}:D{n + 1}", "set": SET_1, "nl": passage["normalized"], "stl": r["stl"],
                 "formula_id": r["id"], "stlnl_formula_id": None, "pattern": r["pattern"], "skeleton": r["skeleton"],
                 "judge": final_judgment(stored, by_id[r["id"]], n, models, tie_breaker),
-                "signals": {"numbers_missing": numbers_missing(r["stl"], passage["normalized"]),
-                            "names_not_in_formula": names[n]},
+                "signals": {"names_not_in_formula": names[n]},
                 "original_stl": r["formula"], "original_nl": passage["text"], "kind": passage["kind"],
                 "domain": r.get("domain"), "paper_id": r["paper_id"], "license_tier": r.get("license_tier"),
                 "license": r.get("license"), "source_type": r.get("source_type"), "stlnl_pattern_id": None,
@@ -138,7 +114,7 @@ def stlnl_rows(name: str, run: Path, manifest: list[dict] | None = None, records
                            license=record.get("license"), source_type=record.get("source_type"))
         for pair in described:
             rows.append({"id": f"{row['formula_id']}:R{pair['realization_index']}", "nl": pair["nl"], **row,
-                         "signals": {"numbers_missing": numbers_missing(f["stl"], pair["nl"]), "names_not_in_formula": None}})
+                         "signals": {"names_not_in_formula": None}})
     counts["descriptions"] = len(rows)
     return rows, counts
 
@@ -179,7 +155,6 @@ COLUMNS = [  # (header, width, value of a row)
                                   r["judge"]["answers"][0]["reason"] if r["judge"]["answers"] else "")),
     ("problems", 50, lambda r: "\n".join(next((a["problems"] for a in r["judge"]["answers"] if a["label"] == r["judge"]["label"]), []))),
     ("models", 30, lambda r: "\n".join(f"{parse_model(a['model'])[0].split('/')[-1]}: {a['label']}" for a in r["judge"]["answers"])),
-    ("numbers missing", 14, lambda r: ", ".join(r["signals"]["numbers_missing"])),
     ("kind", 10, lambda r: r.get("kind") or ""),
     ("original stl", 45, lambda r: r.get("original_stl") or ""),
     ("original nl", 60, lambda r: r.get("original_nl") or ""),

@@ -2,7 +2,6 @@
 import json
 
 from src.dataset.judge import build_messages, check_answer, item_key, vote
-from src.dataset.sets import numbers_missing
 
 
 def answer(*items):
@@ -53,15 +52,6 @@ def test_variables_only_when_given():
     assert "- \\mu_C: note C" in build_messages("mu_C", ["d"], {"\\mu_C": "note C"})[1]["content"]
 
 
-def test_numbers_missing():
-    assert numbers_missing("G[0,2] (x < 4300)", "x stays below 4300 for two seconds") == []
-    assert numbers_missing("F[10,20] sat", "sat occurs after req") == ["10", "20"]
-    assert numbers_missing("G[0,inf] (x > -1.5)", "x is always above -1.5") == []
-    assert numbers_missing("F[0,200] (v < 30.85)", "v below 30.85m within 200ms") == []   # units attached
-    assert numbers_missing("G[2,26] (y > 11.1)", "y above 11.10 between 2.0 and 26") == []   # values, not text
-    assert numbers_missing("G[0,5] (x_1 > 3)", "x_1 above 3 for 5 s") == []   # the 1 of x_1 is a name, not a number
-
-
 def test_stlnl_rows(tmp_path):
     """An stl-nl run: a formula with two descriptions, one with none; set 2 links the first to its paper."""
     from src.dataset.sets import stlnl_rows
@@ -81,7 +71,6 @@ def test_stlnl_rows(tmp_path):
     rows, counts = stlnl_rows("set_2", tmp_path, manifest, records)
     assert [r["id"] for r in rows] == ["P:F1:R0", "P:F1:R1"]
     assert rows[0]["paper_id"] == "P" and rows[0]["stlnl_formula_id"] == "h1" and rows[0]["skeleton"] == "G[#,#] φ"
-    assert rows[0]["signals"]["numbers_missing"] == [] and rows[1]["signals"]["numbers_missing"] == ["5"]
     assert counts["descriptions"] == 2 and sum(n for what, n in counts.items() if what.startswith("formulas without")) == 1
 
     rows, _ = stlnl_rows("set_3", tmp_path)   # no paper: the formula is named after its source index
