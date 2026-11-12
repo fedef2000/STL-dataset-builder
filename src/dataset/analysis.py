@@ -209,8 +209,7 @@ def write_analysis(folder: Path) -> Path:
     ops = {s: [operators(parse(f["pattern"])) for f in by_set[s]] for s in present}
     ops[TOTAL] = [x for s in present for x in ops[s]]
     out += ["", "## Operators", "",
-            "Share of the formulas of each set that hold each operator, read from the pattern (where `X` is `F[1,1]` "
-            "and `<->` is written with `&&`, `||` and `!`, as stlgen does).", ""]
+            "Share of the formulas of each set that hold each operator.", ""]
     out += table(["Operator"] + columns,
                  [[code(op)] + [share(sum(1 for x in ops[s] if op in x), len(ops[s])) for s in columns]
                   for op in ("G", "F", "U", "R", "!", "&&", "||", "->")])
