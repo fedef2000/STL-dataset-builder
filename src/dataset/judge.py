@@ -337,7 +337,8 @@ def vote(labels: list[str | None], third: str | None) -> tuple[str, str]:
     The final label of one description from the labels of the first two models and, when they differ, of the third:
     (label, how). The two agree -> their label. They differ -> the label at least two of the three give, or
     "undecided" when all three differ; "disputed" while the third hasn't answered. "unjudged" while one of the first
-    two hasn't answered.
+    two hasn't answered. One exception to "undecided": when the three labels are correct, ambiguous and wrong, the
+    description is ambiguous, the middle one (read by hand, 16 of the 20 such descriptions of set 1 were acceptable).
     """
     if None in labels:
         return "unjudged", "a model has no answer yet"
@@ -347,4 +348,6 @@ def vote(labels: list[str | None], third: str | None) -> tuple[str, str]:
         return "disputed", "the two models differ, the third not asked yet"
     if third in labels:
         return third, "decided by the third model"
+    if {*labels, third} == {"correct", "ambiguous", "wrong"}:
+        return "ambiguous", "correct, ambiguous and wrong: the middle one"
     return "undecided", "all three models differ"

@@ -37,7 +37,10 @@ def test_vote():
     assert vote(["correct", "correct"], None) == ("correct", "agreed")
     assert vote(["correct", "ambiguous"], None)[0] == "disputed"
     assert vote(["correct", "ambiguous"], "ambiguous") == ("ambiguous", "decided by the third model")
-    assert vote(["correct", "ambiguous"], "wrong")[0] == "undecided"
+    assert vote(["correct", "ambiguous"], "no")[0] == "undecided"
+    assert vote(["correct", "wrong"], "ambiguous")[0] == "ambiguous"   # decided by the third model
+    assert vote(["correct", "ambiguous"], "wrong") == ("ambiguous", "correct, ambiguous and wrong: the middle one")
+    assert vote(["wrong", "correct"], "no")[0] == "undecided"
     assert vote(["correct", None], None)[0] == "unjudged"
 
 

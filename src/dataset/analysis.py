@@ -162,7 +162,8 @@ def write_analysis(folder: Path) -> Path:
             "Labels of the descriptions judged: every description of set 1, a sample of 500 formulas (1,000 "
             "descriptions) of sets 2 and 3. `No`: the description is not a description of the formula (it only says "
             "what the formula is for, describes a part of it, or something else). The rest of the judged descriptions "
-            "are undecided (the three models gave three different labels).", ""]
+            "are undecided (the three models gave three different labels, one of them `no`; correct, ambiguous and wrong "
+            "together give ambiguous).", ""]
     labels = ("correct", "ambiguous", "wrong", "no")
     judge_rows = []
     for s in present:
