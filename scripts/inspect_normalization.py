@@ -2,7 +2,7 @@
 Writes the formulas of step 6 as CSV files, to check by eye that each was translated correctly. Reads the manifests of
 the last run of step 6: nothing is normalized again.
 
-    data/normalized/unpaired/translations.csv   the formulas kept for stl-nl: original LaTeX, normalized text, pattern
+    data/normalized/unpaired/translations.csv   the formulas kept for stl-nl: original LaTeX, normalized text, template
     data/normalized/paired/translations.csv     the paired formulas ok, one row per requirement passage: original
                                                 LaTeX, normalized formula, the passage as the paper writes it and as
                                                 normalized to match the formula
@@ -26,7 +26,7 @@ NORMALIZED_DIR = DATA_DIR / "normalized"
 
 def unpaired_rows(lines: list[dict]) -> list[list[str]]:
     """One row per formula kept for stl-nl."""
-    return [[line["original"], line["normalized"], line["pattern"]] for line in lines if line["selection"] == "kept"]
+    return [[line["original"], line["normalized"], line["template"]] for line in lines if line["selection"] == "kept"]
 
 
 def paired_rows(lines: list[dict]) -> list[list[str]]:
@@ -37,7 +37,7 @@ def paired_rows(lines: list[dict]) -> list[list[str]]:
 
 # name: (header, rows of the manifest lines)
 FILES = {
-    "unpaired": (["original", "normalized", "pattern"], unpaired_rows),
+    "unpaired": (["original", "normalized", "template"], unpaired_rows),
     "paired": (["original", "normalized", "text original", "text normalized"], paired_rows),
 }
 

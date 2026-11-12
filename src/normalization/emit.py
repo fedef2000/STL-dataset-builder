@@ -3,8 +3,8 @@ The tree of a normalized formula written in the grammar of stl-nl, with explicit
 operand and every binary subformula, so that stl-nl's precedence can't change its reading. The faithful mode adds what
 stl-nl's grammar doesn't have: open intervals (F(2,12]), bounds that are real numbers or expressions (F[0,2.5],
 G[T,T + delta]) and powers with an integer exponent (x^2, without parentheses around it: a power binds tightest). The same writer gives the
-pattern of the formula: the same text with every number and parameter written # and the names renamed a, b, ... in the
-order they appear, so that formulas that differ only in their numbers and names have the same pattern.
+template of the formula: the same text with every number and parameter written # and the names renamed a, b, ... in the
+order they appear, so that formulas that differ only in their numbers and names have the same template.
 """
 import math
 import re
@@ -41,7 +41,7 @@ def identifier(name: str) -> str:
 
 
 class Names:
-    """How the writer writes names and numbers: as they are (the formula), or hidden (its pattern)."""
+    """How the writer writes names and numbers: as they are (the formula), or hidden (its template)."""
 
     def __init__(self, hidden: bool = False):
         self.hidden = hidden
@@ -60,7 +60,7 @@ class Names:
 
     def bound(self, x) -> str:
         """
-        A time bound: a number, a parameter or an expression (all # in the pattern), or inf (kept in the pattern).
+        A time bound: a number, a parameter or an expression (all # in the template), or inf (kept in the template).
         """
         if isinstance(x, Node):
             return "#" if self.hidden else expression(x, self)
@@ -139,11 +139,11 @@ def formula(node: Node) -> str:
     return _formula(node, Names())
 
 
-def pattern(node: Node) -> str:
+def template(node: Node) -> str:
     """
-    The pattern of the formula: its text with every number (bound or constant) and parameter written # (inf is kept)
+    The template of the formula: its text with every number (bound or constant) and parameter written # (inf is kept)
     and the names renamed a, b, ... in the order they appear. A name used twice keeps one letter, so
-    (G (x < 3)) -> (G (x < 4)) and (G (x < 3)) -> (G (y < 4)) have different patterns; the comparison operators are kept.
+    (G (x < 3)) -> (G (x < 4)) and (G (x < 3)) -> (G (y < 4)) have different templates; the comparison operators are kept.
     """
     return _formula(node, Names(hidden=True))
 

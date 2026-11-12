@@ -72,14 +72,14 @@ Each rule has a name (the list is `RULES` in `src/normalization/rules.py`). The 
 | `index_names` | `x_{1}`, `x_1` → `x_1`; `v_{max}` → `v_max`; `x_{i,j}` → `x_i_j`; `\mu^{h}` → `mu_h` (a superscript of letters is part of the name; of digits it is a `power`). Font commands in the script are ignored: `\mu_\text{inv}` (no braces), `\phi_{\operatorname{Obs}_1}`, `\phi^{\rm{path}}`, `\mathbb`, ... (since 2026-10-20). Consecutive letters are one name (`gear`, `rpm`), as authors mean them. |
 | `multiword_names` | `\text{Trust Increase}` → `Trust_Increase` |
 | `accent_names` | `\dot{x}` → `x_dot`; `\bar{x}`, `\overline{x}` → `x_bar`; `\underline{x}` → `x_under`; `\hat{x}` → `x_hat`; `\tilde{x}` → `x_tilde`; `x'`, `x^\prime` → `x_prime` (`\overline` and `\underline` on a name since 2026-10-20: `v \le \overline{v}` keeps two names) |
-| `overline_operator` | `\overline{\Diamond}_{[0,10]} p` → `F[0,10] p`; also on `\square`, `\mathcal{U}`, `\mathsf{G}`, ... (and `\underline`). Papers use the line for a variant of the operator: the averaged operators of AvSTL, the marked operators of a tableau. The variant is read as the plain operator: the meaning may change, the pattern stays (decided on 2026-10-20). `\overline` on anything other than a name or an operator stays `unknown_command`. Paired formulas: rejected (*The faithful mode*). |
+| `overline_operator` | `\overline{\Diamond}_{[0,10]} p` → `F[0,10] p`; also on `\square`, `\mathcal{U}`, `\mathsf{G}`, ... (and `\underline`). Papers use the line for a variant of the operator: the averaged operators of AvSTL, the marked operators of a tableau. The variant is read as the plain operator: the meaning may change, the template stays (decided on 2026-10-20). `\overline` on anything other than a name or an operator stays `unknown_command`. Paired formulas: rejected (*The faithful mode*). |
 | `current_time_index` | `x(t)`, `x[t]`, `x_t` → `x` (only the letter `t`, the evaluation time) |
 | `reserved_names` | a signal named `G`, `F`, `X`, `U` or `R` → `G_sig`, ...: `F > 3` → `F_sig > 3`; `X(t)` → `X_sig` |
 | `frac_numbers` | `\frac{1}{3}` → `1/3` (integer literals; any other `\frac` is a division, see `products_and_divisions`) |
 | `number_forms` | `.5` → `0.5`; `5.` → `5`; `1e-3` → `0.001` (exact) |
 | `negation_minus` | `-x > 0` → `(0 - x) > 0`; `-3` stays a literal |
 | `products_and_divisions` | `a \cdot x`, `a \times x`, `a \ast x`, `a * x` → `a * x`; a number written against a name, a Greek letter or a parenthesis: `2x` → `2 * x`, `0.75r` → `0.75 * r`, `2(x+y)` → `2 * (x + y)`; `x / y` → `x / y`; `\frac{x - y}{y}` → `(x - y) / y`. `*` and `/` bind tighter than `+` and `-`, left to right, as in `stl-nl`, which has them since 2026-10-27 (stl-nl `4a6571a`). After a `/`, a fraction is parenthesized (`x / (1/3)`), as `stl-nl` reads `x / 1/3` as `(x / 1) / 3`. Decided on 2026-11-05. |
-| `norm_as_abs` | `\|x - y\|`, `\lVert x \rVert`, `\Vert x \Vert` → `\|x - y\|`. The norm's subscript (`\|x\|_2`, `\|x\|_\infty`, `\Vert x\Vert_{P_1}`) and a square after it (`\|x\|^2`) are dropped. The meaning changes, the pattern (a size compared with a number) stays: decided on 2026-10-20, as the description is written from our formula. Other powers of a norm stay `power`. Paired formulas: the square is kept (*The faithful mode*). |
+| `norm_as_abs` | `\|x - y\|`, `\lVert x \rVert`, `\Vert x \Vert` → `\|x - y\|`. The norm's subscript (`\|x\|_2`, `\|x\|_\infty`, `\Vert x\Vert_{P_1}`) and a square after it (`\|x\|^2`) are dropped. The meaning changes, the template (a size compared with a number) stays: decided on 2026-10-20, as the description is written from our formula. Other powers of a norm stay `power`. Paired formulas: the square is kept (*The faithful mode*). |
 | `function_as_name` | a name followed by `(...)` or `[...]` whose arguments are only names and non-negative integers becomes one name, the function and its arguments joined with `_`: `\mathrm{Reg}(4,4)` → `Reg_4_4`; `behind(p_s, p_{uas})` → `behind_p_s_p_uas`; `h_4(\beta_2(\mathbf{x}))` → `h_4_beta_2_x` (the inner call first); `\phi[\theta]` → `phi_theta`. It can be a proposition (`F[0,10] Reg_4_4`) or a signal (`tau_p_P_A <= 24.5`). The arguments stay in the name so that different calls stay different atoms (`Reg(4,4) && Reg(3,3)` is not `a && a`). Decided on 2026-10-20. Anything else in the brackets (an operator, a formula, an expression, a real number) is `function`. |
 | `placeholder_subformula` | `\varphi_1 \mathcal{U}_{[a,b]} \varphi_2` where `variables` calls `\varphi_1` a "(sub)formula" or "specification": kept as the atom `varphi_1` with no flag (decided on 2026-10-19: the subformula can't be rebuilt). The rule is only recorded in the manifest, so these formulas can be found. |
 
@@ -145,7 +145,7 @@ data/normalized/
 │   ├── stl/f00001.stl ...            # status ok and selection kept (the input of stl-nl), numbered in input order
 │   ├── needs_review/r00001.stl ...   # status needs_review (not written while no rule has it)
 │   ├── manifest.jsonl                # one line per input record
-│   ├── report.md                     # counts by status, the rejection reasons, the most frequent unknown commands and patterns, each with an example, the skeletons, and the selection
+│   ├── report.md                     # counts by status, the rejection reasons, the most frequent unknown commands and templates, each with an example, the patterns, and the selection
 │   └── translations.csv              # written by scripts/inspect_normalization.py, to check the formulas kept by eye
 └── paired/
     ├── records.jsonl                 # the records of step 5 whose formula is ok, with the normalized formula and descriptions
@@ -154,32 +154,32 @@ data/normalized/
     └── report.md                     # as for unpaired, without the selection, with what goes beyond stl-nl's grammar and how the descriptions were written
 ```
 
-A manifest line: `id`, `status`, `file` (or null), `reasons`, `rules` (those that fired), `original`, `normalized`, `pattern` and `skeleton` (see below), `stl` (stlgen's canonical text), `substitutions` (e.g. `{"T": 37}`), `rounded` (e.g. `[[["0.2","0.4"],["0","1"]]]`), `over_limits`, `bounds`, `source_type`, `selection` and `duplicate_of` (see *Selection for stl-nl*). In the paired manifest `stl` is null and `over_limits` empty (no stlgen), `selection` is null (no selection), and the formulas ok have `requirements` (see *Descriptions*).
+A manifest line: `id`, `status`, `file` (or null), `reasons`, `rules` (those that fired), `original`, `normalized`, `template` and `pattern` (see below), `stl` (stlgen's canonical text), `substitutions` (e.g. `{"T": 37}`), `rounded` (e.g. `[[["0.2","0.4"],["0","1"]]]`), `over_limits`, `bounds`, `source_type`, `selection` and `duplicate_of` (see *Selection for stl-nl*). In the paired manifest `stl` is null and `over_limits` empty (no stlgen), `selection` is null (no selection), and the formulas ok have `requirements` (see *Descriptions*).
 
-## Patterns
+## Templates
 
-The pattern of a formula (`emit.pattern`, decided on 2026-10-19) is its normalized text, written by the same writer, with every number (bounds and constants) and every parameter written `#` (so `G[0,T] p` and `G[0,5] p` share `G[#,#] a`; decided on 2026-11-05), `inf` kept (`G[#,inf] a`: an unbounded operator is another shape), and the names renamed `a`, `b`, ... (then `v27`, `v28`, ...) in the order they appear. A name used twice keeps its letter, and the operators and comparison directions are kept; the operands of `&&`/`||` are not sorted.
+The template of a formula (`emit.template`, decided on 2026-10-19; called the pattern until 2026-11-12, when the name went to the skeleton below) is its normalized text, written by the same writer, with every number (bounds and constants) and every parameter written `#` (so `G[0,T] p` and `G[0,5] p` share `G[#,#] a`; decided on 2026-11-05), `inf` kept (`G[#,inf] a`: an unbounded operator is another shape), and the names renamed `a`, `b`, ... (then `v27`, `v28`, ...) in the order they appear. A name used twice keeps its letter, and the operators and comparison directions are kept; the operands of `&&`/`||` are not sorted.
 
-| Formula | Pattern |
+| Formula | Template |
 |---|---|
 | `G[0,30] ((gear == 4) -> (F[0,5] (rpm < 3000)))` | `G[#,#] ((a == #) -> (F[#,#] (b < #)))` |
 | `(G[0,5] (x < 3)) -> (G[0,2] (x < 4))` | `(G[#,#] (a < #)) -> (G[#,#] (a < #))` |
 | `(G[0,5] (x < 3)) -> (G[0,2] (y < 4))` | `(G[#,#] (a < #)) -> (G[#,#] (b < #))` |
 | `F[1,2] p`, `F[42,94] varphi` | `F[#,#] a` |
 
-The manifest has it in `pattern`, and the report counts the formulas of each (section *Patterns*).
+The manifest has it in `template`, and the report counts the formulas of each (section *Templates*).
 
-## Skeletons
+## Patterns
 
-The skeleton of a formula (`src/normalization/skeleton.py`, added on 2026-11-05) is the coarser grouping of stl-nl's `scripts/formula_patterns.py`, copied from stl-nl at `efe09be` so that a formula gets the same skeleton in both: its temporal and Boolean structure, each distinct relation or Boolean signal written as a Greek letter (a letter repeats only when the exact same condition repeats), bounds `[#,#]` or `[#,inf]`, and the operands of `+ * && || == !=` unordered. It is computed from the AST `stlgen import` gives in the check (stage 5), so only formulas accepted by stlgen have one.
+The pattern of a formula (`src/normalization/pattern.py`, added on 2026-11-05; called the skeleton until 2026-11-12, the name stl-nl gives it) is the coarser grouping of stl-nl's `scripts/formula_patterns.py`, copied from stl-nl at `efe09be` so that a formula gets the same pattern in both: its temporal and Boolean structure, each distinct relation or Boolean signal written as a Greek letter (a letter repeats only when the exact same condition repeats), bounds `[#,#]` or `[#,inf]`, and the operands of `+ * && || == !=` unordered. It is computed from the AST `stlgen import` gives in the check (stage 5), so only formulas accepted by stlgen have one.
 
-| Formula | Pattern | Skeleton |
+| Formula | Template | Pattern |
 |---|---|---|
 | `G[0,30] ((gear == 4) -> (F[0,5] (rpm < 3000)))` | `G[#,#] ((a == #) -> (F[#,#] (b < #)))` | `G[#,#] (φ -> F[#,#] ψ)` |
 | `G[0,5] (x < 3)`, `G[0,T] (x + y > z)` | `G[#,#] (a < #)`, `G[#,#] (a + b > c)` | `G[#,#] φ` |
 | `(G[0,5] (x < 3)) && (F[0,2] (x < 3))` | `(G[#,#] (a < #)) && (F[#,#] (a < #))` | `(F[#,#] φ) && (G[#,#] φ)` |
 
-The manifest has it in `skeleton`; the report section *Skeletons* compares the number of skeletons and patterns of the formulas ok and of those kept for stl-nl, and lists the most common skeletons. It is only reported: the cap of the selection is per pattern.
+The manifest has it in `pattern`; the report section *Patterns* compares the number of patterns and templates of the formulas ok and of those kept for stl-nl, and lists the most common patterns. It is only reported: the cap of the selection is per template.
 
 ## Selection for stl-nl
 
@@ -189,9 +189,9 @@ Not every formula ok goes to stl-nl (decided on 2026-10-21; `src/normalization/s
 |---|---|
 | `kept` | written in `stl/`: the input of stl-nl |
 | `duplicate` | the same normalized text as an earlier formula (in manifest order), whose id is in `duplicate_of`. Only the text counts: the same original with other random bounds is a different formula and stays, as stl-nl describes it differently. Since parameters are kept (2026-11-05), formulas such as `F[a,b] varphi` from different papers are the same text, and duplicates. |
-| `pattern_cap` | its pattern already has `--max-per-pattern` formulas (default 10; `0`: no cap), so that the most frequent patterns don't fill the dataset |
+| `template_cap` | its template already has `--max-per-template` formulas (default 10; `0`: no cap), so that the most frequent templates don't fill the dataset |
 
-The duplicates are left out first, then the cap is applied to the rest. When a pattern has more formulas than the cap, they are taken from its papers in turn (one from each paper, then a second, ...), with the papers and the formulas of each in random order, so that the names and contexts vary. The seed of a pattern is `<--seed>:<pattern>`: a rerun picks the same, and a change to one pattern doesn't change the others. A duplicate's `duplicate_of` may be a formula left out by the cap. The report section *Selection for stl-nl* counts each and lists the patterns that are cut.
+The duplicates are left out first, then the cap is applied to the rest. When a template has more formulas than the cap, they are taken from its papers in turn (one from each paper, then a second, ...), with the papers and the formulas of each in random order, so that the names and contexts vary. The seed of a template is `<--seed>:<template>`: a rerun picks the same, and a change to one template doesn't change the others. A duplicate's `duplicate_of` may be a formula left out by the cap. The report section *Selection for stl-nl* counts each and lists the templates that are cut.
 
 
 
@@ -215,7 +215,7 @@ Powers: the exponent must be an integer (with a sign). A letter superscript on a
 
 **Grammar of the paired formulas.** stl-nl's grammar with four additions: `(` or `)` for an open end of an interval; a bound that is a decimal or a fraction (`2.5`, `1/3`); a bound that is an arithmetic expression of numbers and names (`T + delta`, `l - 2`, `|s|`); `^` followed by an integer (in parentheses if negative) after a name, a number, `|...|` or a parenthesized expression. Every other formula ok is in stl-nl's grammar.
 
-**No stlgen.** stlgen can't parse the four additions, so the paired formulas are checked only by the normalizer's parser. Their skeleton comes from their own tree: `src/normalization/stlgen_ast.py` writes it as the AST stlgen would give (`X a` as `F[1,1] a`, `a <-> b` as `(a && b) || (!a && !b)`, `-x` as `0 - x`, as stlgen does), and `skeleton.py` gets one addition, the power. On 2026-11-05 this gave the same skeleton as stlgen's AST for all 2,317 unpaired formulas ok (test: `test_converter_gives_stlgen_skeletons`). The skeleton writes every finite interval `[#,#]`, open or not; the pattern keeps the brackets: `F(#,#] a`.
+**No stlgen.** stlgen can't parse the four additions, so the paired formulas are checked only by the normalizer's parser. Their pattern comes from their own tree: `src/normalization/stlgen_ast.py` writes it as the AST stlgen would give (`X a` as `F[1,1] a`, `a <-> b` as `(a && b) || (!a && !b)`, `-x` as `0 - x`, as stlgen does), and `pattern.py` gets one addition, the power. On 2026-11-05 this gave the same pattern as stlgen's AST for all 2,317 unpaired formulas ok (test: `test_converter_gives_stlgen_patterns`). The pattern writes every finite interval `[#,#]`, open or not; the template keeps the brackets: `F(#,#] a`.
 
 The report section *Beyond the grammar of stl-nl* counts the formulas that use each addition.
 

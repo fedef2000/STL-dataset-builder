@@ -56,8 +56,8 @@ class Result:
     reasons: list[str]               # why it is rejected or needs review
     substitutions: dict = field(default_factory=dict)
     rounded: list = field(default_factory=list)
-    pattern: str | None = None     # the formula with numbers and names hidden (emit.pattern)
-    tree: object = None              # the parsed tree (parser.Node), for the skeleton of the faithful mode
+    template: str | None = None     # the formula with numbers and names hidden (emit.template)
+    tree: object = None              # the parsed tree (parser.Node), for the pattern of the faithful mode
     names: list[str] = field(default_factory=list)  # the signals, atoms and parameters of the normalized formula
 
 
@@ -92,7 +92,7 @@ def normalize(formula: str, *, record_id: str = "", seed: str = "0", macros: dic
         root = parse(tokens, trace, formula_names)
         resolve_bounds(root, trace, random.Random(f"{seed}:{record_id}"))
         check_symbols(root, meanings, trace)
-        text, pattern = emit.formula(root), emit.pattern(root)
+        text, template = emit.formula(root), emit.template(root)
     except Rejected as rejected:
         reason = f"{rejected.rule}: {rejected.detail}" if rejected.detail else rejected.rule
         trace.rules.append(rejected.rule)
@@ -101,4 +101,4 @@ def normalize(formula: str, *, record_id: str = "", seed: str = "0", macros: dic
     names = sorted({n.value for n in _walk(root) if n.kind in ("var", "atom")}
                    | {b for n in _walk(root) if n.interval is not None
                       for b in (n.interval.lower, n.interval.upper) if isinstance(b, str)})
-    return Result(status, text, trace.rules, trace.reviews, trace.substitutions, trace.rounded, pattern, root, names)
+    return Result(status, text, trace.rules, trace.reviews, trace.substitutions, trace.rounded, template, root, names)

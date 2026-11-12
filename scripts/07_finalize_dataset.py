@@ -20,7 +20,9 @@ Every run ends by writing the three sets from the stored answers:
   pairs.xlsx with one sheet each;
 - sets 2 and 3 from the stl-nl runs copied by hand into data/dataset/set_N/stlnl_run/ (formulas.jsonl and pairs.jsonl
   of the run): pairs.jsonl with every description, `judge` filled for the formulas judged so far, and pairs.xlsx. A
-  set whose stlnl_run/ is missing is skipped.
+  set whose stlnl_run/ is missing is skipped;
+- data/dataset/analysis.md and patterns.csv: size, judge, patterns, domains and operators of the dataset
+  (src/dataset/analysis.py).
 
 The answers are kept in data/processed/judgments/answers.jsonl: a run makes only the calls not stored yet, and a
 stored answer is asked again only when what the model reads has changed (formula, descriptions, prompt).
@@ -36,6 +38,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BASE_DIR))
 
 from config import DATA_DIR
+from src.dataset.analysis import write_analysis
 from src.dataset.judge import ANSWERS_FILE, paper_items, read_answers, run_calls, stlnl_items, usable, vote
 from src.dataset.sets import (DATASET_DIR, SET_1, SET_2, SET_3, STLNL_RUN, attach_judgments, paper_rows, read_jsonl,
                               stlnl_rows, write_set)
@@ -216,6 +219,8 @@ def write_sets(records: list[dict], stored: dict):
         written(name, write_set(rows, DATASET_DIR / name), f" ({judged} descriptions judged)")
         for what, n in counts.items():
             print(f"   {n:>6}  {what}")
+    path = write_analysis(DATASET_DIR)
+    print(f"\nWritten {path.relative_to(BASE_DIR)} and patterns.csv")
 
 
 def main():

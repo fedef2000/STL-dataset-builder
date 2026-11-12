@@ -18,7 +18,7 @@ from src.normalization.latex import source_macros
 from src.normalization.normalize import normalize
 from src.normalization.rules import FAITHFUL_REJECTED, FAITHFUL_RULES, RULES, status
 from src.normalization.select import select
-from src.normalization.skeleton import skeleton
+from src.normalization.pattern import pattern
 from src.normalization.stlgen_ast import formula as stlgen_ast
 from src.normalization.validate import check
 
@@ -285,26 +285,26 @@ def test_bounds_that_no_draw_satisfies():
     assert run(r"\Box_{[a, a-200]} p").reasons[0].startswith("bounds_unsatisfiable")
 
 
-def test_pattern():
+def test_template():
     result = run(r"\psi = \Box_{[0,30]} (gear = 4 \rightarrow \Diamond_{[0,5]} rpm < 3000)")
-    assert result.pattern == "G[#,#] ((a == #) -> (F[#,#] (b < #)))"
+    assert result.template == "G[#,#] ((a == #) -> (F[#,#] (b < #)))"
     # A name used twice keeps its letter; numbers inside expressions are hidden too
-    assert run(r"(\Box_{[0,5]} x < 3) \rightarrow (\Box_{[0,2]} x < 4)").pattern == \
+    assert run(r"(\Box_{[0,5]} x < 3) \rightarrow (\Box_{[0,2]} x < 4)").template == \
            "(G[#,#] (a < #)) -> (G[#,#] (a < #))"
-    assert run(r"(\Box_{[0,5]} x < 3) \rightarrow (\Box_{[0,2]} y < 4)").pattern == \
+    assert run(r"(\Box_{[0,5]} x < 3) \rightarrow (\Box_{[0,2]} y < 4)").template == \
            "(G[#,#] (a < #)) -> (G[#,#] (b < #))"
-    assert run(r"\Box_{[0,5]} |x - y| > -x").pattern == "G[#,#] (|a - b| > (# - a))"
-    # Formulas that differ only in numbers and names share their pattern
-    assert run(r"\Diamond_{[1,2]} p").pattern == run(r"\Diamond_{[0,T]} \varphi").pattern == "F[#,#] a"
-    # A parameter is written # as a number (G[0,T] and G[0,5] share a pattern); inf is kept
-    assert run(r"\Box_{[a,b]} x > c").pattern == "G[#,#] (a > b)"
-    assert run(r"\Box p").pattern == "G[#,inf] a"
-    assert run(r"\Box_{[0,5]} 2x + y > 1").pattern == "G[#,#] ((# * a) + b > #)"
-    assert run(r"\Box p \wedge \forall i").pattern is None
+    assert run(r"\Box_{[0,5]} |x - y| > -x").template == "G[#,#] (|a - b| > (# - a))"
+    # Formulas that differ only in numbers and names share their template
+    assert run(r"\Diamond_{[1,2]} p").template == run(r"\Diamond_{[0,T]} \varphi").template == "F[#,#] a"
+    # A parameter is written # as a number (G[0,T] and G[0,5] share a template); inf is kept
+    assert run(r"\Box_{[a,b]} x > c").template == "G[#,#] (a > b)"
+    assert run(r"\Box p").template == "G[#,inf] a"
+    assert run(r"\Box_{[0,5]} 2x + y > 1").template == "G[#,#] ((# * a) + b > #)"
+    assert run(r"\Box p \wedge \forall i").template is None
 
 
-def selection_line(record_id, normalized, pattern, status="ok"):
-    return {"id": record_id, "status": status, "normalized": normalized, "pattern": pattern}
+def selection_line(record_id, normalized, template, status="ok"):
+    return {"id": record_id, "status": status, "normalized": normalized, "template": template}
 
 
 def test_selection_leaves_out_duplicates():
@@ -315,15 +315,15 @@ def test_selection_leaves_out_duplicates():
            [("kept", None), ("duplicate", "W1:P1"), ("kept", None), (None, None)]
 
 
-def test_selection_caps_each_pattern_over_papers():
-    # Paper W1 has 5 formulas of the pattern, W2 and W3 one each: a cap of 3 takes one from each paper
+def test_selection_caps_each_template_over_papers():
+    # Paper W1 has 5 formulas of the template, W2 and W3 one each: a cap of 3 takes one from each paper
     lines = [selection_line(f"W1:P{i}", f"F[0,{i}] p", "F[#,#] a") for i in range(5)]
     lines += [selection_line("W2:P1", "F[0,9] q", "F[#,#] a"), selection_line("W3:P1", "F[0,8] r", "F[#,#] a"),
               selection_line("W4:P1", "G[0,1] p", "G[#,#] a")]
     select(lines, 3, "0")
     kept = [l["id"] for l in lines if l["selection"] == "kept"]
     assert len(kept) == 4 and {"W2:P1", "W3:P1", "W4:P1"} <= set(kept)
-    assert sum(1 for l in lines if l["selection"] == "pattern_cap") == 4
+    assert sum(1 for l in lines if l["selection"] == "template_cap") == 4
     # The same seed picks the same; no cap keeps all
     again = [dict(l) for l in lines]
     select(again, 3, "0")
@@ -333,13 +333,13 @@ def test_selection_caps_each_pattern_over_papers():
 
 
 @pytest.mark.skipif(not STLGEN_BIN.is_file(), reason="stlgen of stl-nl not built")
-def test_skeleton():
+def test_pattern():
     def of(formula):
         parsed, error = check(run(formula).normalized, STLGEN_BIN)
         assert error is None, error
-        return skeleton(parsed["ast"])[0]
+        return pattern(parsed["ast"])[0]
     assert of(r"\psi = \Box_{[0,30]} (gear = 4 \rightarrow \Diamond_{[0,5]} rpm < 3000)") == "G[#,#] (φ -> F[#,#] ψ)"
-    # Conditions become letters whatever their relations: two patterns, one skeleton
+    # Conditions become letters whatever their relations: two templates, one pattern
     assert of(r"\Box_{[0,5]} x < 3") == of(r"\Diamond_{[0,T]} (x + y > z)".replace("Diamond", "Box")) == "G[#,#] φ"
     # A letter repeats only when the same condition repeats; && is unordered; inf is kept
     assert of(r"(\Box_{[0,5]} x < 3) \wedge (\Diamond_{[0,2]} x < 3)") == "(F[#,#] φ) && (G[#,#] φ)"
@@ -422,10 +422,10 @@ def test_rules_of_the_faithful_mode():
         assert not FAITHFUL_RULES & set(run(formula).rules), formula
 
 
-def test_faithful_pattern():
+def test_faithful_template():
     # Bounds are # whatever they are, the brackets are kept, a power's exponent is a number
-    assert faithful(r"\Diamond_{(0,T+1]} (x^2 < 2.5)").pattern == "F(#,#] (a^# < #)"
-    assert faithful(r"\Box_{[0,T]} (x < T)").pattern == "G[#,#] (a < b)"
+    assert faithful(r"\Diamond_{(0,T+1]} (x^2 < 2.5)").template == "F(#,#] (a^# < #)"
+    assert faithful(r"\Box_{[0,T]} (x < T)").template == "G[#,#] (a < b)"
 
 
 def test_faithful_names():
@@ -434,20 +434,20 @@ def test_faithful_names():
 
 
 @pytest.mark.skipif(not STLGEN_BIN.is_file(), reason="stlgen of stl-nl not built")
-def test_converter_gives_stlgen_skeletons():
-    # Our tree as stlgen's AST gives the skeleton stlgen's own AST gives (step 6 checked it on every unpaired formula ok)
+def test_converter_gives_stlgen_patterns():
+    # Our tree as stlgen's AST gives the pattern stlgen's own AST gives (step 6 checked it on every unpaired formula ok)
     for formula, expected, _ in OK_CASES + [(r"\bigcirc a \leftrightarrow b", None, None),
                                             (r"\Box_{[0,5]} -x > 0 \wedge |y| < 1", None, None)]:
         result = run(formula)
         parsed, error = check(result.normalized, STLGEN_BIN)
         assert error is None, error
-        assert skeleton(stlgen_ast(result.tree)) == skeleton(parsed["ast"]), formula
+        assert pattern(stlgen_ast(result.tree)) == pattern(parsed["ast"]), formula
 
 
-def test_faithful_skeleton():
+def test_faithful_pattern():
     def of(formula):
-        return skeleton(stlgen_ast(faithful(formula).tree))[0]
-    # Open, real and expression bounds are [#,#] as any finite bound: these have the skeleton of their stl-nl form
+        return pattern(stlgen_ast(faithful(formula).tree))[0]
+    # Open, real and expression bounds are [#,#] as any finite bound: these have the pattern of their stl-nl form
     assert of(r"\Diamond_{(0,2.5]} p") == of(r"\Diamond_{[0,T+1)} p") == "F[#,#] φ"
     assert of(r"\Box_{[0,5]} (x^2 > 1 \wedge x^2 > 1)") == "G[#,#] (φ && φ)"
     assert of(r"\Box p") == "G[#,inf] φ"

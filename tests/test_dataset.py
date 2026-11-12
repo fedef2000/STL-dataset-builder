@@ -65,12 +65,12 @@ def test_stlnl_rows(tmp_path):
              {"formula_id": "h1", "realization_index": 0, "nl": "p holds from step 0 to step 5"}]
     for name, rows in (("formulas.jsonl", formulas), ("pairs.jsonl", pairs)):
         (tmp_path / name).write_text("".join(json.dumps(r) + "\n" for r in rows))
-    manifest = [{"id": "P:F1", "file": "stl/f00001.stl", "normalized": "G[0,5] p", "pattern": "G[#,#] a", "original": r"\Box_{[0,5]} p"}]
+    manifest = [{"id": "P:F1", "file": "stl/f00001.stl", "normalized": "G[0,5] p", "template": "G[#,#] a", "original": r"\Box_{[0,5]} p"}]
     records = {"P:F1": {"paper_id": "P", "domain": "generic", "license_tier": "permissive_cc", "license": "cc-by", "source_type": "latex"}}
 
     rows, counts = stlnl_rows("set_2", tmp_path, manifest, records)
     assert [r["id"] for r in rows] == ["P:F1:R0", "P:F1:R1"]
-    assert rows[0]["paper_id"] == "P" and rows[0]["stlnl_formula_id"] == "h1" and rows[0]["skeleton"] == "G[#,#] φ"
+    assert rows[0]["paper_id"] == "P" and rows[0]["stlnl_formula_id"] == "h1" and rows[0]["pattern"] == "G[#,#] φ"
     assert counts["descriptions"] == 2 and sum(n for what, n in counts.items() if what.startswith("formulas without")) == 1
 
     rows, _ = stlnl_rows("set_3", tmp_path)   # no paper: the formula is named after its source index
@@ -82,3 +82,24 @@ def test_stlnl_semantics_only_for_stlnl_sets():
     with_semantics = build_messages("p", ["d"], stlnl=True)[0]["content"]
     assert "up to and including" in with_semantics
     assert with_semantics.index("The semantics of these formulas") < with_semantics.index("For each description, answer:")
+
+
+def test_pattern_tree():
+    from src.dataset.analysis import nestings, parse, temporal_depth
+    tree = parse("G[#,#] (φ -> F[#,#] ψ)")
+    assert temporal_depth(tree) == 2 and nestings(tree) == {"G F"}
+    tree = parse("(φ && ψ) R[#,#] (χ && θ)")   # U and R bind looser than the unary operators, tighter than &&
+    assert tree[0] == "R" and temporal_depth(tree) == 1
+    tree = parse("(F[#,#] G[#,#] φ) || (F[#,#] G[#,#] ψ)")
+    assert tree[0] == "||" and nestings(tree) == {"F G"}
+    assert temporal_depth(parse("G[#,inf] F[#,#] G[#,#] φ")) == 3
+    assert parse("!(φ U[#,#] ψ)")[0] == "!"
+
+
+def test_features():
+    from src.dataset.analysis import features
+    x = features({"pattern": "G[#,#] (φ -> F[#,#] ψ)", "stl": "G[0,T] ((x > 3) -> (F(0,2.5] (y + z <= 1)))"})
+    assert x["bounds"] == {"integer", "parameter", "real"} and x["open"]
+    assert x["comparison"] and x["arithmetic"] and x["conditions"] == 2
+    x = features({"pattern": "G[#,inf] (φ -> ψ)", "stl": "G[0,inf] (p -> q)"})   # -> is not a comparison
+    assert not x["comparison"] and not x["arithmetic"] and x["bounds"] == {"integer", "inf"}

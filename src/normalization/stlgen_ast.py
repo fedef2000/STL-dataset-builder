@@ -1,16 +1,16 @@
 """
 The tree of a normalized formula (parser.Node) written as the AST that `stlgen import` gives for its text, so that the
-skeleton (skeleton.py, copied from stl-nl) can be computed without stlgen: for the formulas of the faithful mode, which
+pattern (pattern.py, copied from stl-nl) can be computed without stlgen: for the formulas of the faithful mode, which
 stlgen can't parse (open intervals, real or expression bounds, powers). It follows what stlgen does to the text:
 
     X a        -> F[1,1] a                     (stlgen has no next operator: it writes X as one step of F)
     a <-> b    -> (a && b) || (!a && !b)
     -x         -> 0 - x                        (emit.py writes it so)
 
-For the formulas stlgen can parse, the result gives the same skeleton as stlgen's own AST (tested on every formula ok of
+For the formulas stlgen can parse, the result gives the same pattern as stlgen's own AST (tested on every formula ok of
 the unpaired run). What stlgen doesn't have is written as stlgen would if it had it: a power is {"type": "power"}, a
-bound that is a real number or an expression is {"type": "expression"} (the skeleton writes every finite bound #), and
-an open interval is not marked (the skeleton doesn't show the brackets).
+bound that is a real number or an expression is {"type": "expression"} (the pattern writes every finite bound #), and
+an open interval is not marked (the pattern doesn't show the brackets).
 """
 import math
 

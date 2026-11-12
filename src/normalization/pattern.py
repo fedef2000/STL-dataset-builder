@@ -1,9 +1,9 @@
 """
-The skeleton of a formula, as stl-nl's scripts/formula_patterns.py computes it (copied from stl-nl at efe09be, only
-the skeleton): its temporal and Boolean structure, with each distinct relation or Boolean signal written as a Greek
+The pattern of a formula, as stl-nl's scripts/formula_patterns.py computes it, where it is called the skeleton (copied
+from stl-nl at efe09be, only that part; named skeleton here too until 2026-11-12): its temporal and Boolean structure, with each distinct relation or Boolean signal written as a Greek
 letter, a letter repeating only when the exact same condition repeats. Time bounds are [#,#], or [#,inf] when
 unbounded. Operands of + * && || == != are unordered. It is computed from the AST that `stlgen import` gives
-(validate.check), so a formula gets the same skeleton here and in stl-nl; the formulas stlgen can't parse (faithful
+(validate.check), so a formula gets the same pattern here and in stl-nl; the formulas stlgen can't parse (faithful
 mode) give that AST with stlgen_ast.py. One addition to stl-nl's code: the power of the faithful mode (^, tightest).
 
     G[0,30] ((gear == 4) -> (F[0,5] (rpm < 3000)))  ->  G[#,#] (φ -> F[#,#] ψ)
@@ -135,8 +135,8 @@ def canonical(render, alphabet):
     return PLACEHOLDER.sub(lambda m: assigned.setdefault(m[0], label(len(assigned), alphabet)), best), exact
 
 
-def skeleton(ast):
-    """(the skeleton of the formula whose stlgen AST is `ast`, whether every renaming could be compared)."""
+def pattern(ast):
+    """(the pattern of the formula whose stlgen AST is `ast`, whether every renaming could be compared)."""
     def identity(node):
         if node["type"] == "atom":
             return node["name"]

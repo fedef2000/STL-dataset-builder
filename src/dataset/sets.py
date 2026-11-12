@@ -15,14 +15,15 @@ with their AST) and pairs.jsonl (the descriptions). Every set is written as rows
                   stl-nl's own text for sets 2 and 3), so the three sets write their formulas alike
     formula_id    the formula: the record id of step 5 for paper formulas, stlnl_<source index> for set 3
     stlnl_formula_id   stl-nl's id of the formula (a hash of its AST; sets 2 and 3)
-    pattern       as in step 6 (sets 1 and 2; null for set 3), skeleton: as in step 6, from the AST for sets 2 and 3
+    template       as in step 6 (sets 1 and 2; null for set 3), pattern: as in step 6, from the AST for sets 2 and 3
     judge         the final label (correct, ambiguous, wrong, no, undecided), how it was reached, and each model's
                   answer; null while the set isn't judged
     signals       checks made without a model, recorded only: names of the description the formula doesn't have
                   (set 1 only, from step 6)
     original_stl, original_nl   as the paper writes them (LaTeX), for checking (original_nl: set 1 only)
     kind, domain, paper_id, license_tier, license, source_type   from step 5 (set 3: only domain, from stl-nl)
-    stlnl_pattern_id   the pattern stl-nl generated the formula from (set 3)
+    stlnl_pattern_id   the property pattern of stl-nl's generator the formula comes from (bounded_response, invariance,
+                       ...; set 3), stl-nl's own name: not the pattern of the field `pattern`
 """
 import collections
 import json
@@ -32,7 +33,7 @@ from pathlib import Path
 from config import DATA_DIR
 from src.dataset.judge import usable, vote
 from src.extraction.records import parse_model
-from src.normalization.skeleton import skeleton
+from src.normalization.pattern import pattern
 
 DATASET_DIR = DATA_DIR / "dataset"
 SET_1, SET_2, SET_3 = "set_1", "set_2", "set_3"
@@ -63,7 +64,7 @@ def paper_rows(records: list[dict], items: list[dict], stored: dict, models: lis
         for n, passage in enumerate(r["requirements"]):
             rows.append({
                 "id": f"{r['id']}:D{n + 1}", "set": SET_1, "nl": passage["normalized"], "stl": r["stl"],
-                "formula_id": r["id"], "stlnl_formula_id": None, "pattern": r["pattern"], "skeleton": r["skeleton"],
+                "formula_id": r["id"], "stlnl_formula_id": None, "template": r["template"], "pattern": r["pattern"],
                 "judge": final_judgment(stored, by_id[r["id"]], n, models, tie_breaker),
                 "signals": {"names_not_in_formula": names[n]},
                 "original_stl": r["formula"], "original_nl": passage["text"], "kind": passage["kind"],
@@ -97,9 +98,9 @@ def stlnl_rows(name: str, run: Path, manifest: list[dict] | None = None, records
             counts["formulas without a description (failed in the stl-nl run, or not reached by it)"] += 1
             continue
         source = f["source"]
-        skeleton_text, _ = skeleton(f["ast"])
+        pattern_text, _ = pattern(f["ast"])
         row = {"set": name, "stl": f["stl"], "formula_id": f"stlnl_{source['source_index']}",
-               "stlnl_formula_id": f["formula_id"], "pattern": None, "skeleton": skeleton_text, "judge": None,
+               "stlnl_formula_id": f["formula_id"], "template": None, "pattern": pattern_text, "judge": None,
                "original_stl": None, "original_nl": None, "kind": None, "domain": source.get("domain"),
                "paper_id": None, "license_tier": None, "license": None, "source_type": None,
                "stlnl_pattern_id": source.get("pattern_id")}
@@ -109,7 +110,7 @@ def stlnl_rows(name: str, run: Path, manifest: list[dict] | None = None, records
                 counts["formulas not linked to a paper (no .stl file of step 6 with the same text)"] += 1
             else:
                 record = records[line["id"]]
-                row.update(formula_id=line["id"], pattern=line["pattern"], original_stl=line["original"],
+                row.update(formula_id=line["id"], template=line["template"], original_stl=line["original"],
                            domain=record.get("domain"), paper_id=record["paper_id"], license_tier=record.get("license_tier"),
                            license=record.get("license"), source_type=record.get("source_type"))
         for pair in described:

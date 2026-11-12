@@ -14,7 +14,7 @@ its mode (src/normalization/rules.py):
     python scripts/06_normalize_formulas.py --only paired       # one of them (unpaired, paired)
     python scripts/06_normalize_formulas.py --seed 1            # other random values for the bounds that cannot stay symbolic
     python scripts/06_normalize_formulas.py --stlgen PATH       # the stlgen binary of stl-nl (default: STLGEN_BIN)
-    python scripts/06_normalize_formulas.py --max-per-pattern 0 # every formula ok to stl-nl (default: 10 per pattern)
+    python scripts/06_normalize_formulas.py --max-per-template 0 # every formula ok to stl-nl (default: 10 per template)
     python scripts/06_normalize_formulas.py --show-rejected               # the reasons of rejection, with counts
     python scripts/06_normalize_formulas.py --show-rejected function      # 10 random formulas rejected by `function`
     python scripts/06_normalize_formulas.py --show-rejected "unknown_command: \\overline" --limit 0   # all of them
@@ -24,7 +24,7 @@ its mode (src/normalization/rules.py):
 and no file is written.
 
 Of the unpaired formulas ok, those with the same normalized text as an earlier one are left out, and at most
---max-per-pattern of each pattern are kept (taken from the papers in turn): the manifest says which (`selection`).
+--max-per-template of each template are kept (taken from the papers in turn): the manifest says which (`selection`).
 The paired ones are all kept: the same formula with another description is another pair. Writes (the files of an
 earlier run are replaced):
 
@@ -32,10 +32,10 @@ earlier run are replaced):
         stl/f00001.stl ...            the formulas kept for stl-nl (status ok, selection kept)
         needs_review/r00001.stl ...   the formulas with a rule of status needs_review (none since 2026-10-19: not written)
         manifest.jsonl                one line per input record: status, file, reasons, rules, original and normalized text
-        report.md                     counts by status, reason and pattern, with examples
+        report.md                     counts by status, reason and template, with examples
     data/normalized/paired/
         records.jsonl                 the records of step 5 whose formula is ok, with `normalized`, `stl` (the same formula
-                                      with the parentheses stl-nl prints), `pattern`, `skeleton`
+                                      with the parentheses stl-nl prints), `template`, `pattern`
                                       and, in each requirement, `normalized`: the text that matches the formula
         manifest.jsonl                as above, with the passages of the formulas ok and what couldn't be converted
         report.md                     as above, with what goes beyond stl-nl's grammar and how the descriptions were written
@@ -94,7 +94,7 @@ def paired_record(record: dict, line: dict) -> dict:
                      for passage, normalized in zip(value, line["requirements"])]
         out[key] = value
         if key == "formula":
-            out.update(normalized=line["normalized"], stl=line["stl"], pattern=line["pattern"], skeleton=line["skeleton"])
+            out.update(normalized=line["normalized"], stl=line["stl"], template=line["template"], pattern=line["pattern"])
     return out
 
 
@@ -110,7 +110,7 @@ def run(name: str, args):
     records = [json.loads(line) for line in open(source, encoding="utf-8")]
     print(f"Normalizing {len(records)} {name} formulas from {source.relative_to(BASE_DIR)} (mode {mode})")
     lines = normalize_records(records, args.seed, args.stlgen, mode)
-    select(lines, args.max_per_pattern if mode == "stl-nl" else 0, args.seed)
+    select(lines, args.max_per_template if mode == "stl-nl" else 0, args.seed)
     if mode == "stl-nl":
         write_stl_files(lines, output)
     else:
@@ -120,7 +120,7 @@ def run(name: str, args):
                     [paired_record(r, l) for r, l in zip(records, lines) if l["status"] == "ok"])
     write_lines(output / "manifest.jsonl", lines)
     text = report(lines, mode=mode, source=str(source.relative_to(BASE_DIR)), seed=args.seed,
-                  max_per_pattern=args.max_per_pattern)
+                  max_per_template=args.max_per_template)
     (output / "report.md").write_text(text, encoding="utf-8")
     status = collections.Counter(l["status"] for l in lines)
     kept = f" (kept for stl-nl {sum(1 for l in lines if l['selection'] == 'kept')})" if mode == "stl-nl" else ""
@@ -162,8 +162,8 @@ def main():
     parser.add_argument("--only", choices=sorted(INPUTS), help="normalize only these formulas (default: both)")
     parser.add_argument("--seed", default="0", help="seed of the random values of the symbolic bounds")
     parser.add_argument("--stlgen", type=Path, default=STLGEN_BIN, help="the stlgen binary of stl-nl")
-    parser.add_argument("--max-per-pattern", type=int, default=10,
-                        help="at most this many formulas of each pattern go to stl-nl (0: no cap)")
+    parser.add_argument("--max-per-template", type=int, default=10,
+                        help="at most this many formulas of each template go to stl-nl (0: no cap)")
     parser.add_argument("--show-rejected", nargs="?", const="", metavar="REASON",
                         help="print rejected formulas whose reason starts with REASON (alone: list the reasons), "
                              "from the manifest of the last run")

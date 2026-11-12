@@ -1,8 +1,8 @@
 """
 The normalization of a file of records (step 6): one manifest line per record. The formulas without a requirement are
-normalized in the stl-nl mode and checked with stlgen, the parser of stl-nl, which also gives their skeleton. The
+normalized in the stl-nl mode and checked with stlgen, the parser of stl-nl, which also gives their pattern. The
 paired formulas are normalized in the faithful mode (rules.py), which stlgen can't parse, as it keeps the paper's bounds
-and powers: their skeleton comes from their own tree (stlgen_ast.py), and their requirement passages are written to
+and powers: their pattern comes from their own tree (stlgen_ast.py), and their requirement passages are written to
 match the formula (description.py).
 """
 from pathlib import Path
@@ -12,15 +12,15 @@ from src.normalization.description import normalize_description
 from src.normalization.emit import stlnl_text
 from src.normalization.latex import paper_macros
 from src.normalization.normalize import normalize, with_fallback
-from src.normalization.skeleton import skeleton
+from src.normalization.pattern import pattern
 from src.normalization.stlgen_ast import formula as stlgen_ast
 from src.normalization.validate import check, over_limits
 
 
-def skeleton_of(ast, record_id: str) -> str:
-    text, exact = skeleton(ast)
+def pattern_of(ast, record_id: str) -> str:
+    text, exact = pattern(ast)
     if not exact:
-        print(f"   {record_id}: too many interchangeable conditions to compare every renaming; its skeleton may "
+        print(f"   {record_id}: too many interchangeable conditions to compare every renaming; its pattern may "
               f"differ from an equal one")
     return text
 
@@ -49,19 +49,19 @@ def normalize_records(records: list[dict], seed: str, stlgen: Path | None, mode:
                            flags=record["provenance"].get("flags", []), mode=mode)
         line = {"id": record["id"], "status": result.status, "file": None, "reasons": result.reasons,
                 "rules": result.rules, "original": record["formula"], "normalized": result.normalized,
-                "pattern": result.pattern, "skeleton": None,
+                "template": result.template, "pattern": None,
                 "stl": None, "substitutions": result.substitutions, "rounded": result.rounded, "over_limits": [],
                 "bounds": record["bounds"], "source_type": record["source_type"]}
         if result.normalized is not None and mode == "stl-nl":
             parsed, error = check(result.normalized, stlgen)
             if parsed is None:
                 line.update(status="rejected", reasons=[f"stlgen_error: {error}"], rules=result.rules + ["stlgen_error"],
-                            normalized=None, pattern=None)
+                            normalized=None, template=None)
             else:
                 line.update(stl=parsed["stl"], over_limits=over_limits(parsed),
-                            skeleton=skeleton_of(parsed["ast"], record["id"]))
+                            pattern=pattern_of(parsed["ast"], record["id"]))
         elif result.normalized is not None:
-            line["skeleton"] = skeleton_of(stlgen_ast(result.tree), record["id"])
+            line["pattern"] = pattern_of(stlgen_ast(result.tree), record["id"])
             # The text as stl-nl prints it (what stlgen gives the unpaired formulas), for the final dataset
             line["stl"] = stlnl_text(result.tree)
             if result.status == "ok":

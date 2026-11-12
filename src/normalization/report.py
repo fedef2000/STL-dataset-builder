@@ -1,6 +1,6 @@
 """
 The report of step 6 (report.md), from the manifest lines of one run: counts by status, why formulas are rejected (with
-examples), the most frequent unknown commands, the patterns and skeletons, and for the formulas without a requirement
+examples), the most frequent unknown commands, the templates and patterns, and for the formulas without a requirement
 the selection for stl-nl; for the paired ones the extensions of stl-nl's grammar they use and how their descriptions
 were written (description.py).
 """
@@ -196,7 +196,7 @@ def why(line: dict) -> str:
     return code(part) if part else ""
 
 
-def report(lines: list[dict], *, mode: str, source: str, seed: str, max_per_pattern: int | None = None) -> str:
+def report(lines: list[dict], *, mode: str, source: str, seed: str, max_per_template: int | None = None) -> str:
     """The report of a run on the records of `source` (a path, for the text) in `mode` (rules.py)."""
     total = len(lines)
     status = collections.Counter(l["status"] for l in lines)
@@ -255,10 +255,10 @@ def report(lines: list[dict], *, mode: str, source: str, seed: str, max_per_patt
             "Candidates for a new rule. Many come from the paper's macros: its definition of an operator uses a "
             "command to draw the symbol (\\raisebox, \\rotatebox, ...).", ""]
     out += table(rows, ("Command", "Formulas", "Written in the formula", "From a macro", "Example"))
-    out += patterns(lines)
-    out += skeletons(lines, with_selection=mode == "stl-nl")
+    out += templates(lines)
+    out += patterns(lines, with_selection=mode == "stl-nl")
     if mode == "stl-nl":
-        out += selection(lines, max_per_pattern)
+        out += selection(lines, max_per_template)
     else:
         out += extensions(lines)
         out += descriptions(lines)
@@ -268,27 +268,27 @@ def report(lines: list[dict], *, mode: str, source: str, seed: str, max_per_patt
 PATTERNS_SHOWN = 30
 
 
-def patterns(lines: list[dict]) -> list[str]:
-    """The patterns of the formulas kept: how many there are, and the most common ones with an example each."""
+def templates(lines: list[dict]) -> list[str]:
+    """The templates of the formulas kept: how many there are, and the most common ones with an example each."""
     kept = [l for l in lines if l["status"] != "rejected"]
-    count = collections.Counter(l["pattern"] for l in kept)
+    count = collections.Counter(l["template"] for l in kept)
     once = sum(1 for n in count.values() if n == 1)
     shown = count.most_common(PATTERNS_SHOWN)
     covered = sum(n for _, n in shown)
     example = {}
     for l in kept:
-        best = example.get(l["pattern"])
+        best = example.get(l["template"])
         if best is None or len(l["normalized"]) < len(best["normalized"]):
-            example[l["pattern"]] = l
-    out = ["## Patterns", "",
-           "The pattern of a formula is its normalized text with every number written # and the names renamed a, "
+            example[l["template"]] = l
+    out = ["## Templates", "",
+           "The template of a formula is its normalized text with every number written # and the names renamed a, "
            "b, ... in the order they appear (a name used twice keeps its letter; operators and comparisons are kept). "
-           "Formulas that differ only in their numbers and names have the same pattern. The manifest has the "
-           f"pattern of each formula (`pattern`); the example is the shortest formula of each pattern.", "",
-           f"{len(kept)} formulas kept have {len(count)} patterns; {once} of them have one formula only. The "
+           "Formulas that differ only in their numbers and names have the same template. The manifest has the "
+           f"template of each formula (`template`); the example is the shortest formula of each template.", "",
+           f"{len(kept)} formulas kept have {len(count)} templates; {once} of them have one formula only. The "
            f"{len(shown)} most common cover {covered} formulas ({100 * covered / len(kept):.0f}%).", ""]
     out += table([(code(s), n, f"{100 * n / len(kept):.1f}%", code(example[s]["normalized"])) for s, n in shown],
-                 ("Pattern", "Formulas", "Share", "Example"))
+                 ("Template", "Formulas", "Share", "Example"))
     return out
 
 
@@ -299,66 +299,67 @@ def coverage(group: list[dict], field: str) -> tuple:
     return (len(group), len(count), sum(1 for n in count.values() if n == 1), f"{100 * top / len(group):.1f}%")
 
 
-def skeletons(lines: list[dict], with_selection: bool = True) -> list[str]:
+def patterns(lines: list[dict], with_selection: bool = True) -> list[str]:
     """
-    The skeletons of the formulas ok (and with `with_selection` of those kept for stl-nl), and the most common ones
+    The patterns of the formulas ok (and with `with_selection` of those kept for stl-nl), and the most common ones
     with an example each.
     """
     ok = [l for l in lines if l["status"] == "ok"]
     kept = [l for l in ok if l["selection"] == "kept"] if with_selection else []
     groups = (("ok", ok), ("kept for stl-nl", kept)) if with_selection else (("ok", ok),)
-    count = collections.Counter(l["skeleton"] for l in ok)
-    count_kept = collections.Counter(l["skeleton"] for l in kept)
+    count = collections.Counter(l["pattern"] for l in ok)
+    count_kept = collections.Counter(l["pattern"] for l in kept)
     shown = count.most_common(PATTERNS_SHOWN)
     example = {}
     for l in ok:
-        best = example.get(l["skeleton"])
+        best = example.get(l["pattern"])
         if best is None or len(l["normalized"]) < len(best["normalized"]):
-            example[l["skeleton"]] = l
-    out = ["## Skeletons", "",
-           "The skeleton of a formula is its temporal and Boolean structure, as stl-nl's "
-           "`scripts/formula_patterns.py` computes it (`src/normalization/skeleton.py`, from stlgen's AST): each "
+            example[l["pattern"]] = l
+    out = ["## Patterns", "",
+           "The pattern of a formula is its temporal and Boolean structure, as stl-nl's "
+           "`scripts/formula_patterns.py` computes it, calling it the skeleton (`src/normalization/pattern.py`, "
+           "from stlgen's AST): each "
            "distinct relation or Boolean signal is a Greek letter, which repeats only when the exact same condition "
            "repeats; bounds are `[#,#]`, or `[#,inf]` when unbounded; the operands of `+ * && || == !=` are "
-           "unordered. It is coarser than the pattern, which also keeps the relations. The manifest has the skeleton "
-           "of each formula ok (`skeleton`); the example is the shortest formula of each skeleton.", ""]
+           "unordered. It is coarser than the template, which also keeps the relations. The manifest has the pattern "
+           "of each formula ok (`pattern`); the example is the shortest formula of each pattern.", ""]
     if not with_selection:
         out += ["These formulas can't all be parsed by stlgen (their bounds and powers go beyond its grammar): their "
                 "AST is built from the normalizer's own tree (`src/normalization/stlgen_ast.py`), which gives the same "
-                "skeleton as stlgen's AST for every formula stlgen can parse. Every finite interval is `[#,#]`, open "
+                "pattern as stlgen's AST for every formula stlgen can parse. Every finite interval is `[#,#]`, open "
                 "or not; a power is `^`.", ""]
     out += table([(f"{level}, {group_name}", *coverage(group, field))
-                  for level, field in (("Skeleton", "skeleton"), ("Pattern", "pattern"))
+                  for level, field in (("Pattern", "pattern"), ("Template", "template"))
                   for group_name, group in groups],
                  ("Level, formulas", "Formulas", "Distinct", "Seen once", "Top 10 cover"))
     if with_selection:
         out += table([(code(s), n, f"{100 * n / len(ok):.1f}%", count_kept[s], code(example[s]["normalized"]))
-                      for s, n in shown], ("Skeleton", "Formulas ok", "Share", "Kept for stl-nl", "Example"))
+                      for s, n in shown], ("Pattern", "Formulas ok", "Share", "Kept for stl-nl", "Example"))
     else:
         out += table([(code(s), n, f"{100 * n / len(ok):.1f}%", code(example[s]["normalized"])) for s, n in shown],
-                     ("Skeleton", "Formulas ok", "Share", "Example"))
+                     ("Pattern", "Formulas ok", "Share", "Example"))
     return out
 
 
-def selection(lines: list[dict], max_per_pattern: int) -> list[str]:
-    """How many formulas ok go to stl-nl, and the patterns the cap cuts."""
+def selection(lines: list[dict], max_per_template: int) -> list[str]:
+    """How many formulas ok go to stl-nl, and the templates the cap cuts."""
     ok = [l for l in lines if l["status"] == "ok"]
     count = collections.Counter(l["selection"] for l in ok)
-    cap = f"at most {max_per_pattern} formulas of each pattern" if max_per_pattern else "no cap per pattern"
+    cap = f"at most {max_per_template} formulas of each template" if max_per_template else "no cap per template"
     out = ["## Selection for stl-nl", "",
            "Of the formulas ok, one with the same normalized text as an earlier one is left out (`duplicate`; the "
            f"manifest gives the id of the first in `duplicate_of`), and {cap} are kept, taken from the papers in "
-           "turn, at random with the seed (`pattern_cap`). Only the formulas kept are written in `stl/`.", ""]
-    out += table([(s, count[s], f"{100 * count[s] / len(ok):.1f}%") for s in ("kept", "duplicate", "pattern_cap")],
+           "turn, at random with the seed (`template_cap`). Only the formulas kept are written in `stl/`.", ""]
+    out += table([(s, count[s], f"{100 * count[s] / len(ok):.1f}%") for s in ("kept", "duplicate", "template_cap")],
                  ("Selection", "Formulas", "Share of ok"))
-    by_pattern = collections.defaultdict(collections.Counter)
+    by_template = collections.defaultdict(collections.Counter)
     for l in ok:
-        by_pattern[l["pattern"]][l["selection"]] += 1
-    cut = sorted(((p, c) for p, c in by_pattern.items() if c["pattern_cap"]), key=lambda pc: -pc[1]["pattern_cap"])
+        by_template[l["template"]][l["selection"]] += 1
+    cut = sorted(((p, c) for p, c in by_template.items() if c["template_cap"]), key=lambda pc: -pc[1]["template_cap"])
     if cut:
-        out += [f"{len(cut)} patterns are cut:", ""]
+        out += [f"{len(cut)} templates are cut:", ""]
         out += table([(code(p), sum(c.values()) - c["duplicate"], c["kept"]) for p, c in cut],
-                     ("Pattern", "Formulas (no duplicates)", "Kept"))
+                     ("Template", "Formulas (no duplicates)", "Kept"))
     return out
 
 
