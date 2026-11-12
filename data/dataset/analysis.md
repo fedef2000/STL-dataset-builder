@@ -120,7 +120,7 @@ In sets 1 and 2 the domain is the one step 5's models read in the paper (`generi
 
 ## Operators
 
-Share of the formulas of each set that hold each operator, read from the pattern (where `X` is `F[1,1]` and `<->` is written with `&&`, `||` and `!`, as stlgen does).
+Share of the formulas of each set that hold each operator.
 
 | Operator | set_1 | set_2 | set_3 | total |
 |---|---|---|---|---|
