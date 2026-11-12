@@ -1,4 +1,4 @@
-original,normalized,pattern
+original,normalized,template
 "F_{[a,\infty)} p","F[a,inf] p","F[#,inf] a"
 "\varphi= \fut_{(0,1)}\{a \wedge \neg\fut_{[1,1]}(a\vee b)\}","F[0,1] (a && (!(F[1,1] (a || b))))","F[#,#] (a && (!(F[#,#] (a || b))))"
 "(\Diamond_{[3,2005]}\, p)","F[3,2005] p","F[#,#] a"

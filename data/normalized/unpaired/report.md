@@ -200,13 +200,13 @@ Candidates for a new rule. Many come from the paper's macros: its definition of 
 | `\parallel` | 5 | 5 | 0 | `\Psi_2 = F_{[1,16]}(\parallel \textbf{x}_2 - [2,1]^T \parallel < 0.5)` |
 | `\sqcap` | 5 | 2 | 3 | `A\,\mathcal{U}_{[2,5)}B \sqcap \exists r.\bigcirc A` |
 
-## Patterns
+## Templates
 
-The pattern of a formula is its normalized text with every number written # and the names renamed a, b, ... in the order they appear (a name used twice keeps its letter; operators and comparisons are kept). Formulas that differ only in their numbers and names have the same pattern. The manifest has the pattern of each formula (`pattern`); the example is the shortest formula of each pattern.
+The template of a formula is its normalized text with every number written # and the names renamed a, b, ... in the order they appear (a name used twice keeps its letter; operators and comparisons are kept). Formulas that differ only in their numbers and names have the same template. The manifest has the template of each formula (`template`); the example is the shortest formula of each template.
 
-2318 formulas kept have 681 patterns; 463 of them have one formula only. The 30 most common cover 1264 formulas (55%).
+2318 formulas kept have 681 templates; 463 of them have one formula only. The 30 most common cover 1264 formulas (55%).
 
-| Pattern | Formulas | Share | Example |
+| Template | Formulas | Share | Example |
 |---|---|---|---|
 | `F[#,#] a` | 292 | 12.6% | `F[0,7] p` |
 | `G[#,#] a` | 250 | 10.8% | `G[2,6] p` |
@@ -239,18 +239,18 @@ The pattern of a formula is its normalized text with every number written # and 
 | `G[#,#] (\|a - b\| <= #)` | 10 | 0.4% | `G[5,10] (\|x_1 - x_2\| <= 2)` |
 | `G[#,#] (a && b)` | 10 | 0.4% | `G[0,5] (mu_1 && mu_2)` |
 
-## Skeletons
+## Patterns
 
-The skeleton of a formula is its temporal and Boolean structure, as stl-nl's `scripts/formula_patterns.py` computes it (`src/normalization/skeleton.py`, from stlgen's AST): each distinct relation or Boolean signal is a Greek letter, which repeats only when the exact same condition repeats; bounds are `[#,#]`, or `[#,inf]` when unbounded; the operands of `+ * && || == !=` are unordered. It is coarser than the pattern, which also keeps the relations. The manifest has the skeleton of each formula ok (`skeleton`); the example is the shortest formula of each skeleton.
+The pattern of a formula is its temporal and Boolean structure, as stl-nl's `scripts/formula_patterns.py` computes it, calling it the skeleton (`src/normalization/pattern.py`, from stlgen's AST): each distinct relation or Boolean signal is a Greek letter, which repeats only when the exact same condition repeats; bounds are `[#,#]`, or `[#,inf]` when unbounded; the operands of `+ * && || == !=` are unordered. It is coarser than the template, which also keeps the relations. The manifest has the pattern of each formula ok (`pattern`); the example is the shortest formula of each pattern.
 
 | Level, formulas | Formulas | Distinct | Seen once | Top 10 cover |
 |---|---|---|---|---|
-| Skeleton, ok | 2318 | 429 | 280 | 60.3% |
-| Skeleton, kept for stl-nl | 1201 | 429 | 302 | 35.2% |
-| Pattern, ok | 2318 | 681 | 463 | 42.5% |
-| Pattern, kept for stl-nl | 1201 | 681 | 509 | 8.3% |
+| Pattern, ok | 2318 | 429 | 280 | 60.3% |
+| Pattern, kept for stl-nl | 1201 | 429 | 302 | 35.2% |
+| Template, ok | 2318 | 681 | 463 | 42.5% |
+| Template, kept for stl-nl | 1201 | 681 | 509 | 8.3% |
 
-| Skeleton | Formulas ok | Share | Kept for stl-nl | Example |
+| Pattern | Formulas ok | Share | Kept for stl-nl | Example |
 |---|---|---|---|---|
 | `G[#,#] φ` | 468 | 20.2% | 107 | `G[2,6] p` |
 | `F[#,#] φ` | 413 | 17.8% | 85 | `F[0,7] p` |
@@ -285,17 +285,17 @@ The skeleton of a formula is its temporal and Boolean structure, as stl-nl's `sc
 
 ## Selection for stl-nl
 
-Of the formulas ok, one with the same normalized text as an earlier one is left out (`duplicate`; the manifest gives the id of the first in `duplicate_of`), and at most 10 formulas of each pattern are kept, taken from the papers in turn, at random with the seed (`pattern_cap`). Only the formulas kept are written in `stl/`.
+Of the formulas ok, one with the same normalized text as an earlier one is left out (`duplicate`; the manifest gives the id of the first in `duplicate_of`), and at most 10 formulas of each template are kept, taken from the papers in turn, at random with the seed (`template_cap`). Only the formulas kept are written in `stl/`.
 
 | Selection | Formulas | Share of ok |
 |---|---|---|
 | kept | 1201 | 51.8% |
 | duplicate | 567 | 24.5% |
-| pattern_cap | 550 | 23.7% |
+| template_cap | 550 | 23.7% |
 
-19 patterns are cut:
+19 templates are cut:
 
-| Pattern | Formulas (no duplicates) | Kept |
+| Template | Formulas (no duplicates) | Kept |
 |---|---|---|
 | `F[#,#] a` | 183 | 10 |
 | `G[#,#] a` | 140 | 10 |

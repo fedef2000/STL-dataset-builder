@@ -234,13 +234,13 @@ Candidates for a new rule. Many come from the paper's macros: its definition of 
 | `\scalebox` | 3 | 2 | 1 | `\frac{ \left( \scalebox{0.94}{\begin{tabular}{c} $(b < a \land [x'=\theta \ \ \ \chi]\phi) \ \lor$ $((\chi \lo …` |
 | `\mathlarger` | 3 | 0 | 3 | `(\mathcal{X}, t) \mymodels \Box_{[a,b]}\varphi \:\Leftrightarrow \forall t' \in t+[a, b]: (\mathcal{X}, t') \m …` (in a macro of the paper) |
 
-## Patterns
+## Templates
 
-The pattern of a formula is its normalized text with every number written # and the names renamed a, b, ... in the order they appear (a name used twice keeps its letter; operators and comparisons are kept). Formulas that differ only in their numbers and names have the same pattern. The manifest has the pattern of each formula (`pattern`); the example is the shortest formula of each pattern.
+The template of a formula is its normalized text with every number written # and the names renamed a, b, ... in the order they appear (a name used twice keeps its letter; operators and comparisons are kept). Formulas that differ only in their numbers and names have the same template. The manifest has the template of each formula (`template`); the example is the shortest formula of each template.
 
-1614 formulas kept have 695 patterns; 497 of them have one formula only. The 30 most common cover 695 formulas (43%).
+1614 formulas kept have 695 templates; 497 of them have one formula only. The 30 most common cover 695 formulas (43%).
 
-| Pattern | Formulas | Share | Example |
+| Template | Formulas | Share | Example |
 |---|---|---|---|
 | `F[#,#] a` | 134 | 8.3% | `F[3,8] p` |
 | `G[#,#] a` | 114 | 7.1% | `G[0,0] B` |
@@ -273,18 +273,18 @@ The pattern of a formula is its normalized text with every number written # and 
 | `(F[#,#] (a && (F[#,#] b))) && (G[#,#] (!c))` | 6 | 0.4% | `(F[2,6] (G_1 && (F[3,7] G_2))) && (G[0,15] (!Obs))` |
 | `F[#,#] (((# <= a) && (a <= #)) && ((# <= b) && (b <= #)))` | 6 | 0.4% | `F[0,10] (((3 <= x) && (x <= 5)) && ((4 <= y) && (y <= 6)))` |
 
-## Skeletons
+## Patterns
 
-The skeleton of a formula is its temporal and Boolean structure, as stl-nl's `scripts/formula_patterns.py` computes it (`src/normalization/skeleton.py`, from stlgen's AST): each distinct relation or Boolean signal is a Greek letter, which repeats only when the exact same condition repeats; bounds are `[#,#]`, or `[#,inf]` when unbounded; the operands of `+ * && || == !=` are unordered. It is coarser than the pattern, which also keeps the relations. The manifest has the skeleton of each formula ok (`skeleton`); the example is the shortest formula of each skeleton.
+The pattern of a formula is its temporal and Boolean structure, as stl-nl's `scripts/formula_patterns.py` computes it, calling it the skeleton (`src/normalization/pattern.py`, from stlgen's AST): each distinct relation or Boolean signal is a Greek letter, which repeats only when the exact same condition repeats; bounds are `[#,#]`, or `[#,inf]` when unbounded; the operands of `+ * && || == !=` are unordered. It is coarser than the template, which also keeps the relations. The manifest has the pattern of each formula ok (`pattern`); the example is the shortest formula of each pattern.
 
-These formulas can't all be parsed by stlgen (their bounds and powers go beyond its grammar): their AST is built from the normalizer's own tree (`src/normalization/stlgen_ast.py`), which gives the same skeleton as stlgen's AST for every formula stlgen can parse. Every finite interval is `[#,#]`, open or not; a power is `^`.
+These formulas can't all be parsed by stlgen (their bounds and powers go beyond its grammar): their AST is built from the normalizer's own tree (`src/normalization/stlgen_ast.py`), which gives the same pattern as stlgen's AST for every formula stlgen can parse. Every finite interval is `[#,#]`, open or not; a power is `^`.
 
 | Level, formulas | Formulas | Distinct | Seen once | Top 10 cover |
 |---|---|---|---|---|
-| Skeleton, ok | 1614 | 392 | 264 | 55.4% |
-| Pattern, ok | 1614 | 695 | 497 | 30.9% |
+| Pattern, ok | 1614 | 392 | 264 | 55.4% |
+| Template, ok | 1614 | 695 | 497 | 30.9% |
 
-| Skeleton | Formulas ok | Share | Example |
+| Pattern | Formulas ok | Share | Example |
 |---|---|---|---|
 | `G[#,#] φ` | 306 | 19.0% | `G[0,0] B` |
 | `F[#,#] φ` | 231 | 14.3% | `F[3,8] p` |
@@ -325,8 +325,8 @@ What the faithful mode keeps as the paper writes it, where the stl-nl mode would
 |---|---|---|---|---|
 | open_intervals | 96 | an open or half-open interval kept open: F(2,12] (faithful mode) | `\Box_{[0,4)}\psi` | `G[0,4) psi` |
 | real_bounds | 43 | a time bound that isn't an integer kept as written: F[0,2.5] (faithful mode) | `\Diamond_{(0, 1.5]} A` | `F(0,1.5] A` |
-| powers | 27 | a power with an integer exponent kept: x^2, (x - 1)^2, \|x\|^2 (faithful mode) | `G_{[0,2]}(x_4^2 + x_5^2 > 1.5^2)` | `G[0,2] (x_4^2 + x_5^2 > 1.5^2)` |
 | bound_expressions | 27 | a time bound written as an expression of symbols kept: G[T,T + delta] (faithful mode) | `\mathsf{F}_{[0,\|s\|)}(s' > 0.1 \wedge \mathsf{F}_{[0,20]} s' < -0.1)` | `F[0,\|s\|) ((s_prime > 0.1) && (F[0,20] (s_prime < -0.1)))` |
+| powers | 27 | a power with an integer exponent kept: x^2, (x - 1)^2, \|x\|^2 (faithful mode) | `G_{[0,2]}(x_4^2 + x_5^2 > 1.5^2)` | `G[0,2] (x_4^2 + x_5^2 > 1.5^2)` |
 
 ## Descriptions
 
