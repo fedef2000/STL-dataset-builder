@@ -119,6 +119,26 @@ def stlnl_rows(name: str, run: Path, manifest: list[dict] | None = None, records
     return rows, counts
 
 
+def attach_judgments(rows: list[dict], items: list[dict], stored: dict, models: list[str], tie_breaker: str) -> int:
+    """
+    Sets 2 and 3: `judge` of each row whose formula has a stored answer (all of them once the whole set is judged,
+    the sample until then); null for the others. Returns the rows judged.
+    """
+    by_id = {item["id"]: item for item in items}
+    position: dict[str, int] = collections.Counter()
+    judged = 0
+    for row in rows:
+        item = by_id[row["formula_id"]]
+        n = position[item["id"]]
+        position[item["id"]] += 1
+        if any(usable(stored.get((*parse_model(label), item["set"], item["id"])), item) for label in models + [tie_breaker]):
+            row["judge"] = final_judgment(stored, item, n, models, tie_breaker)
+            judged += 1
+        else:
+            row["judge"] = None
+    return judged
+
+
 # The files of a set: the label of the pairs that go in each
 SPLIT = {"pairs": ("correct",), "pairs_ambiguous": ("ambiguous",), "dropped": ("wrong", "no", "undecided")}
 
@@ -126,7 +146,8 @@ SPLIT = {"pairs": ("correct",), "pairs_ambiguous": ("ambiguous",), "dropped": ("
 def write_set(rows: list[dict], folder: Path) -> dict[str, int]:
     """
     A judged set: pairs.jsonl, pairs_ambiguous.jsonl, dropped.jsonl, and pairs.xlsx with one sheet each. A set not
-    judged yet: pairs.jsonl with every row, and pairs.xlsx with one sheet. Returns the rows per file.
+    judged yet, or judged only on a sample: pairs.jsonl with every row (`judge` filled for the sample), and pairs.xlsx
+    with one sheet. Returns the rows per file.
     """
     folder.mkdir(parents=True, exist_ok=True)
     if any(r["judge"] is None for r in rows):

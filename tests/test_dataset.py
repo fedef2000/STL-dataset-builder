@@ -75,3 +75,10 @@ def test_stlnl_rows(tmp_path):
 
     rows, _ = stlnl_rows("set_3", tmp_path)   # no paper: the formula is named after its source index
     assert rows[0]["id"] == "stlnl_0:R0" and rows[0]["paper_id"] is None
+
+
+def test_stlnl_semantics_only_for_stlnl_sets():
+    assert "up to and including" not in build_messages("p", ["d"])[0]["content"]
+    with_semantics = build_messages("p", ["d"], stlnl=True)[0]["content"]
+    assert "up to and including" in with_semantics
+    assert with_semantics.index("The semantics of these formulas") < with_semantics.index("For each description, answer:")

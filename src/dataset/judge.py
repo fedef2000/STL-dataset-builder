@@ -73,6 +73,26 @@ a comparison in the other direction, a negation added or missing, an implication
 Answer in JSON only, with one item per description, in the order given.
 """
 
+# Sets 2 and 3: the semantics of stl-nl (its docs/SEMANTICS.md), which its descriptions follow and the usual reading
+# of STL doesn't: discrete steps, intervals that include both ends, an until whose left operand holds also at the step
+# where the right one holds. Without it the judges call such descriptions wrong (tried on 200 formulas of each set).
+STLNL_SEMANTICS = """\
+The semantics of these formulas, which the descriptions follow (where it differs from the usual reading of STL, this \
+one holds):
+- Time is discrete: steps 0, 1, 2, ... The formula is evaluated at step 0; every interval is relative to the step at \
+which its subformula is evaluated.
+- Every interval [a,b] is closed and contains both ends: G[0,5] p covers the six steps 0 to 5, G[1,2] p means p at \
+steps 1 and 2, F[2,3] p means p at step 2 or at step 3. Naming the steps of an interval, or counting them ("six \
+consecutive steps"), is correct.
+- p U[a,b] q: there is a step tau in [a,b] at which q holds, and p holds at every step from now up to and including \
+tau. A description where p holds "up to and including" the step of q is correct.
+- p R[a,b] q is the negation of (!p) U[a,b] (!q): at every step tau in [a,b], q holds at tau or p holds at some step \
+from now up to and including tau.
+- A name in a bound (F[0,T]) is a parameter: a fixed but unspecified number of steps. inf means no upper limit.
+
+"""
+STLNL_SYSTEM_PROMPT = SYSTEM_PROMPT.replace("For each description, answer:", STLNL_SEMANTICS + "For each description, answer:")
+
 ANSWER_SCHEMA = {
     "type": "object",
     "properties": {
@@ -98,13 +118,17 @@ ANSWER_SCHEMA = {
 }
 
 
-def build_messages(formula: str, descriptions: list[str], variables: dict[str, str] | None = None) -> list[dict]:
-    """The messages of one call: the formula, the variable meanings when there are any, the descriptions D1, D2, ..."""
+def build_messages(formula: str, descriptions: list[str], variables: dict[str, str] | None = None,
+                   stlnl: bool = False) -> list[dict]:
+    """
+    The messages of one call: the formula, the variable meanings when there are any, the descriptions D1, D2, ...
+    With `stlnl` (sets 2 and 3) the instructions also give stl-nl's semantics.
+    """
     user = f"Formula:\n{formula}\n\n"
     if variables:
         user += "Variable meanings (from the paper):\n" + "".join(f"- {name}: {meaning}\n" for name, meaning in variables.items()) + "\n"
     user += "Descriptions:\n" + "".join(f"D{n}: {text}\n" for n, text in enumerate(descriptions, 1))
-    return [{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": user}]
+    return [{"role": "system", "content": STLNL_SYSTEM_PROMPT if stlnl else SYSTEM_PROMPT}, {"role": "user", "content": user}]
 
 
 # ---------------------------------------------------------------- the call
@@ -196,12 +220,36 @@ def item_key(messages: list[dict]) -> str:
 
 
 def paper_items(records: list[dict]) -> list[dict]:
-    """Set 1: one item per record of data/normalized/paired/records.jsonl, with its normalized passages."""
+    """
+    Set 1: one item per record of data/normalized/paired/records.jsonl, with its normalized passages. The judge reads
+    the formula as step 6 normalizes it (`normalized`, fully parenthesized), as it did when set 1 was judged.
+    """
     items = []
     for r in records:
-        messages = build_messages(r["normalized"], [p["normalized"] for p in r["requirements"]], r.get("variables"))
-        items.append({"set": "set_1", "id": r["id"], "count": len(r["requirements"]), "messages": messages,
-                      "key": item_key(messages)})
+        descriptions = [p["normalized"] for p in r["requirements"]]
+        messages = build_messages(r["normalized"], descriptions, r.get("variables"))
+        items.append({"set": "set_1", "id": r["id"], "count": len(descriptions), "messages": messages,
+                      "key": item_key(messages), "formula": r["normalized"], "descriptions": descriptions,
+                      "kinds": [p["kind"] for p in r["requirements"]]})
+    return items
+
+
+def stlnl_items(rows: list[dict]) -> list[dict]:
+    """
+    Sets 2 and 3: one item per formula, with all the descriptions stl-nl wrote of it (the rows of sets.stlnl_rows, in
+    their order), and no variable meanings. The judge reads the formula as stl-nl wrote it, as its describer did, and
+    the semantics of stl-nl (STLNL_SEMANTICS).
+    """
+    by_formula: dict[str, list[dict]] = {}
+    for row in rows:
+        by_formula.setdefault(row["formula_id"], []).append(row)
+    items = []
+    for formula_id, described in by_formula.items():
+        descriptions = [r["nl"] for r in described]
+        messages = build_messages(described[0]["stl"], descriptions, stlnl=True)
+        items.append({"set": described[0]["set"], "id": formula_id, "count": len(descriptions), "messages": messages,
+                      "key": item_key(messages), "formula": described[0]["stl"], "descriptions": descriptions,
+                      "kinds": [None] * len(descriptions)})
     return items
 
 
