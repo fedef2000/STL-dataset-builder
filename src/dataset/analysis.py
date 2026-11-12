@@ -15,7 +15,7 @@ from src.dataset.sets import SET_1, SET_2, SET_3, read_jsonl
 SETS = (SET_1, SET_2, SET_3)
 TOTAL = "total"
 KEPT = {"correct", "ambiguous"}
-TOP = 20
+TOP = 10
 
 
 # ---------------------------------------------------------------- the rows of the dataset
@@ -117,69 +117,12 @@ def parse(text: str) -> tuple:
     return tree
 
 
-def temporal_depth(tree: tuple) -> int:
-    op, children = tree
-    inner = max((temporal_depth(c) for c in children), default=0)
-    return inner + (op in "GFUR" and op != "cond" and len(op) == 1)
-
-
-def nestings(tree: tuple, parent: str | None = None) -> set[str]:
-    """The temporal operators directly inside another (G F, F G, G U, ...): parent and child, with no temporal between."""
-    op, children = tree
-    is_temporal = len(op) == 1 and op in "GFUR"
-    found = {f"{parent} {op}"} if is_temporal and parent else set()
-    for c in children:
-        found |= nestings(c, op if is_temporal else parent)
-    return found
-
-
 def operators(tree: tuple) -> set[str]:
     op, children = tree
     found = {op} if op != "cond" else set()
     for c in children:
         found |= operators(c)
     return found
-
-
-# ---------------------------------------------------------------- what a formula holds, from its text
-
-INTERVAL = re.compile(r"[GFUR]([\[(])([^,\[\]()]*),([^\[\]()]*)([\])])")
-RELATION = re.compile(r"<=|>=|==|!=|(?<!-)>|<(?!-)")
-ARITHMETIC = re.compile(r" [-+*/] |\^")
-NAME = re.compile(r"[A-Za-z]\w*")
-
-
-def bound_kind(bound: str) -> str:
-    bound = bound.strip()
-    if bound == "inf":
-        return "inf"
-    if re.fullmatch(r"\d+", bound):
-        return "integer"
-    if re.fullmatch(r"-?\d+(\.\d+)?|\d+/\d+", bound):
-        return "real"
-    if NAME.fullmatch(bound):
-        return "parameter"
-    return "expression"
-
-
-def features(row: dict) -> dict:
-    """What the formula holds: operators, nesting, depth, conditions, comparisons, arithmetic, kinds of bounds."""
-    tree = parse(row["pattern"])
-    ops = operators(tree)
-    stl = row["stl"]
-    intervals = INTERVAL.findall(stl)
-    without_bounds = INTERVAL.sub("", stl)
-    kinds = {bound_kind(b) for _, lo, hi, _ in intervals for b in (lo, hi)}
-    return {
-        "ops": ops,
-        "nestings": nestings(tree),
-        "depth": temporal_depth(tree),
-        "conditions": len(set(re.findall(r"[^\x00-\x7f]", row["pattern"]))),
-        "comparison": bool(RELATION.search(without_bounds)),
-        "arithmetic": bool(ARITHMETIC.search(without_bounds)),
-        "bounds": kinds,
-        "open": any(o == "(" or c == ")" for o, _, _, c in intervals),
-    }
 
 
 # ---------------------------------------------------------------- the report
@@ -211,34 +154,32 @@ def write_analysis(folder: Path) -> Path:
 
     # Size
     out += ["## Size", ""]
-    out += table(["Set", "Descriptions", "Formulas", "Patterns"],
-                 [[s, len(rows[s]) if s != TOTAL else sum(len(rows[x]) for x in present), len(by_set[s]),
-                   len({f["pattern"] for f in by_set[s]})] for s in columns])
+    out += table(["Set", "Descriptions", "Formulas"],
+                 [[s, len(rows[s]) if s != TOTAL else sum(len(rows[x]) for x in present), len(by_set[s])] for s in columns])
 
     # Judge
     out += ["", "## Judge", "",
             "Labels of the descriptions judged: every description of set 1, a sample of 500 formulas (1,000 "
-            "descriptions) of sets 2 and 3. The rest of the judged descriptions are `no` (not a description of the "
-            "formula) or undecided.", ""]
+            "descriptions) of sets 2 and 3. `No`: the description is not a description of the formula (it only says "
+            "what the formula is for, describes a part of it, or something else). The rest of the judged descriptions "
+            "are undecided (the three models gave three different labels).", ""]
+    labels = ("correct", "ambiguous", "wrong", "no")
     judge_rows = []
     for s in present:
         files = ["pairs.jsonl", "pairs_ambiguous.jsonl", "dropped.jsonl"] if s == SET_1 else ["pairs.jsonl"]
         judged = [r["judge"]["label"] for f in files if (folder / s / f).exists() for r in read_jsonl(folder / s / f) if r["judge"]]
         count = collections.Counter(judged)
-        judge_rows.append([s, len(judged)] + [f"{count[l]} ({share(count[l], len(judged))})" for l in ("correct", "ambiguous", "wrong")])
-    out += table(["Set", "Judged", "Correct", "Ambiguous", "Wrong"], judge_rows)
+        judge_rows.append([s, len(judged)] + [f"{count[l]} ({share(count[l], len(judged))})" for l in labels])
+    out += table(["Set", "Judged", "Correct", "Ambiguous", "Wrong", "No (not a description)"], judge_rows)
 
     # Patterns
     counts = {s: collections.Counter(f["pattern"] for f in by_set[s]) for s in columns}
     out += ["", "## Patterns", "",
             "The pattern of a formula: its temporal and Boolean structure, each condition a Greek letter, every bound "
-            "`#` (or `inf`), computed as in step 6. The full list, with the "
-            "formulas of each set, is in `patterns.csv`.", ""]
-    summary = []
-    for s in columns:
-        c, n = counts[s], len(by_set[s])
-        summary.append([s, n, len(c), sum(1 for v in c.values() if v == 1), share(sum(v for _, v in c.most_common(10)), n)])
-    out += table(["Set", "Formulas", "Patterns", "Seen once", "Top 10 cover"], summary)
+            "`#` (or `inf`), computed as in step 6. The full list, with the formulas of each set, is in `patterns.csv`.", ""]
+    out += table(["Set", "Formulas", "Patterns", "Top 10 cover"],
+                 [[s, len(by_set[s]), len(counts[s]), share(sum(v for _, v in counts[s].most_common(TOP)), len(by_set[s]))]
+                  for s in columns])
     out += ["", f"### The {TOP} most common patterns of the dataset", "",
             "Formulas of each set with the pattern, and their share of that set's formulas."]
     out += [""] + table(["Pattern"] + columns,
@@ -265,54 +206,14 @@ def write_analysis(folder: Path) -> Path:
                   for d, _ in domains[TOTAL].most_common()])
 
     # Operators
-    feats = {s: [features(f) for f in by_set[s]] for s in present}
-    feats[TOTAL] = [x for s in present for x in feats[s]]
-
-    def line(label, test):
-        return [label] + [share(sum(1 for x in feats[s] if test(x)), len(feats[s])) for s in columns]
-
+    ops = {s: [operators(parse(f["pattern"])) for f in by_set[s]] for s in present}
+    ops[TOTAL] = [x for s in present for x in ops[s]]
     out += ["", "## Operators", "",
-            "Share of the formulas of each set that hold each construct. The operators come from the pattern "
-            "(where `X` is `F[1,1]` and `<->` is written with `&&`, `||` and `!`, as stlgen does), the comparisons, "
-            "arithmetic and bounds from the formula.", ""]
-    out += table(["Construct"] + columns, [
-        line("G (always)", lambda x: "G" in x["ops"]),
-        line("F (eventually)", lambda x: "F" in x["ops"]),
-        line("U (until)", lambda x: "U" in x["ops"]),
-        line("R (release)", lambda x: "R" in x["ops"]),
-        line("! (not)", lambda x: "!" in x["ops"]),
-        line("&& (and)", lambda x: "&&" in x["ops"]),
-        line("\\|\\| (or)", lambda x: "||" in x["ops"]),
-        line("-> (implies)", lambda x: "->" in x["ops"]),
-        line("a temporal operator inside another", lambda x: x["depth"] >= 2),
-        line("a comparison (x > 3)", lambda x: x["comparison"]),
-        line("only Boolean signals, no comparison", lambda x: not x["comparison"]),
-        line("arithmetic (+ - * / ^)", lambda x: x["arithmetic"]),
-        line("an integer bound", lambda x: "integer" in x["bounds"]),
-        line("a parameter as a bound (F[0,T])", lambda x: "parameter" in x["bounds"]),
-        line("an infinite bound (inf)", lambda x: "inf" in x["bounds"]),
-        line("a real bound (F[0,2.5])", lambda x: "real" in x["bounds"]),
-        line("an expression as a bound (G[T,T + d])", lambda x: "expression" in x["bounds"]),
-        line("an open interval (F(0,2])", lambda x: x["open"]),
-    ])
-
-    out += ["", "### Temporal depth and conditions", "",
-            "Temporal depth: the most temporal operators nested in one another (`G[#,#] F[#,#] φ` has 2, a formula "
-            "with no temporal operator 0). Conditions: the distinct comparisons and Boolean signals (the Greek letters "
-            "of the pattern).", ""]
-    depth_rows = [[f"depth {d}" if d < 3 else "depth 3 or more"]
-                  + [share(sum(1 for x in feats[s] if (x["depth"] == d if d < 3 else x["depth"] >= 3)), len(feats[s])) for s in columns]
-                  for d in range(4)]
-    depth_rows.append(["mean conditions"] + [f"{sum(x['conditions'] for x in feats[s]) / len(feats[s]):.2f}" for s in columns])
-    depth_rows.append(["mean temporal depth"] + [f"{sum(x['depth'] for x in feats[s]) / len(feats[s]):.2f}" for s in columns])
-    out += table(["Formulas with"] + columns, depth_rows)
-
-    nest = {s: collections.Counter(n for x in feats[s] for n in x["nestings"]) for s in columns}
-    out += ["", "### Nested temporal operators", "",
-            "Formulas with a temporal operator directly inside another (`G F`: an F inside a G, with no other "
-            "temporal operator between them); the 10 most common pairs of the dataset.", ""]
-    out += table(["Outer, inner"] + columns,
-                 [[code(n)] + [share(nest[s][n], len(feats[s])) for s in columns] for n, _ in nest[TOTAL].most_common(10)])
+            "Share of the formulas of each set that hold each operator, read from the pattern (where `X` is `F[1,1]` "
+            "and `<->` is written with `&&`, `||` and `!`, as stlgen does).", ""]
+    out += table(["Operator"] + columns,
+                 [[code(op)] + [share(sum(1 for x in ops[s] if op in x), len(ops[s])) for s in columns]
+                  for op in ("G", "F", "U", "R", "!", "&&", "||", "->")])
 
     path = folder / "analysis.md"
     path.write_text("\n".join(out) + "\n", encoding="utf-8")

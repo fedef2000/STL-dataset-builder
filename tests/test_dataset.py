@@ -85,21 +85,10 @@ def test_stlnl_semantics_only_for_stlnl_sets():
 
 
 def test_pattern_tree():
-    from src.dataset.analysis import nestings, parse, temporal_depth
-    tree = parse("G[#,#] (φ -> F[#,#] ψ)")
-    assert temporal_depth(tree) == 2 and nestings(tree) == {"G F"}
+    from src.dataset.analysis import operators, parse
+    assert operators(parse("G[#,#] (φ -> F[#,#] ψ)")) == {"G", "->", "F"}
     tree = parse("(φ && ψ) R[#,#] (χ && θ)")   # U and R bind looser than the unary operators, tighter than &&
-    assert tree[0] == "R" and temporal_depth(tree) == 1
+    assert tree[0] == "R" and operators(tree) == {"R", "&&"}
     tree = parse("(F[#,#] G[#,#] φ) || (F[#,#] G[#,#] ψ)")
-    assert tree[0] == "||" and nestings(tree) == {"F G"}
-    assert temporal_depth(parse("G[#,inf] F[#,#] G[#,#] φ")) == 3
+    assert tree[0] == "||" and operators(tree) == {"||", "F", "G"}
     assert parse("!(φ U[#,#] ψ)")[0] == "!"
-
-
-def test_features():
-    from src.dataset.analysis import features
-    x = features({"pattern": "G[#,#] (φ -> F[#,#] ψ)", "stl": "G[0,T] ((x > 3) -> (F(0,2.5] (y + z <= 1)))"})
-    assert x["bounds"] == {"integer", "parameter", "real"} and x["open"]
-    assert x["comparison"] and x["arithmetic"] and x["conditions"] == 2
-    x = features({"pattern": "G[#,inf] (φ -> ψ)", "stl": "G[0,inf] (p -> q)"})   # -> is not a comparison
-    assert not x["comparison"] and not x["arithmetic"] and x["bounds"] == {"integer", "inf"}
