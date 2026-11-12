@@ -60,3 +60,29 @@ def test_numbers_missing():
     assert numbers_missing("F[0,200] (v < 30.85)", "v below 30.85m within 200ms") == []   # units attached
     assert numbers_missing("G[2,26] (y > 11.1)", "y above 11.10 between 2.0 and 26") == []   # values, not text
     assert numbers_missing("G[0,5] (x_1 > 3)", "x_1 above 3 for 5 s") == []   # the 1 of x_1 is a name, not a number
+
+
+def test_stlnl_rows(tmp_path):
+    """An stl-nl run: a formula with two descriptions, one with none; set 2 links the first to its paper."""
+    from src.dataset.sets import stlnl_rows
+    atom = {"type": "atom", "name": "p"}
+    ast = {"type": "globally", "interval": {"lower": 0, "upper": 5}, "child": atom}
+    formulas = [{"formula_id": "h1", "stl": "G[0,5] p", "ast": ast,
+                 "source": {"source_index": 0, "path": "/x/f00001.stl", "source_text": "G[0,5] p\n"}},
+                {"formula_id": "h2", "stl": "F[0,5] p", "ast": {**ast, "type": "eventually"},
+                 "source": {"source_index": 1, "path": "/x/f00002.stl", "source_text": "F[0,5] p\n"}}]
+    pairs = [{"formula_id": "h1", "realization_index": 1, "nl": "p holds for six steps"},
+             {"formula_id": "h1", "realization_index": 0, "nl": "p holds from step 0 to step 5"}]
+    for name, rows in (("formulas.jsonl", formulas), ("pairs.jsonl", pairs)):
+        (tmp_path / name).write_text("".join(json.dumps(r) + "\n" for r in rows))
+    manifest = [{"id": "P:F1", "file": "stl/f00001.stl", "normalized": "G[0,5] p", "pattern": "G[#,#] a", "original": r"\Box_{[0,5]} p"}]
+    records = {"P:F1": {"paper_id": "P", "domain": "generic", "license_tier": "permissive_cc", "license": "cc-by", "source_type": "latex"}}
+
+    rows, counts = stlnl_rows("set_2", tmp_path, manifest, records)
+    assert [r["id"] for r in rows] == ["P:F1:R0", "P:F1:R1"]
+    assert rows[0]["paper_id"] == "P" and rows[0]["stlnl_formula_id"] == "h1" and rows[0]["skeleton"] == "G[#,#] φ"
+    assert rows[0]["signals"]["numbers_missing"] == [] and rows[1]["signals"]["numbers_missing"] == ["5"]
+    assert counts["descriptions"] == 2 and sum(n for what, n in counts.items() if what.startswith("formulas without")) == 1
+
+    rows, _ = stlnl_rows("set_3", tmp_path)   # no paper: the formula is named after its source index
+    assert rows[0]["id"] == "stlnl_0:R0" and rows[0]["paper_id"] is None

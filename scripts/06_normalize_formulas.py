@@ -34,7 +34,8 @@ earlier run are replaced):
         manifest.jsonl                one line per input record: status, file, reasons, rules, original and normalized text
         report.md                     counts by status, reason and pattern, with examples
     data/normalized/paired/
-        records.jsonl                 the records of step 5 whose formula is ok, with `normalized`, `pattern`, `skeleton`
+        records.jsonl                 the records of step 5 whose formula is ok, with `normalized`, `stl` (the same formula
+                                      with the parentheses stl-nl prints), `pattern`, `skeleton`
                                       and, in each requirement, `normalized`: the text that matches the formula
         manifest.jsonl                as above, with the passages of the formulas ok and what couldn't be converted
         report.md                     as above, with what goes beyond stl-nl's grammar and how the descriptions were written
@@ -93,7 +94,7 @@ def paired_record(record: dict, line: dict) -> dict:
                      for passage, normalized in zip(value, line["requirements"])]
         out[key] = value
         if key == "formula":
-            out.update(normalized=line["normalized"], pattern=line["pattern"], skeleton=line["skeleton"])
+            out.update(normalized=line["normalized"], stl=line["stl"], pattern=line["pattern"], skeleton=line["skeleton"])
     return out
 
 

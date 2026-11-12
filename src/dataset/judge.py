@@ -200,7 +200,7 @@ def paper_items(records: list[dict]) -> list[dict]:
     items = []
     for r in records:
         messages = build_messages(r["normalized"], [p["normalized"] for p in r["requirements"]], r.get("variables"))
-        items.append({"set": "paper-paper", "id": r["id"], "count": len(r["requirements"]), "messages": messages,
+        items.append({"set": "set_1", "id": r["id"], "count": len(r["requirements"]), "messages": messages,
                       "key": item_key(messages)})
     return items
 

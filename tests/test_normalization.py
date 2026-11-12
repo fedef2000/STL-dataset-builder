@@ -13,7 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from config import STLGEN_BIN
 from src.normalization.description import normalize_description
-from src.normalization.emit import number
+from src.normalization.emit import number, stlnl_number, stlnl_text
 from src.normalization.latex import source_macros
 from src.normalization.normalize import normalize
 from src.normalization.rules import FAITHFUL_REJECTED, FAITHFUL_RULES, RULES, status
@@ -499,3 +499,42 @@ def test_description_keeps_what_it_cannot_convert():
     assert d.normalized == r"$(p, t) \models \varphi$ (see Eq. \eqref{eq:x}), \frobnicate"
     assert d.unreadable == [{"span": r"$(p, t) \models \varphi$", "reason": r"semantics_definition: \models"}]
     assert d.references == [r"\eqref{eq:x}"] and d.latex_left == [r"\frobnicate"]
+
+
+# ---------------------------------------------------------------- the text as stl-nl prints it (emit.stlnl_text)
+
+STLNL_TEXT_CASES = [
+    # (formula, mode, the text with stlgen's parentheses)
+    (r"\Diamond_{[0,15]} \Box_{[0,5]} a \vee \Diamond_{[0,15]} \Box_{[0,5]} b", "stl-nl", "(F[0,15] G[0,5] a) || (F[0,15] G[0,5] b)"),
+    (r"\Box_{[0,30]} (gear = 4 \rightarrow \Diamond_{[0,5]} rpm < 3000)", "stl-nl", "G[0,30] ((gear == 4) -> (F[0,5] (rpm < 3000)))"),
+    (r"(x > 0) \mathcal{U}_{[0,2]} q", "stl-nl", "(x > 0) U[0,2] q"),
+    (r"\neg a \wedge \neg \Box_{[0,2]} b", "stl-nl", "!a && (!G[0,2] b)"),
+    (r"\Box_{[0,1]} (x - (y - z) > 1/3)", "stl-nl", "G[0,1] (x - (y - z) > 1/3)"),
+    (r"\Box_{[0,1]} (x_1^2 + x_2^2 > 1.5^2)", "faithful", "G[0,1] (x_1^2 + x_2^2 > 1.5^2)"),
+    (r"\Diamond_{(0,2.5]} p", "faithful", "F(0,2.5] p"),
+]
+
+
+@pytest.mark.parametrize("formula, mode, expected", STLNL_TEXT_CASES)
+def test_stlnl_text(formula, mode, expected):
+    result = run(formula, mode=mode)
+    assert result.status == "ok", result.reasons
+    assert stlnl_text(result.tree, exact_decimals=(mode == "faithful")) == expected
+
+
+def test_stlnl_number():
+    assert stlnl_number(Fraction(47, 5), exact_decimals=False) == "9.4"
+    assert stlnl_number(Fraction(-17, 4), exact_decimals=False) == "-4.25"
+    assert stlnl_number(Fraction(1, 8), exact_decimals=False) == "1/8"   # stlgen: at most two decimal places
+    assert stlnl_number(Fraction(1, 8), exact_decimals=True) == "0.125"  # the paired formulas keep the paper's number
+
+
+@pytest.mark.skipif(not STLGEN_BIN.is_file(), reason="stlgen of stl-nl not built")
+def test_stlnl_text_is_what_stlgen_prints():
+    for formula, mode, _ in STLNL_TEXT_CASES:
+        if mode != "stl-nl":
+            continue
+        result = run(formula)
+        parsed, error = check(result.normalized, STLGEN_BIN)
+        assert parsed is not None, error
+        assert stlnl_text(result.tree, exact_decimals=False) == parsed["stl"], formula

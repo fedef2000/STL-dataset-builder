@@ -6,3 +6,6 @@ data/processed/*
 __pycache__
 .env
 NORMALIZER_BRIEF.md
+
+# stl-nl runs copied by hand into the sets of step 7 (only the pairs built from them are tracked)
+data/dataset/*/stlnl_run/

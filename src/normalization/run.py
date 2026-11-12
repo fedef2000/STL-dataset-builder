@@ -9,6 +9,7 @@ from pathlib import Path
 
 from config import RAW_LATEX_DIR
 from src.normalization.description import normalize_description
+from src.normalization.emit import stlnl_text
 from src.normalization.latex import paper_macros
 from src.normalization.normalize import normalize, with_fallback
 from src.normalization.skeleton import skeleton
@@ -61,6 +62,8 @@ def normalize_records(records: list[dict], seed: str, stlgen: Path | None, mode:
                             skeleton=skeleton_of(parsed["ast"], record["id"]))
         elif result.normalized is not None:
             line["skeleton"] = skeleton_of(stlgen_ast(result.tree), record["id"])
+            # The text as stl-nl prints it (what stlgen gives the unpaired formulas), for the final dataset
+            line["stl"] = stlnl_text(result.tree)
             if result.status == "ok":
                 line["requirements"] = descriptions(record, macros, result.names)
         lines.append(line)
