@@ -40,6 +40,7 @@ from src.augmentation import llm
 from src.augmentation.paraphrase import (AUGMENT_DIR, METHODS, frozen_words, lost_frozen, missing_symbols, run_worker,
                                          trial_sample)
 from src.augmentation.report import short, summary_table, write_llm_report, write_textattack_report
+from src.dataset.analysis import write_analysis
 from src.dataset.judge import ANSWERS_FILE, build_messages, item_key, read_answers, run_calls, usable, vote
 from src.dataset.sets import DATASET_DIR, SET_1, read_jsonl
 from src.extraction.extractor import LOWEST_REASONING
@@ -132,6 +133,7 @@ def augment_all(rows: list[dict], records: dict, budget: float, workers: int, dr
     print(f"\n{len(answers)} of {len(rows)} descriptions paraphrased (${sum(a.get('cost', 0) for a in answers):.2f}), "
           f"{len(pairs)} paraphrases: {len(kept)} kept ({missing} missing a number or symbol of the original), "
           f"{len(dropped)} dropped by hand\n -> {AUGMENTED_DIR.relative_to(BASE_DIR)}/")
+    print(f"The analysis of the dataset, with the paraphrases: {write_analysis(DATASET_DIR).relative_to(BASE_DIR)}")
     if len(answers) < len(rows):
         print(f"{len(rows) - len(answers)} descriptions without paraphrases yet: run again to make them.")
 

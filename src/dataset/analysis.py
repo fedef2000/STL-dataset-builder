@@ -4,18 +4,23 @@ sets. The pattern of a formula (the field `pattern` of the rows, as in step 6) i
 except those the judge's sample found wrong, not a description, or undecided (the rows outside the sample are kept).
 Patterns, domains and operators count formulas, not descriptions: in sets 2 and 3 stl-nl wrote two descriptions of
 each formula, which would otherwise count it twice. A formula is counted once per set.
+
+The paraphrases of step 8 (set_1/augmented/) are counted apart, in the size and in a section of their own: they have
+the formulas of their originals, so they change no count of formulas.
 """
 import collections
 import csv
 import re
 from pathlib import Path
 
+from src.augmentation.paraphrase import word_difference
 from src.dataset.sets import SET_1, SET_2, SET_3, read_jsonl
 
 SETS = (SET_1, SET_2, SET_3)
 TOTAL = "total"
 KEPT = {"correct", "ambiguous"}
 TOP = 10
+AUGMENTED = "augmented"   # the folder of step 8's paraphrases inside a set's folder
 
 
 # ---------------------------------------------------------------- the rows of the dataset
@@ -28,6 +33,15 @@ def dataset_rows(folder: Path) -> dict[str, list[dict]]:
         found = [r for f in files if (folder / name / f).exists() for r in read_jsonl(folder / name / f)]
         rows[name] = [r for r in found if r["judge"] is None or r["judge"]["label"] in KEPT]
     return rows
+
+
+def augmented_rows(folder: Path) -> dict[str, dict[str, list[dict]]]:
+    """Set name -> the paraphrases of step 8 kept (`pairs`) and dropped by hand (`dropped`); empty for a set without them."""
+    out = {}
+    for name in SETS:
+        sub = folder / name / AUGMENTED
+        out[name] = {f: read_jsonl(sub / f"{f}.jsonl") if (sub / f"{f}.jsonl").exists() else [] for f in ("pairs", "dropped")}
+    return out
 
 
 def formulas(rows: list[dict]) -> list[dict]:
@@ -142,6 +156,7 @@ def code(text: str) -> str:
 def write_analysis(folder: Path) -> Path:
     """data/dataset/analysis.md and patterns.csv. Returns the path of analysis.md."""
     rows = dataset_rows(folder)
+    augmented = augmented_rows(folder)
     present = [s for s in SETS if rows[s]]
     by_set = {s: formulas(rows[s]) for s in present}
     by_set[TOTAL] = [f for s in present for f in by_set[s]]
@@ -150,12 +165,17 @@ def write_analysis(folder: Path) -> Path:
            "The dataset is: set 1's correct and ambiguous pairs; sets 2 and 3's pairs except the few the judge's sample "
            "found wrong, not a description, or undecided (the pairs outside the sample are not judged and are kept). "
            "Patterns, domains and operators count formulas, not descriptions (in sets 2 and 3 each formula has two "
-           "descriptions); a formula is counted once per set, and the total adds the three sets.", ""]
+           "descriptions); a formula is counted once per set, and the total adds the three sets. The paraphrases of "
+           "step 8 are counted apart.", ""]
 
     # Size
-    out += ["## Size", ""]
-    out += table(["Set", "Descriptions", "Formulas"],
-                 [[s, len(rows[s]) if s != TOTAL else sum(len(rows[x]) for x in present), len(by_set[s])] for s in columns])
+    out += ["## Size", "",
+            "Paraphrases: those step 8 adds to the descriptions (see Paraphrases below); they have the formulas of their "
+            "originals, so they add no formula.", ""]
+    n_par = {s: len(augmented[s]["pairs"]) for s in present}
+    out += table(["Set", "Descriptions", "Paraphrases", "Formulas"],
+                 [[s, len(rows[s]) if s != TOTAL else sum(len(rows[x]) for x in present),
+                   n_par[s] if s != TOTAL else sum(n_par.values()), len(by_set[s])] for s in columns])
 
     # Judge
     out += ["", "## Judge", "",
@@ -172,6 +192,29 @@ def write_analysis(folder: Path) -> Path:
         count = collections.Counter(judged)
         judge_rows.append([s, len(judged)] + [f"{count[l]} ({share(count[l], len(judged))})" for l in labels])
     out += table(["Set", "Judged", "Correct", "Ambiguous", "Wrong", "No (not a description)"], judge_rows)
+
+    # Paraphrases
+    with_par = [s for s in present if augmented[s]["pairs"] or augmented[s]["dropped"]]
+    if with_par:
+        out += ["", "## Paraphrases", "",
+                "Step 8: a model writes two paraphrases of each correct description of set 1 (the ambiguous ones are not "
+                "paraphrased), keeping its numbers, symbols and meaning; they are not judged. Missing a symbol: the "
+                "paraphrases that lack a number or symbol of their original, read by hand and kept (the others read were "
+                "dropped by hand). Word difference: how different the words of a paraphrase are from its original's, 0 "
+                "(the same words in the same order) to 1 (no word in common); in the trial, TextAttack's word-level "
+                "augmenters gave 0.08 and back-translation 0.22.", ""]
+        par_rows = []
+        for s in with_par:
+            kept = augmented[s]["pairs"]
+            originals = {r["id"]: r for f in ("pairs.jsonl", "pairs_ambiguous.jsonl") if (folder / s / f).exists()
+                         for r in read_jsonl(folder / s / f)}
+            diff = [word_difference(originals[p["augmented_from"]]["nl"], p["nl"]) for p in kept if p["augmented_from"] in originals]
+            par_rows.append([s, len({p["augmented_from"] for p in kept}), len({p["formula_id"] for p in kept}), len(kept),
+                             len(augmented[s]["dropped"]),
+                             sum(1 for p in kept if p["augmentation"]["missing_symbols"]),
+                             f"{sum(diff) / len(diff):.2f}" if diff else "-"])
+        out += table(["Set", "Descriptions paraphrased", "Formulas", "Paraphrases", "Dropped by hand", "Missing a symbol",
+                      "Word difference"], par_rows)
 
     # Patterns
     counts = {s: collections.Counter(f["pattern"] for f in by_set[s]) for s in columns}

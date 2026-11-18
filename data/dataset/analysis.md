@@ -1,15 +1,17 @@
 # Analysis of the dataset
 
-The dataset is: set 1's correct and ambiguous pairs; sets 2 and 3's pairs except the few the judge's sample found wrong, not a description, or undecided (the pairs outside the sample are not judged and are kept). Patterns, domains and operators count formulas, not descriptions (in sets 2 and 3 each formula has two descriptions); a formula is counted once per set, and the total adds the three sets.
+The dataset is: set 1's correct and ambiguous pairs; sets 2 and 3's pairs except the few the judge's sample found wrong, not a description, or undecided (the pairs outside the sample are not judged and are kept). Patterns, domains and operators count formulas, not descriptions (in sets 2 and 3 each formula has two descriptions); a formula is counted once per set, and the total adds the three sets. The paraphrases of step 8 are counted apart.
 
 ## Size
 
-| Set | Descriptions | Formulas |
-|---|---|---|
-| set_1 | 1018 | 982 |
-| set_2 | 2376 | 1188 |
-| set_3 | 1997 | 1000 |
-| total | 5391 | 3170 |
+Paraphrases: those step 8 adds to the descriptions (see Paraphrases below); they have the formulas of their originals, so they add no formula.
+
+| Set | Descriptions | Paraphrases | Formulas |
+|---|---|---|---|
+| set_1 | 1018 | 1143 | 982 |
+| set_2 | 2376 | 0 | 1188 |
+| set_3 | 1997 | 0 | 1000 |
+| total | 5391 | 1143 | 3170 |
 
 ## Judge
 
@@ -20,6 +22,14 @@ Labels of the descriptions judged: every description of set 1, a sample of 500 f
 | set_1 | 1719 | 573 (33.3%) | 445 (25.9%) | 126 (7.3%) | 537 (31.2%) |
 | set_2 | 1000 | 987 (98.7%) | 11 (1.1%) | 2 (0.2%) | 0 (0.0%) |
 | set_3 | 1000 | 988 (98.8%) | 9 (0.9%) | 2 (0.2%) | 0 (0.0%) |
+
+## Paraphrases
+
+Step 8: a model writes two paraphrases of each correct description of set 1 (the ambiguous ones are not paraphrased), keeping its numbers, symbols and meaning; they are not judged. Missing a symbol: the paraphrases that lack a number or symbol of their original, read by hand and kept (the others read were dropped by hand). Word difference: how different the words of a paraphrase are from its original's, 0 (the same words in the same order) to 1 (no word in common); in the trial, TextAttack's word-level augmenters gave 0.08 and back-translation 0.22.
+
+| Set | Descriptions paraphrased | Formulas | Paraphrases | Dropped by hand | Missing a symbol | Word difference |
+|---|---|---|---|---|---|---|
+| set_1 | 572 | 560 | 1143 | 3 | 13 | 0.55 |
 
 ## Patterns
 
