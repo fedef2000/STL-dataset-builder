@@ -37,8 +37,8 @@ from src.normalization.pattern import pattern
 
 DATASET_DIR = DATA_DIR / "dataset"
 SET_1, SET_2, SET_3 = "set_1", "set_2", "set_3"
-# The xlsx of each set: a name of its own for sets 2 and 3, so that the files opened side by side are told apart
-XLSX_NAME = {SET_1: "pairs.xlsx", SET_2: "pairs2.xlsx", SET_3: "pairs3.xlsx"}
+# The xlsx of each set, with the number of the set in its name, so that the files opened side by side are told apart
+XLSX_NAME = {SET_1: "pairs1.xlsx", SET_2: "pairs2.xlsx", SET_3: "pairs3.xlsx"}
 STLNL_RUN = "stlnl_run"   # the folder of a set where the files of its stl-nl run are copied
 def final_judgment(stored: dict, item: dict, n: int, models: list[str], tie_breaker: str) -> dict:
     """The final label of description n of an item, how it was reached, and each model's answer to it."""

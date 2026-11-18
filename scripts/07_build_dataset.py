@@ -17,7 +17,7 @@ faithfully: correct, ambiguous, wrong, or no (it doesn't describe it). One call 
 Every run ends by writing the three sets from the stored answers:
 - set 1 to data/dataset/set_1/, only when every description has a final label (no call missing, no disagreement left
   for the third model): pairs.jsonl (correct), pairs_ambiguous.jsonl, dropped.jsonl (wrong, no, undecided) and
-  pairs.xlsx with one sheet each;
+  pairs1.xlsx with one sheet each;
 - sets 2 and 3 from the stl-nl runs copied by hand into data/dataset/set_N/stlnl_run/ (formulas.jsonl and pairs.jsonl
   of the run): pairs.jsonl with every description, `judge` filled for the formulas judged so far, and pairs2.xlsx or
   pairs3.xlsx. A

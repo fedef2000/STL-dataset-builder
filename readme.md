@@ -50,7 +50,7 @@ STL_dataset_builder/
 │   │   │   ├── pairs.jsonl            # The pairs the judge finds correct
 │   │   │   ├── pairs_ambiguous.jsonl  # The pairs whose description fits the formula but also others
 │   │   │   ├── dropped.jsonl          # The pairs left out: wrong, not a description of the formula, undecided
-│   │   │   ├── pairs.xlsx             # The three files as sheets, to check them by eye
+│   │   │   ├── pairs1.xlsx            # The three files as sheets, to check them by eye
 │   │   │   └── augmented/             # Built by step 8: two paraphrases of each description of pairs.jsonl
 │   │   │       ├── pairs.jsonl        # The paraphrases, each linked to its original (augmented_from)
 │   │   │       └── dropped.jsonl      # The paraphrases dropped after reading them, with the reason
@@ -733,7 +733,7 @@ Sets 2 and 3 come from runs of `stl-nl`, copied by hand into the set's `stlnl_ru
 
 Every run ends by writing `data/dataset/analysis.md` and `patterns.csv` (`src/dataset/analysis.py`), from the files of the three sets. The dataset they describe is set 1's correct and ambiguous pairs, and sets 2 and 3's pairs except the few their sample found wrong, not a description, or undecided (the pairs outside the sample are kept). Patterns, domains and operators count formulas, not descriptions, since `stl-nl` wrote two descriptions of each formula. Sections: size; judge (correct, ambiguous, wrong, and for set 1 no, i.e. not a description, per set); patterns (distinct, the share the 10 most common cover, the 10 most common of the dataset and of each set; every pattern in `patterns.csv`); domains; operators (the share of formulas with each of `G`, `F`, `U`, `R`, `!`, `&&`, `||`, `->`).
 
-`data/dataset/set_1/` holds one row per description: `pairs.jsonl` (correct), `pairs_ambiguous.jsonl` (ambiguous), `dropped.jsonl` (wrong, no, undecided), and `pairs.xlsx` with one sheet each (frozen header, filters on every column), to check them by eye. Each row has:
+`data/dataset/set_1/` holds one row per description: `pairs.jsonl` (correct), `pairs_ambiguous.jsonl` (ambiguous), `dropped.jsonl` (wrong, no, undecided), and `pairs1.xlsx` with one sheet each (frozen header, filters on every column), to check them by eye. Each row has:
 
 | Field | What it holds |
 |---|---|
