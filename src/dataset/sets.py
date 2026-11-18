@@ -37,6 +37,8 @@ from src.normalization.pattern import pattern
 
 DATASET_DIR = DATA_DIR / "dataset"
 SET_1, SET_2, SET_3 = "set_1", "set_2", "set_3"
+# The xlsx of each set: a name of its own for sets 2 and 3, so that the files opened side by side are told apart
+XLSX_NAME = {SET_1: "pairs.xlsx", SET_2: "pairs2.xlsx", SET_3: "pairs3.xlsx"}
 STLNL_RUN = "stlnl_run"   # the folder of a set where the files of its stl-nl run are copied
 def final_judgment(stored: dict, item: dict, n: int, models: list[str], tie_breaker: str) -> dict:
     """The final label of description n of an item, how it was reached, and each model's answer to it."""
@@ -146,9 +148,9 @@ SPLIT = {"pairs": ("correct",), "pairs_ambiguous": ("ambiguous",), "dropped": ("
 
 def write_set(rows: list[dict], folder: Path) -> dict[str, int]:
     """
-    A judged set: pairs.jsonl, pairs_ambiguous.jsonl, dropped.jsonl, and pairs.xlsx with one sheet each. A set not
-    judged yet, or judged only on a sample: pairs.jsonl with every row (`judge` filled for the sample), and pairs.xlsx
-    with one sheet. Returns the rows per file.
+    A judged set: pairs.jsonl, pairs_ambiguous.jsonl, dropped.jsonl, and the xlsx (XLSX_NAME) with one sheet each. A
+    set not judged yet, or judged only on a sample: pairs.jsonl with every row (`judge` filled for the sample), and the
+    xlsx with one sheet. Returns the rows per file.
     """
     folder.mkdir(parents=True, exist_ok=True)
     if any(r["judge"] is None for r in rows):
@@ -161,7 +163,7 @@ def write_set(rows: list[dict], folder: Path) -> dict[str, int]:
         with open(folder / f"{name}.jsonl", "w", encoding="utf-8") as out:
             for r in part:
                 out.write(json.dumps(r, ensure_ascii=False) + "\n")
-    write_xlsx(folder / "pairs.xlsx", sheets)
+    write_xlsx(folder / XLSX_NAME[folder.name], sheets)
     return {name: len(part) for name, part in parts.items()}
 
 

@@ -19,7 +19,8 @@ Every run ends by writing the three sets from the stored answers:
   for the third model): pairs.jsonl (correct), pairs_ambiguous.jsonl, dropped.jsonl (wrong, no, undecided) and
   pairs.xlsx with one sheet each;
 - sets 2 and 3 from the stl-nl runs copied by hand into data/dataset/set_N/stlnl_run/ (formulas.jsonl and pairs.jsonl
-  of the run): pairs.jsonl with every description, `judge` filled for the formulas judged so far, and pairs.xlsx. A
+  of the run): pairs.jsonl with every description, `judge` filled for the formulas judged so far, and pairs2.xlsx or
+  pairs3.xlsx. A
   set whose stlnl_run/ is missing is skipped;
 - data/dataset/analysis.md and patterns.csv: size, judge, patterns, domains and operators of the dataset
   (src/dataset/analysis.py).
@@ -40,8 +41,8 @@ sys.path.insert(0, str(BASE_DIR))
 from config import DATA_DIR
 from src.dataset.analysis import write_analysis
 from src.dataset.judge import ANSWERS_FILE, paper_items, read_answers, run_calls, stlnl_items, usable, vote
-from src.dataset.sets import (DATASET_DIR, SET_1, SET_2, SET_3, STLNL_RUN, attach_judgments, paper_rows, read_jsonl,
-                              stlnl_rows, write_set)
+from src.dataset.sets import (DATASET_DIR, SET_1, SET_2, SET_3, STLNL_RUN, XLSX_NAME, attach_judgments, paper_rows,
+                              read_jsonl, stlnl_rows, write_set)
 from src.extraction.records import DEFAULT_MODELS, DEFAULT_TIE_BREAKER, parse_model
 
 sys.stdout.reconfigure(encoding="utf-8")
@@ -195,7 +196,7 @@ def stlnl_set_rows(name: str) -> tuple[list[dict], dict] | None:
 
 
 def written(name: str, counts: dict[str, int], note: str = ""):
-    print(f"\nWritten data/dataset/{name}/: " + ", ".join(f"{part}.jsonl {n}" for part, n in counts.items()) + ", pairs.xlsx" + note)
+    print(f"\nWritten data/dataset/{name}/: " + ", ".join(f"{part}.jsonl {n}" for part, n in counts.items()) + f", {XLSX_NAME[name]}" + note)
 
 
 def write_sets(records: list[dict], stored: dict):
