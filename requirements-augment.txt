@@ -1,0 +1,8 @@
+# Step 8 (TextAttack), in its own environment: TextAttack doesn't install in the project's .venv (Python 3.14).
+#   ~/.pyenv/versions/3.10.16/bin/python -m venv .venv-augment
+#   .venv-augment/bin/pip install torch==2.14.1 --index-url https://download.pytorch.org/whl/cpu
+#   .venv-augment/bin/pip install -r requirements-augment.txt
+torch==2.14.1
+textattack==0.3.11
+transformers==4.57.6
+nltk==3.10.4

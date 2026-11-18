@@ -8,11 +8,11 @@ Step 7: the final dataset, three sets of (description, formula) pairs in data/da
 A judge (two models, a third on their disagreements) says of each description whether it describes its formula and how
 faithfully: correct, ambiguous, wrong, or no (it doesn't describe it). One call per formula, with all its descriptions.
 
-    python scripts/07_finalize_dataset.py --judge --trial 20                # set 1: 20 records only, and trial.md
-    python scripts/07_finalize_dataset.py --judge --dry-run                 # set 1: the calls a full run would make, and their cost
-    python scripts/07_finalize_dataset.py --judge                           # set 1: every record (at most --budget dollars)
-    python scripts/07_finalize_dataset.py --judge --set set_2 --sample 200  # 200 formulas of set 2, and set_2_sample.md
-    python scripts/07_finalize_dataset.py                                   # the sets from the stored answers: no model is called
+    python scripts/07_build_dataset.py --judge --trial 20                # set 1: 20 records only, and trial.md
+    python scripts/07_build_dataset.py --judge --dry-run                 # set 1: the calls a full run would make, and their cost
+    python scripts/07_build_dataset.py --judge                           # set 1: every record (at most --budget dollars)
+    python scripts/07_build_dataset.py --judge --set set_2 --sample 200  # 200 formulas of set 2, and set_2_sample.md
+    python scripts/07_build_dataset.py                                   # the sets from the stored answers: no model is called
 
 Every run ends by writing the three sets from the stored answers:
 - set 1 to data/dataset/set_1/, only when every description has a final label (no call missing, no disagreement left

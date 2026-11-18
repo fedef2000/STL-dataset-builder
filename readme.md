@@ -10,9 +10,10 @@ A modular, resumable pipeline that builds a dataset of **(Natural Language Requi
 | 4 | `04_estimate_formulas.py` | Counts and locates the STL formulas of each paper | `data/corpus.json` |
 | 5 | `05_extract_requirements.py` | Two models (a third on their disagreements) give the requirement of each formula; the formulas with a requirement and those without are written from their vote | `data/processed/extractions/`, `data/extracted/` |
 | 6 | `06_normalize_formulas.py` | Normalizes every formula into the STL syntax of `stl-nl`: the unpaired ones as its input, the paired ones (and their descriptions) for fine-tuning | `data/normalized/` |
-| 7 | `07_finalize_dataset.py` | Builds the final dataset: two models (a third on their disagreements) judge whether each paper description describes its formula and how faithfully; the pairs are written by label | `data/processed/judgments/`, `data/dataset/` |
+| 7 | `07_build_dataset.py` | Builds the final dataset: two models (a third on their disagreements) judge whether each paper description describes its formula and how faithfully; the pairs are written by label | `data/processed/judgments/`, `data/dataset/` |
+| 8 | `08_augment_dataset.py` | Augments set 1: a model writes two paraphrases of each correct description, keeping its numbers, symbols and meaning | `data/processed/augmentation/`, `data/dataset/set_1/augmented/` |
 
-**Current state:** steps 1-6 are implemented. Step 7 writes the three sets of the dataset (`data/dataset/set_1/`, `set_2/`, `set_3/`); it judges set 1 entirely and sets 2 and 3 on a sample of 500 formulas each. Its analysis is in `data/dataset/analysis.md`. The corpus, the extracted and normalized formulas and the dataset are tracked in git (`data/corpus.json`, `data/extracted/`, `data/normalized/`, `data/dataset/`); the downloaded papers and the answers of the models are not (`data/raw/`, `data/processed/`).
+**Current state:** steps 1-6 are implemented. Step 7 writes the three sets of the dataset (`data/dataset/set_1/`, `set_2/`, `set_3/`); it judges set 1 entirely and sets 2 and 3 on a sample of 500 formulas each. Its analysis is in `data/dataset/analysis.md`. Step 8 adds two paraphrases of each correct description of set 1 (`data/dataset/set_1/augmented/`), not judged; they are not in the analysis. The corpus, the extracted and normalized formulas and the dataset are tracked in git (`data/corpus.json`, `data/extracted/`, `data/normalized/`, `data/dataset/`); the downloaded papers and the answers of the models are not (`data/raw/`, `data/processed/`).
 
 ---
 
@@ -23,6 +24,7 @@ STL_dataset_builder/
 ├── config.py                          # Central settings: paths, .env loading, seed DOIs, default keywords
 ├── .env.example                       # Template for the local .env file (email and API keys)
 ├── requirements.txt                   # Python packages, with their versions
+├── requirements-augment.txt           # Only for the TextAttack trial of step 8, in its own environment (.venv-augment)
 ├── readme.md
 │
 ├── data/
@@ -48,7 +50,10 @@ STL_dataset_builder/
 │   │   │   ├── pairs.jsonl            # The pairs the judge finds correct
 │   │   │   ├── pairs_ambiguous.jsonl  # The pairs whose description fits the formula but also others
 │   │   │   ├── dropped.jsonl          # The pairs left out: wrong, not a description of the formula, undecided
-│   │   │   └── pairs.xlsx             # The three files as sheets, to check them by eye
+│   │   │   ├── pairs.xlsx             # The three files as sheets, to check them by eye
+│   │   │   └── augmented/             # Built by step 8: two paraphrases of each description of pairs.jsonl
+│   │   │       ├── pairs.jsonl        # The paraphrases, each linked to its original (augmented_from)
+│   │   │       └── dropped.jsonl      # The paraphrases dropped after reading them, with the reason
 │   │   ├── set_2/                     # Formula from the papers, description written by stl-nl
 │   │   │   ├── stlnl_run/             # Copied by hand from the stl-nl run: formulas.jsonl, pairs.jsonl
 │   │   │   ├── pairs.jsonl            # Every description, judged on a sample of 500 formulas
@@ -65,6 +70,7 @@ STL_dataset_builder/
 │       ├── extractions/               # The answers of step 5 (see Step 5)
 │       ├── benchmark/                 # The answers and reports of the model benchmark
 │       ├── judgments/                 # The answers of the judge of step 7 (answers.jsonl); trial.md, set_2_sample.md, set_3_sample.md to read them
+│       ├── augmentation/              # Step 8: the model's paraphrases (llm_answers.jsonl), the trials' judge answers and reports
 │       ├── eval_set.json              # Hand-labelled (requirement, formula) pairs, with domain and variable meanings, for evaluating the extraction
 │       └── eval_set.md                # The same set, readable, with rendered formulas
 │
@@ -102,10 +108,15 @@ STL_dataset_builder/
 │   │   ├── run.py                     # A file of records through the normalization: the manifest lines
 │   │   ├── report.py                  # The report of a run (report.md)
 │   │   └── select.py                  # The formulas for stl-nl: duplicates and the cap per template left out
-│   └── dataset/                       # The final dataset (step 7)
-│       ├── judge.py                   # The judge: its prompt, the call, the checks on the answer, the vote
-│       ├── analysis.py                # The analysis of the dataset (analysis.md, patterns.csv)
-│       └── sets.py                    # The rows of a set (one per pair), the signals computed without a model, the files and the xlsx
+│   ├── dataset/                       # The final dataset (step 7)
+│   │   ├── judge.py                   # The judge: its prompt, the call, the checks on the answer, the vote
+│   │   ├── analysis.py                # The analysis of the dataset (analysis.md, patterns.csv)
+│   │   └── sets.py                    # The rows of a set (one per pair), the signals computed without a model, the files and the xlsx
+│   └── augmentation/                  # The paraphrases of step 8
+│       ├── llm.py                     # The model's paraphrases: its prompt, the call, the check on the answer; the augmented pairs
+│       ├── paraphrase.py              # The trial's sample; the checks made without a model (words kept, numbers and symbols missing)
+│       ├── textattack_worker.py       # TextAttack's augmenters, for the trial (runs in .venv-augment)
+│       └── report.py                  # The reports of the two trials
 │
 ├── docs/
 │   └── normalization_rules.md         # Every rule of the normalization, with an example
@@ -120,7 +131,8 @@ STL_dataset_builder/
     ├── 04_estimate_formulas.py        # Step 4: Estimate the STL formula yield per paper
     ├── 05_extract_requirements.py     # Step 5: Extract the requirements with two models, a third on their disagreements
     ├── 06_normalize_formulas.py       # Step 6: Normalize every formula into the syntax of stl-nl (unpaired and paired)
-    ├── 07_finalize_dataset.py         # Step 7: Judge the paper descriptions and write the final dataset
+    ├── 07_build_dataset.py            # Step 7: Judge the paper descriptions and write the final dataset
+    ├── 08_augment_dataset.py          # Step 8: Paraphrase the descriptions of set 1; the trials of TextAttack and of a model
     ├── inspect_extractions.py         # Prints the undecided formulas and the answers that failed a check, to read
     ├── inspect_normalization.py       # Writes the formulas of step 6 as CSV files (unpaired, paired), to check the translation by eye
     ├── migrate_corpus_lookups.py      # One-off: rebuilt the enrichment lookups of the corpus from the log (already run)
@@ -158,6 +170,8 @@ pip install pytest
 * `requests`: all HTTP calls.
 * `pymupdf`: reads PDF text and metadata (license audit, formula estimation).
 * `openpyxl`: writes the `.xlsx` files of step 7.
+
+TextAttack, tried in step 8 and not used for the dataset, doesn't install with Python 3.14: its trial runs it in a separate environment with Python 3.10, made from `requirements-augment.txt` (the commands are in the file). Nothing else needs it.
 * `truststore`: makes Python check HTTPS certificates with the operating system's certificate store, like a browser. Without it the pipeline still runs, but some repositories that send an incomplete certificate chain fail with `SSL Certificate Error`.
 
 ### 2. Configure `.env`
@@ -168,7 +182,7 @@ Copy `.env.example` to `.env` and fill in your email address and (optionally) yo
 USER_EMAIL=your.name@university.edu        # Enables OpenAlex Polite Pool
 OPENALEX_API_KEY=your_free_openalex_key    # Optional: Increases daily quota 10x (get at openalex.org)
 SEMANTIC_SCHOLAR_API_KEY=your_s2_key       # Optional: Lifts the anonymous rate limit (semanticscholar.org/product/api)
-OPENROUTER_API_KEY=your_openrouter_key     # Step 5 only: the models are called and billed through openrouter.ai
+OPENROUTER_API_KEY=your_openrouter_key     # Steps 5, 7 and 8: the models are called and billed through openrouter.ai
 
 ```
 
@@ -674,7 +688,7 @@ It needs the `stlgen` binary of `stl-nl`, built with `cargo build --release --lo
 
 The rules are tested with `python -m pytest tests` (needs `pytest`); the test that runs `stlgen` is skipped when it isn't built.
 
-### Step 7: Finalize the Dataset
+### Step 7: Build the Dataset
 
 Builds the final dataset, three sets of (description, formula) pairs, one folder each in `data/dataset/`:
 
@@ -698,19 +712,19 @@ The descriptions of `stl-nl` are judged in the same way, with no variable meanin
 ```bash
 # A trial on 20 records (a fifth with a generic passage, a seventh with several), with every answer in
 # data/processed/judgments/trial.md
-python scripts/07_finalize_dataset.py --judge --trial 20
+python scripts/07_build_dataset.py --judge --trial 20
 
 # How many calls a full run would make, and about what they cost (priced at the stored calls; no call is made)
-python scripts/07_finalize_dataset.py --judge --dry-run
+python scripts/07_build_dataset.py --judge --dry-run
 
 # Every record, then the three sets
-python scripts/07_finalize_dataset.py --judge
+python scripts/07_build_dataset.py --judge
 
 # 500 formulas of set 2 (or set_3), with every answer in data/processed/judgments/set_2_sample.md
-python scripts/07_finalize_dataset.py --judge --set set_2 --sample 500
+python scripts/07_build_dataset.py --judge --set set_2 --sample 500
 
 # The three sets again from the stored answers, without calling a model
-python scripts/07_finalize_dataset.py
+python scripts/07_build_dataset.py
 ```
 
 Each answer is appended to `data/processed/judgments/answers.jsonl` as it arrives, so an interrupted run continues where it stopped; a stored answer is asked again only when what the model reads changes (formula, descriptions, variable meanings, prompt), or when it failed its check (not the JSON asked, a description missing, `faithful` given for a description judged `no`). Set 1 is written only when every description has a final label.
@@ -743,6 +757,59 @@ Every run ends by writing `data/dataset/analysis.md` and `patterns.csv` (`src/da
 | `--sample N` | With `--judge`, sets 2 and 3: only `N` formulas, chosen at random with a fixed seed (a larger `N` keeps the formulas of a smaller one); writes `set_N_sample.md`. |
 | `--dry-run` | With `--judge`: prints the calls a run would make and their cost, priced at the average of the stored calls of each model (the third model on the share of formulas it was asked about so far, over all sets). |
 | `--budget D` | Dollars after which no new call is started (default `10`). |
+| `--workers N` | Calls made at the same time (default `8`). |
+
+### Step 8: Augment the Dataset
+
+Adds paraphrases of the descriptions of set 1, so that a model trained on the dataset sees each formula said in more than one way. A model (`claude-sonnet-5.5`) writes two paraphrases of each description of `data/dataset/set_1/pairs.jsonl` (the correct ones), in one call: it reads the description, the formula as step 6 normalizes it and the meanings of its variables, so that it knows what must not change. The prompt (`SYSTEM_PROMPT` in `src/augmentation/llm.py`) asks it to:
+
+* keep every number and symbol as written (a unit may be written in full), and the same signals, quantities, objects and regions (reworded at most);
+* keep the temporal and logical meaning with its strength ("less than" must not become "at most");
+* add, remove and make precise nothing: the formula is given only to understand the description, and a vague description stays vague; no STL notation the description doesn't use;
+* change the sentence structure, not only words (order of the clauses, voice, how the timing and the conditions are said), in natural English.
+
+The model is asked with reasoning off; it refuses it, and the call is made again with the lowest level it accepts (`minimal`), as in steps 5 and 7.
+
+**How it was chosen.** Two trials on the same 30 correct descriptions, every paraphrase judged by the judge of step 7, with reports written for readers who don't know the project (in `data/processed/augmentation/`):
+
+* `textattack_trial.md`: TextAttack's augmenters (WordNet and embedding synonyms, EDA, back-translation through Spanish), with the words that carry the formula frozen. The judge found 74 of 109 paraphrases correct, but read by hand only about 25 of those are natural English: synonyms of the wrong sense, broken grammar, a signal renamed, and paraphrases that differ from the original by a word or two.
+* `llm_trial.md`: the model above. The judge found 56 of 60 correct, all of them natural English; none misses a number or symbol, and they differ from the original far more (word difference 0.54, against 0.08 for TextAttack's word methods and 0.22 for back-translation). The problems found: a detail taken from the formula or the variable meanings now and then, one paraphrase vaguer than its original.
+
+**Not judged.** From the trial's rate, a few percent of the paraphrases may change the meaning; the paraphrases of the whole set are not judged. Each one has instead a check made without a model: the numbers, the names with `_` or a digit and the formula's names that its original has and it doesn't (`augmentation.missing_symbols`). Of the 1,146 paraphrases, 16 were flagged and read: 3 lose something and are dropped (`DROPPED_BY_HAND` in `src/augmentation/llm.py`, with the reason), the other 13 are kept (list numbers "(1)", a garbled character written as the formula's name, "≥ 0" as "nonnegative", ...). Cost: $1.63 for the 573 descriptions.
+
+```bash
+# The calls a run would make and their cost (priced at the stored calls; no call is made)
+python scripts/08_augment_dataset.py --method llm --all --no-judge --dry-run
+
+# Every description of set 1, then data/dataset/set_1/augmented/
+python scripts/08_augment_dataset.py --method llm --all --no-judge --budget 3
+
+# The trials: the paraphrases of 30 descriptions, judged, and their report
+python scripts/08_augment_dataset.py --method llm --trial 30
+python scripts/08_augment_dataset.py --method textattack --trial 30
+```
+
+Each answer of the model is appended to `data/processed/augmentation/llm_answers.jsonl` as it arrives, so an interrupted run continues where it stopped, and `set_1/augmented/` is written again from the stored answers without calls; an answer is asked again only when what the model reads changes (prompt, formula, description, variable meanings). The trials keep the judge's answers in `data/processed/augmentation/answers.jsonl`, apart from those of step 7.
+
+`data/dataset/set_1/augmented/pairs.jsonl` holds one row per paraphrase, and `dropped.jsonl` the paraphrases dropped by hand, with `dropped`, the reason. A paraphrase identical to its original or to the other paraphrase is left out (none so far). Each row is the row of its original (see step 7) with:
+
+| Field | What it holds |
+|---|---|
+| `id` | `<id of the original>:A<n>`, the n-th paraphrase |
+| `nl` | The paraphrase |
+| `augmented_from` | The id of the original: a paraphrase must go in the same split (train, test) as its original, or the test set holds the training pairs reworded |
+| `augmentation` | `method` (`llm`), `model`, `reasoning_used`, `missing_symbols` (see above) |
+| `judge`, `original_nl` | `null`: the paraphrase is not judged and is not in the paper |
+
+| Flag | What it does |
+|---|---|
+| `--method M` | `llm` (the model) or `textattack` (trial only). Required. |
+| `--all` | `llm`, with `--no-judge`: every description of set 1, written to `set_1/augmented/`. |
+| `--trial N` | `N` correct descriptions of set 1 at random (fixed seed), judged; writes `llm_trial.md` or `textattack_trial.md`. One of `--all` and `--trial` is required. |
+| `--no-judge` | Only make the paraphrases: no judge, no report. |
+| `--regenerate` | `textattack`: make the paraphrases again even if stored. |
+| `--dry-run` | Prints the calls a run would make and their cost. |
+| `--budget D` | Dollars after which no new call is started (default `2`). |
 | `--workers N` | Calls made at the same time (default `8`). |
 
 ---
