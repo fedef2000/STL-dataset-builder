@@ -30,7 +30,7 @@ class Tok:
     kind: str
     value: object = None
     interval: Interval | None = None
-    candidate: bool = False  # an ID that is a bare G, F, X, U or R: an operator if an interval follows
+    candidate: bool = False  # an ID that is a bare G, F, X, U or R: an operator if an interval or an operand follows
     spaced: bool = False     # preceded by a space in the source
 
     def __repr__(self):

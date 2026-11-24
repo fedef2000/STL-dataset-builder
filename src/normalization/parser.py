@@ -17,14 +17,15 @@ from src.normalization.rules import Rejected, Trace
 class Bounds:
     """
     A parsed interval: its bounds as arithmetic trees (hi is an inf node for an infinite upper bound); `lower` and
-    `upper` are set once resolved (rules.py): an integer, the name of a parameter, or math.inf.
+    `upper` are set once resolved (rules.py): an integer, the name of a parameter, or math.inf; in the faithful mode
+    also a Fraction (a real bound) or the expression itself, a Node (keep_bounds).
     """
     lo: "Node"
     hi: "Node"
     lo_open: bool
     hi_open: bool
-    lower: int | str | float | None = None
-    upper: int | str | float | None = None
+    lower: "int | Fraction | str | float | Node | None" = None
+    upper: "int | Fraction | str | float | Node | None" = None
 
 
 @dataclass

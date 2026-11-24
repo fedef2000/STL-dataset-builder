@@ -1,7 +1,7 @@
 """
 The named rules of the normalization, what a record collects as they fire (Trace), and the rules that work on the
-parsed tree: the time bounds (random values for symbols, open intervals closed, real bounds rounded outward) and the
-checks of the symbols against the meanings the extraction gives them (constants, placeholder subformulas).
+parsed tree: the time bounds (a symbol alone kept as a parameter, random values for the other symbols, open intervals
+closed, real bounds rounded outward) and the checks of the symbols against the meanings the extraction gives them (constants, placeholder subformulas).
 
 The normalization has two modes (Trace.mode). "stl-nl", for the formulas without a requirement, writes them in the
 grammar of stl-nl, which then describes them: a change of meaning is acceptable, as the description is written from the
@@ -36,7 +36,7 @@ RULES = {
     "group_brackets": ("ok", "[ ] or \\{ \\} used as parentheses"),
     # Stage 2: intervals
     "subscript_interval": ("ok", "G_{[a,b]} written as G[a,b]"),
-    "bound_shorthand": ("ok", "G_{<= c} written as G[0,c]"),
+    "bound_shorthand": ("ok", "G_{<= c} written as G[0,c], G_{>= c} as G[c,inf]"),
     "close_open_interval": ("ok", "an open or half-open interval closed"),
     "round_bounds_outward": ("ok", "real bounds rounded: the lower one down, the upper one up"),
     "parameter_bounds": ("ok", "a symbol alone in a bound kept as a parameter of stl-nl: G[0,T]"),
@@ -316,7 +316,7 @@ def _kept_bound(node, trace: Trace):
 def keep_bounds(root, trace: Trace):
     """
     The intervals of the faithful mode: the bounds as the paper writes them (_kept_bound), open or closed as written.
-    Only what has no meaning is rejected: a negative bound, a lower bound above the upper one.
+    Only what has no meaning is rejected: a negative bound, a lower bound above the upper one, a division by 0.
     """
     for interval in (n.interval for n in _walk(root) if n.interval is not None):
         lower, upper = _kept_bound(interval.lo, trace), _kept_bound(interval.hi, trace)

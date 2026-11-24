@@ -77,9 +77,11 @@ def symbol_names(variables: dict[str, str], macros: dict[str, list[Macro]], mode
 def normalize(formula: str, *, record_id: str = "", seed: str = "0", macros: dict[str, list[Macro]] | None = None,
               variables: dict[str, str] | None = None, flags: list[str] = (), mode: str = "stl-nl") -> Result:
     """
-    The formula in the grammar of stl-nl, and what happened to it. `seed` and `record_id` set the random values of
-    the symbolic bounds (the same record gets the same values on every run, whatever the other records). `mode`:
-    "stl-nl" or "faithful" (rules.py).
+    The formula normalized, and what happened to it. In the "stl-nl" mode the text is in the grammar of stl-nl; in
+    the "faithful" mode it keeps the paper's bounds (real numbers, open intervals, expressions) and powers, so it may
+    not be (rules.py). A symbol alone in a bound stays a parameter (G[0,T]); `seed` and `record_id` set the random
+    values of the symbols that can't (in a bound expression, or also used as a signal), only in the "stl-nl" mode:
+    the same record gets the same values on every run, whatever the other records.
     """
     trace = Trace(mode)
     macros = with_fallback(macros or {})

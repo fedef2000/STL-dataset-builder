@@ -1,7 +1,8 @@
 """
 The pattern of a formula, as stl-nl's scripts/formula_patterns.py computes it, where it is called the skeleton (copied
-from stl-nl at efe09be, only that part; named skeleton here too until 2026-11-12): its temporal and Boolean structure, with each distinct relation or Boolean signal written as a Greek
-letter, a letter repeating only when the exact same condition repeats. Time bounds are [#,#], or [#,inf] when
+from stl-nl at efe09be, only that part; named skeleton here too until 2026-11-12): its temporal and Boolean structure,
+with each distinct relation or Boolean signal written as a Greek letter, a letter repeating only when the exact same
+condition repeats. Time bounds are [#,#], or [#,inf] when
 unbounded. Operands of + * && || == != are unordered. It is computed from the AST that `stlgen import` gives
 (validate.check), so a formula gets the same pattern here and in stl-nl; the formulas stlgen can't parse (faithful
 mode) give that AST with stlgen_ast.py. One addition to stl-nl's code: the power of the faithful mode (^, tightest).

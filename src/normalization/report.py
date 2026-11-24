@@ -281,7 +281,8 @@ def templates(lines: list[dict]) -> list[str]:
         if best is None or len(l["normalized"]) < len(best["normalized"]):
             example[l["template"]] = l
     out = ["## Templates", "",
-           "The template of a formula is its normalized text with every number written # and the names renamed a, "
+           "The template of a formula is its normalized text with every number and parameter written # and the names "
+           "renamed a, "
            "b, ... in the order they appear (a name used twice keeps its letter; operators and comparisons are kept). "
            "Formulas that differ only in their numbers and names have the same template. The manifest has the "
            f"template of each formula (`template`); the example is the shortest formula of each template.", "",

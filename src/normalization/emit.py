@@ -2,9 +2,11 @@
 The tree of a normalized formula written in the grammar of stl-nl, with explicit parentheses around every temporal
 operand and every binary subformula, so that stl-nl's precedence can't change its reading. The faithful mode adds what
 stl-nl's grammar doesn't have: open intervals (F(2,12]), bounds that are real numbers or expressions (F[0,2.5],
-G[T,T + delta]) and powers with an integer exponent (x^2, without parentheses around it: a power binds tightest). The same writer gives the
-template of the formula: the same text with every number and parameter written # and the names renamed a, b, ... in the
-order they appear, so that formulas that differ only in their numbers and names have the same template.
+G[T,T + delta]) and powers with an integer exponent (x^2, without parentheses around it: a power binds tightest). The
+same writer gives the template of the formula: the same text with every number, parameter and bound expression written
+# and the names renamed a, b, ... in the order they appear, so that formulas that differ only in their numbers and
+names have the same template. A second writer (stlnl_text, at the end) gives the formula with the parentheses stlgen
+prints, for the final dataset.
 """
 import math
 import re
@@ -141,7 +143,8 @@ def formula(node: Node) -> str:
 
 def template(node: Node) -> str:
     """
-    The template of the formula: its text with every number (bound or constant) and parameter written # (inf is kept)
+    The template of the formula: its text with every number (bound or constant), parameter and bound expression
+    written # (inf is kept)
     and the names renamed a, b, ... in the order they appear. A name used twice keeps one letter, so
     (G (x < 3)) -> (G (x < 4)) and (G (x < 3)) -> (G (y < 4)) have different templates; the comparison operators are kept.
     """
