@@ -1,0 +1,120 @@
+{"id": "W2221585980:F1:D1", "method": "wordnet", "operation": "wordnet", "text": "The pressure applied to the patient by the end effector is always less than a precondition doorsill, except for the puncturing subtask. Formally, assuming that the operation time is 30 seconds"}
+{"id": "W2221585980:F1:D1", "method": "embedding", "operation": "embedding", "text": "The force applied to the ailing by the end effector is always less than a given threshold, except for the puncturing subtask. Official, assuming that the functioning time is 30 seconds"}
+{"id": "W2221585980:F1:D1", "method": "eda", "operation": "eda_synonym", "text": "The strength applied to the patient by the end effector is always less than a return threshold, except for the puncturing subtask. Formally, arrogate that the operation time is 30 seconds"}
+{"id": "W2221585980:F1:D1", "method": "backtranslation", "operation": "backtranslation", "text": "The force applied to the patient by the final effector is always lower than a given threshold, except for the subset of the score. Formally, assuming that the operating time is 30 seconds"}
+{"id": "W2221585980:F9:D1", "method": "wordnet", "operation": "wordnet", "text": "in the next 36 seconds, engine upper should always be less than 4000"}
+{"id": "W2221585980:F9:D1", "method": "embedding", "operation": "embedding", "text": "in the next 36 seconds, engine acceleration should always be less than 4000"}
+{"id": "W2221585980:F9:D1", "method": "eda", "operation": "eda_deletion", "text": "in the next 36 seconds, engine should always be less than 4000"}
+{"id": "W2221585980:F9:D1", "method": "backtranslation", "operation": "backtranslation", "text": "in the next 36 seconds, the engine speed should always be less than 4000"}
+{"id": "W2256658272:F4:D1", "method": "wordnet", "operation": "wordnet", "text": "leave w to lie in an interval [w_min,w_max] at all times"}
+{"id": "W2256658272:F4:D1", "method": "embedding", "operation": "embedding", "text": "allow w to lies in an interval [w_min,w_max] at all times"}
+{"id": "W2256658272:F4:D1", "method": "eda", "operation": "eda_insertion", "text": "allow w to At lie in an interval [w_min,w_max] at all times"}
+{"id": "W2256658272:F4:D1", "method": "backtranslation", "operation": "backtranslation", "text": "allow w to be in an interval [w_min,w_max] at all times"}
+{"id": "W2470448410:F5:D1", "method": "wordnet", "operation": "wordnet", "text": "encodes that eventually in the next 0.3 s, the quadrotor will rainfly above a threshold stratum of -0.1 m"}
+{"id": "W2470448410:F5:D1", "method": "embedding", "operation": "embedding", "text": "encodes that eventually in the next 0.3 s, the quadrotor will flying above a threshold tiers of -0.1 m"}
+{"id": "W2470448410:F5:D1", "method": "eda", "operation": "eda_insertion", "text": "cypher encodes that eventually in the next 0.3 s, the quadrotor will fly above a threshold level of -0.1 m"}
+{"id": "W2470448410:F5:D1", "method": "backtranslation", "operation": "backtranslation", "text": "code that eventually in the following 0.3 s, the square will fly above a threshold level of -0.1 m"}
+{"id": "W2531762107:P13:D1", "method": "wordnet", "operation": "wordnet", "text": "during the next T_c - tau_2 - tau_3 time units, whenever gamma_cs is true, then gamma_es will be true at least once from the next tau_1 to tau_2 time units and preserve to be true for tau_3 time units"}
+{"id": "W2531762107:P13:D1", "method": "embedding", "operation": "embedding", "text": "during the next T_c - tau_2 - tau_3 time units, whenever gamma_cs is true, then gamma_es will be true at least once from the next tau_1 to tau_2 time units and sustain to be true for tau_3 time units"}
+{"id": "W2531762107:P13:D1", "method": "eda", "operation": "eda_synonym", "text": "during the next T_c - tau_2 - tau_3 time units, whenever gamma_cs is true, then gamma_es will be true at least once from the next tau_1 to tau_2 time units and observe to be true for tau_3 time units"}
+{"id": "W2531762107:P13:D1", "method": "backtranslation", "operation": "backtranslation", "text": "during the next T_c - tau_2 - tau_3 time units, each time gamma_cs is true, then gamma_es will be true at least once from the next tau_1 to tau_2 time units and keep it true for tau_3 time units"}
+{"id": "W2531762107:P9:D1", "method": "wordnet", "operation": "wordnet", "text": "during the next tau_1 time units, phi_t1 is do at least once in every tau_2 time units"}
+{"id": "W2531762107:P9:D1", "method": "embedding", "operation": "embedding", "text": "during the next tau_1 time units, phi_t1 is accomplished at least once in every tau_2 time units"}
+{"id": "W2531762107:P9:D1", "method": "eda", "operation": "eda_insertion", "text": "during the next tau_1 time units, phi_t1 is whole performed at least once in every tau_2 time units"}
+{"id": "W2531762107:P9:D1", "method": "backtranslation", "operation": "backtranslation", "text": "during the following tau_1, phi_t1 time units is performed at least once in each tau_2 time unit"}
+{"id": "W2941720440:F1:D2", "method": "wordnet", "operation": "wordnet", "text": "satisfaction of the convention at all times"}
+{"id": "W2941720440:F1:D2", "method": "embedding", "operation": "embedding", "text": "satisfaction of the formulas at all times"}
+{"id": "W2941720440:F1:D2", "method": "eda", "operation": "eda_synonym", "text": "satisfaction of the convention at all times"}
+{"id": "W2941720440:F1:D2", "method": "backtranslation", "operation": "backtranslation", "text": null}
+{"id": "W2965407852:P6:D1", "method": "wordnet", "operation": "wordnet", "text": "there should not be a period of t1 where a visible object is not accurately find and no collision occurs, followed immediately by a period of length t2 - t1 that arrest a hit"}
+{"id": "W2965407852:P6:D1", "method": "embedding", "operation": "embedding", "text": "there should not be a period of t1 where a visible object is not accurately detects and no collision occurs, followed immediately by a period of length t2 - t1 that therein a crashed"}
+{"id": "W2965407852:P6:D1", "method": "eda", "operation": "eda_insertion", "text": "there should not be a period of t1 where a visible object is not A accurately detected and no collision occurs, hit followed immediately by a period of length t2 - t1 that contains a collision"}
+{"id": "W2965407852:P6:D1", "method": "backtranslation", "operation": "backtranslation", "text": "there should be no t1 period during which a visible object is not accurately detected and no collision occurs, followed immediately by a t2 - t1 length period containing a collision"}
+{"id": "W2995364870:P9:D1", "method": "wordnet", "operation": "wordnet", "text": "the trespass of the safe conditions remain completely stealthy only up to the duration n of the attempt (we recall that ⟦P9⟧G[0,n] (!alarm)⟦/P9⟧ is satisfied with probability 0.99)"}
+{"id": "W2995364870:P9:D1", "method": "embedding", "operation": "embedding", "text": "the offence of the safety conditions remain completely stealthy only up to the duration n of the storming (we recall that ⟦P9⟧G[0,n] (!alarm)⟦/P9⟧ is satisfied with likely 0.99)"}
+{"id": "W2995364870:P9:D1", "method": "eda", "operation": "eda_synonym", "text": "the violations of the safety status remain completely stealthy only up to the duration n of the assault (we retrieve that ⟦P9⟧G[0,n] (!alarm)⟦/P9⟧ is satisfied with probability 0.99)"}
+{"id": "W2995364870:P9:D1", "method": "backtranslation", "operation": "backtranslation", "text": "violations of security conditions remain completely secret until the duration n of the attack (remember that the probability is 0.99)"}
+{"id": "W3014403430:F1:D1", "method": "wordnet", "operation": "wordnet", "text": "all maximal solutions phi to H_cl starting from the initial specify I eventually reach the goal circle O, while staying within the safe set S"}
+{"id": "W3014403430:F1:D1", "method": "embedding", "operation": "embedding", "text": "all maximal solutions phi to H_cl starting from the initial set I eventually reach the objectives set O, while staying within the segura set S"}
+{"id": "W3014403430:F1:D1", "method": "eda", "operation": "eda_synonym", "text": "all maximal solutions phi to H_cl starting from the initial set I eventually reach the goal localise O, while staying within the safe located S"}
+{"id": "W3014403430:F1:D1", "method": "backtranslation", "operation": "backtranslation", "text": "all the maximum solutions from phi to H_cl from the initial set to the end reach the target set O, while remaining within the safety set S"}
+{"id": "W3083205847:P12:D2", "method": "wordnet", "operation": "wordnet", "text": "the requirement is met during the all evolution of the system w.r.t. the time horizon H"}
+{"id": "W3083205847:P12:D2", "method": "embedding", "operation": "embedding", "text": "the requirement is met during the entirety evolution of the system w.r.t. the time horizon H"}
+{"id": "W3083205847:P12:D2", "method": "eda", "operation": "eda_swap", "text": "the requirement is met during the w evolution of the system whole.r.t. the time horizon H"}
+{"id": "W3083205847:P12:D2", "method": "backtranslation", "operation": "backtranslation", "text": "the requirement is met throughout the evolution of the w.r.t. system the time horizon H"}
+{"id": "W3122631132:P2:D1", "method": "wordnet", "operation": "wordnet", "text": "submit that varphi is true at some point within [a,b] time units"}
+{"id": "W3122631132:P2:D1", "method": "embedding", "operation": "embedding", "text": null}
+{"id": "W3122631132:P2:D1", "method": "eda", "operation": "eda_synonym", "text": "State that varphi is true at some point within [a,b] time units"}
+{"id": "W3122631132:P2:D1", "method": "backtranslation", "operation": "backtranslation", "text": null}
+{"id": "W3198638775:F1:D1", "method": "wordnet", "operation": "wordnet", "text": "within the time interval [0,1] the value of sensor x would go larger than 0.4"}
+{"id": "W3198638775:F1:D1", "method": "embedding", "operation": "embedding", "text": "within the time interval [0,1] the value of sensor x would becoming larger than 0.4"}
+{"id": "W3198638775:F1:D1", "method": "eda", "operation": "eda_swap", "text": "within the time interval [sensor,1] the value of 0 x would become larger than 0.4"}
+{"id": "W3198638775:F1:D1", "method": "backtranslation", "operation": "backtranslation", "text": "within the time interval [0.1] the value of the x-sensor would be greater than 0.4"}
+{"id": "W3210726654:F1:D1", "method": "wordnet", "operation": "wordnet", "text": "the robot must satisfy each condom boundary with 99% confidence until it achieves each target edge with 95% trust within 240 time instants and stays in the target for 10 time instants"}
+{"id": "W3210726654:F1:D1", "method": "embedding", "operation": "embedding", "text": "the robots must satisfy each safety restrict with 99% confidence until it achieves each target limiting with 95% confidence within 240 time instants and stays in the target for 10 time instants"}
+{"id": "W3210726654:F1:D1", "method": "eda", "operation": "eda_deletion", "text": "the robot must satisfy each safety with 99% confidence until it achieves each target with 95% confidence within 240 time and stays in the target for 10 time instants"}
+{"id": "W3210726654:F1:D1", "method": "backtranslation", "operation": "backtranslation", "text": "the robot must meet each safety limit with 99% confidence until reaching each target limit with 95% confidence within 240 moments of time and remain in the target for 10 moments of time"}
+{"id": "W4391019804:P7:D1", "method": "wordnet", "operation": "wordnet", "text": "\\be t'in[t_a,t_b],h( x(t'))>=0"}
+{"id": "W4391019804:P7:D1", "method": "embedding", "operation": "embedding", "text": "\\exist t'in[t_a,t_b],h( x(t'))>=0"}
+{"id": "W4391019804:P7:D1", "method": "eda", "operation": "eda_swap", "text": "\\exists x[t_a,t_b],h( t'in(t'))>=0"}
+{"id": "W4391019804:P7:D1", "method": "backtranslation", "operation": "backtranslation", "text": "\\existing t'in[t_a,t_b],h(x(t'))>=0"}
+{"id": "W4394907173:F2:D1", "method": "wordnet", "operation": "wordnet", "text": "specialize that there exists a time instant t between 0 and 2 such that xt > 0"}
+{"id": "W4394907173:F2:D1", "method": "embedding", "operation": "embedding", "text": "specifies that there exist a time instant t between 0 and 2 such that xt > 0"}
+{"id": "W4394907173:F2:D1", "method": "eda", "operation": "eda_swap", "text": "that specifies there exists a time instant t between 0 and 2 such that xt > 0"}
+{"id": "W4394907173:F2:D1", "method": "backtranslation", "operation": "backtranslation", "text": "specifies that there is an instantaneous time t between 0 and 2 so that xt > 0"}
+{"id": "W4403799341:F1:D1", "method": "wordnet", "operation": "wordnet", "text": "it is always the pillowcase that whenever detect_motion is true then activate_alert will eventually be true at most 10 seconds after detect_motion suit true"}
+{"id": "W4403799341:F1:D1", "method": "embedding", "operation": "embedding", "text": "it is always the example that whenever detect_motion is true then activate_alert will eventually be true at most 10 seconds after detect_motion came true"}
+{"id": "W4403799341:F1:D1", "method": "eda", "operation": "eda_swap", "text": "it is always the whenever that case detect_motion is true then activate_alert will eventually be true at most 10 seconds after detect_motion became true"}
+{"id": "W4403799341:F1:D1", "method": "backtranslation", "operation": "backtranslation", "text": "is always the case that every time detect_motion is true then activate_alert eventually will be true at the maximum 10 seconds after detection_motion became true"}
+{"id": "W4405182083:P4:D1", "method": "wordnet", "operation": "wordnet", "text": null}
+{"id": "W4405182083:P4:D1", "method": "embedding", "operation": "embedding", "text": null}
+{"id": "W4405182083:P4:D1", "method": "eda", "operation": null, "text": null}
+{"id": "W4405182083:P4:D1", "method": "backtranslation", "operation": "backtranslation", "text": null}
+{"id": "W4412164746:P9:D1", "method": "wordnet", "operation": "wordnet", "text": "eventually strain g_1 and always avoiding g_2 within time interval [0,T]"}
+{"id": "W4412164746:P9:D1", "method": "embedding", "operation": "embedding", "text": "eventually reaching g_1 and always forestall g_2 within time interval [0,T]"}
+{"id": "W4412164746:P9:D1", "method": "eda", "operation": "eda_deletion", "text": "eventually reaching g_1 and always g_2 within time interval [0,T]"}
+{"id": "W4412164746:P9:D1", "method": "backtranslation", "operation": "backtranslation", "text": "finally reach g_1 and always avoid g_2 within the time interval [0,T]"}
+{"id": "arxiv_1404.0087:F1:D1", "method": "wordnet", "operation": "wordnet", "text": null}
+{"id": "arxiv_1404.0087:F1:D1", "method": "embedding", "operation": "embedding", "text": null}
+{"id": "arxiv_1404.0087:F1:D1", "method": "eda", "operation": null, "text": null}
+{"id": "arxiv_1404.0087:F1:D1", "method": "backtranslation", "operation": "backtranslation", "text": "Varphi will keep within two units of time from now on"}
+{"id": "arxiv_2207.00627:F16:D1", "method": "wordnet", "operation": "wordnet", "text": "Always, in the next 1000 seconds, the robot should not streak into walls"}
+{"id": "arxiv_2207.00627:F16:D1", "method": "embedding", "operation": "embedding", "text": "Always, in the next 1000 seconds, the robot should not running into walls"}
+{"id": "arxiv_2207.00627:F16:D1", "method": "eda", "operation": "eda_swap", "text": "Always, in the next 1000 robot, the seconds should not run into walls"}
+{"id": "arxiv_2207.00627:F16:D1", "method": "backtranslation", "operation": "backtranslation", "text": "Always, in the next 1000 seconds, the robot should not run against the walls"}
+{"id": "arxiv_2508.04438:P3:D1", "method": "wordnet", "operation": "wordnet", "text": "true if and only if rho is true at all sample times between and include t_n + x and t_n + y"}
+{"id": "arxiv_2508.04438:P3:D1", "method": "embedding", "operation": "embedding", "text": "true if and only if rho is true at all sampling times between and containing t_n + x and t_n + y"}
+{"id": "arxiv_2508.04438:P3:D1", "method": "eda", "operation": "eda_deletion", "text": "true if and only if rho is true at all times between and t_n + x and t_n + y"}
+{"id": "arxiv_2508.04438:P3:D1", "method": "backtranslation", "operation": "backtranslation", "text": "true if y only if rho is true in all sampling times between y including t_n + x and t_n + y"}
+{"id": "arxiv_2509.08610:P2:D1", "method": "wordnet", "operation": "wordnet", "text": "demand varphi to be satisfied eventually within l and u steps"}
+{"id": "arxiv_2509.08610:P2:D1", "method": "embedding", "operation": "embedding", "text": "require varphi to be satisfied eventually within l and u steps"}
+{"id": "arxiv_2509.08610:P2:D1", "method": "eda", "operation": "eda_swap", "text": "steps varphi to be satisfied eventually within l and u requires"}
+{"id": "arxiv_2509.08610:P2:D1", "method": "backtranslation", "operation": "backtranslation", "text": "requires varphi to be eventually satisfied within the steps of l and u"}
+{"id": "arxiv_2511.16765:F1:D1", "method": "wordnet", "operation": "wordnet", "text": "the water degree must not exceed 8 for 30 s of simulation time"}
+{"id": "arxiv_2511.16765:F1:D1", "method": "embedding", "operation": "embedding", "text": "the water level must not exceed 8 for 30 s of simulated time"}
+{"id": "arxiv_2511.16765:F1:D1", "method": "eda", "operation": "eda_insertion", "text": "the moldiness water level must not exceed 8 for 30 s of simulation time"}
+{"id": "arxiv_2511.16765:F1:D1", "method": "backtranslation", "operation": "backtranslation", "text": "the water level shall not exceed 8 in 30 seconds of simulation time"}
+{"id": "arxiv_2603.28426:F2:D3", "method": "wordnet", "operation": "wordnet", "text": "Within 10 seconds, reach B or reach C while nullify A."}
+{"id": "arxiv_2603.28426:F2:D3", "method": "embedding", "operation": "embedding", "text": "Within 10 seconds, reach B or reach C while averted A."}
+{"id": "arxiv_2603.28426:F2:D3", "method": "eda", "operation": "eda_swap", "text": "Within 10 seconds, avoiding B or reach C while reach A."}
+{"id": "arxiv_2603.28426:F2:D3", "method": "backtranslation", "operation": "backtranslation", "text": "In 10 seconds, range B or C while avoiding A."}
+{"id": "arxiv_2604.14440:F3:D1", "method": "wordnet", "operation": "wordnet", "text": "situations where at some time point (in this case, between the $100^{th}$ step and the $200^{th}$ step) the haul continuously stays in the region with x < 0 for some time (in this illustration, for 300 successive steps)"}
+{"id": "arxiv_2604.14440:F3:D1", "method": "embedding", "operation": "embedding", "text": "circumstances where at some time point (in this example, between the $100^{th}$ step and the $200^{th}$ step) the cart continuously stays in the region with x < 0 for some time (in this case, for 300 sequential steps)"}
+{"id": "arxiv_2604.14440:F3:D1", "method": "eda", "operation": "eda_swap", "text": "situations where at some time point (in this th, between the $100^{th}$ step and the $200^{example}$ step) the cart continuously stays in the region with example < 0 for some time (in this x, for 300 successive steps)"}
+{"id": "arxiv_2604.14440:F3:D1", "method": "backtranslation", "operation": "backtranslation", "text": "situations where at some point (in this example, between the step of $100^{th}$ and the step of $200^{th}$) the cart remains continuously in the region with x < 0 for some time (in this example, during 300 successive steps)"}
+{"id": "arxiv_2605.21676:P11:D1", "method": "wordnet", "operation": "wordnet", "text": "the oscillation period remains robustly within a 23.5 to 24.5-hour window for the entire model duration T"}
+{"id": "arxiv_2605.21676:P11:D1", "method": "embedding", "operation": "embedding", "text": "the oscillation period remains robustly within a 23.5 to 24.5-hour window for the overall simulation duration T"}
+{"id": "arxiv_2605.21676:P11:D1", "method": "eda", "operation": "eda_swap", "text": "the oscillation period remains robustly within a entire.5 to 24.5-hour window for the 23 simulation duration T"}
+{"id": "arxiv_2605.21676:P11:D1", "method": "backtranslation", "operation": "backtranslation", "text": "the oscillation period remains robust within a window of 23.5 to 24.5 hours for the entire duration of the simulation T"}
+{"id": "arxiv_2608.07289:P5:D1", "method": "wordnet", "operation": "wordnet", "text": "The data center's intimate voltage v_i must stay above the power-electronics tripper threshold v_trip over the fault window [t_f,t_r]"}
+{"id": "arxiv_2608.07289:P5:D1", "method": "embedding", "operation": "embedding", "text": "The data center's interiors voltage v_i must stay above the power-electronics journeys threshold v_trip over the fault window [t_f,t_r]"}
+{"id": "arxiv_2608.07289:P5:D1", "method": "eda", "operation": "eda_insertion", "text": "The data center's internal voltage v_i must stay above the power-electronics trip windowpane threshold v_trip over the fault window [t_f,t_r]"}
+{"id": "arxiv_2608.07289:P5:D1", "method": "backtranslation", "operation": "backtranslation", "text": "The internal voltage of the v_i data center should remain above the displacement threshold of the v_trip power electronics over the failure window [t_f,t_r]"}
+{"id": "arxiv_2609.33287:F10:D1", "method": "wordnet", "operation": "wordnet", "text": "At all times, `laundry room exhaust fan incline' is active and `laundry room exhaust fan running' is active."}
+{"id": "arxiv_2609.33287:F10:D1", "method": "embedding", "operation": "embedding", "text": "At all times, `laundry room exhaust fan implementing' is active and `laundry room exhaust fan running' is active."}
+{"id": "arxiv_2609.33287:F10:D1", "method": "eda", "operation": "eda_deletion", "text": "At all times, room exhaust fan running' is active and `laundry room exhaust fan running' is active."}
+{"id": "arxiv_2609.33287:F10:D1", "method": "backtranslation", "operation": "backtranslation", "text": "At all times, the laundry room exhaust fan is active and the laundry room exhaust fan is active."}
+{"id": "arxiv_2609.33287:F21:D1", "method": "wordnet", "operation": "wordnet", "text": "At some point within [0, 60] seconds, reverse-motion inhibit is alive and a rear-path consequence is updated within 10 seconds."}
+{"id": "arxiv_2609.33287:F21:D1", "method": "embedding", "operation": "embedding", "text": "At some point within [0, 60] seconds, reverse-motion inhibit is active and a rear-path results is updated within 10 seconds."}
+{"id": "arxiv_2609.33287:F21:D1", "method": "eda", "operation": "eda_insertion", "text": "At some point within [0, 60] seconds, sec reverse-motion inhibit is active and a rear-path result is updated within 10 seconds."}
+{"id": "arxiv_2609.33287:F21:D1", "method": "backtranslation", "operation": "backtranslation", "text": "At some point within [0, 60] seconds, reverse motion inhibition is active and a rear track result is updated in 10 seconds."}

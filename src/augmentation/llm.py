@@ -1,29 +1,25 @@
 """
-Step 8, paraphrases written by a model: for each description, K paraphrases in one call (so that they differ from
-each other), given the formula and the variable meanings so that the model knows what must not change. The answers
-are kept in data/processed/augmentation/llm_answers.jsonl, as the judge keeps its own: an answer is used again while
-what the model reads (prompt, formula, description) is the same, so a run makes only the calls not stored yet.
+Step 9, paraphrases written by a model: for each pair of set 1 in the dataset, K paraphrases in one call (so that they
+differ from each other), given the formula and the variable meanings so that the model knows what must not change.
+The answers are kept in data/processed/augmentation/llm_answers.jsonl: an answer is used again while what the model
+reads (prompt, formula, description) is the same, so a run makes only the calls not stored yet. The paraphrases are
+candidates: the round trip of step 8 keeps those it can write back into their formula.
 """
+import difflib
 import json
 import re
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from src.augmentation.paraphrase import AUGMENT_DIR, missing_symbols
-from src.dataset.judge import item_key
+from config import PROCESSED_DIR
 from src.extraction.extractor import LOWEST_REASONING, ExtractionError, post_request
+from src.extraction.records import item_key
 
+AUGMENT_DIR = PROCESSED_DIR / "augmentation"
 GENERATOR = "anthropic/claude-sonnet-5.5:off"
 K = 2   # paraphrases per description
 LLM_ANSWERS = AUGMENT_DIR / "llm_answers.jsonl"
 MAX_OUTPUT_TOKENS = 4000
-
-# Paraphrases of set 1 dropped after reading them (the 16 the symbols check flagged were read; these 3 lose something)
-DROPPED_BY_HAND = {
-    "W4225679458:F5:D1:A1": "the name phi, the formula's only symbol, is left out",
-    "W4225679458:F5:D1:A2": "the name phi, the formula's only symbol, is left out",
-    "arxiv_2603.25531:F4:D1:A1": "V_EGM written out from the variable meanings, and 'below' made 'to or below' from the formula",
-}
 
 SYSTEM_PROMPT = """\
 You paraphrase natural-language descriptions of Signal Temporal Logic (STL) formulas, for a dataset that teaches a \
@@ -84,7 +80,7 @@ def check_answer(text: str, k: int) -> tuple[list[str] | None, list[str]]:
 
 
 def build_request(model: str, messages: list[dict], reasoning: str, use_schema: bool = True) -> dict:
-    """As the judge's request (judge.build_request), with this answer schema."""
+    """The request of one call through OpenRouter, with this answer schema (strict JSON when the provider takes it)."""
     body = {"model": model, "messages": messages, "max_tokens": MAX_OUTPUT_TOKENS,
             "reasoning": {"effort": "none" if reasoning == "off" else reasoning}}
     if use_schema:
@@ -96,7 +92,8 @@ def build_request(model: str, messages: list[dict], reasoning: str, use_schema: 
 
 
 def ask(model: str, reasoning: str, messages: list[dict], k: int) -> dict:
-    """One call, with the judge's fallbacks (reasoning that can't be off, strict schema refused)."""
+    """One call, with two fallbacks: the lowest reasoning when the model can't answer without, plain JSON when the strict
+    schema is refused."""
     notes, use_schema = [], True
     while True:
         try:
@@ -123,7 +120,7 @@ def ask(model: str, reasoning: str, messages: list[dict], k: int) -> dict:
 
 
 def items_for(sample: list[dict], records: dict, k: int = K) -> list[dict]:
-    """One call per description of the sample, with the formula and variables the judge reads (step 6's `normalized`)."""
+    """One call per description, with the formula as step 6 normalizes it (`normalized`) and the variable meanings."""
     items = []
     for row in sample:
         record = records[row["formula_id"]]
@@ -193,11 +190,12 @@ def generate(items: list[dict], model: str, reasoning: str, workers: int = 8, bu
 
 def augmented_pairs(rows: list[dict], items: list[dict], stored: dict, model: str, reasoning: str, used: str) -> list[dict]:
     """
-    The dataset's lines of the paraphrases: each the pair it paraphrases with the paraphrase as `nl`, id
-    "<original id>:A<n>" and `augmented_from` the original id. What belongs only to the original is emptied: `judge`
-    (the paraphrase isn't judged) and `original_nl` (the paper's text). `augmentation` tells how it was made and
-    lists the numbers and symbols of the original it misses (missing_symbols; none in the trial). A paraphrase identical
-    to the original or to an earlier one of the same description is left out.
+    The candidate lines of the paraphrases: each the pair it paraphrases with the paraphrase as `nl`, id
+    "<original id>:A<n>" and `augmented_from` the original id. What belongs only to the original is emptied:
+    `roundtrip` (step 8 checks the paraphrase itself), `original_nl` (the paper's text), the decision taken by hand on
+    the original (`manual`). `augmentation` tells how it was made and lists the numbers and symbols of the original it
+    misses (missing_symbols). A paraphrase identical to the original or to an earlier one of the same description is
+    left out.
     """
     by_id = {i["id"]: i for i in items}
     out = []
@@ -206,12 +204,43 @@ def augmented_pairs(rows: list[dict], items: list[dict], stored: dict, model: st
         if not usable(answer, by_id[row["id"]]):
             continue
         seen = {row["nl"]}
+        base = {k: v for k, v in row.items() if k != "manual"}
         for n, text in enumerate(answer["paraphrases"], 1):
             if text in seen:
                 continue
             seen.add(text)
-            out.append({**row, "id": f"{row['id']}:A{n}", "nl": text, "judge": None, "original_nl": None,
+            out.append({**base, "id": f"{row['id']}:A{n}", "nl": text, "roundtrip": None, "original_nl": None,
                         "augmented_from": row["id"],
                         "augmentation": {"method": "llm", "model": f"{model}:{reasoning}", "reasoning_used": used,
                                          "missing_symbols": missing_symbols(row["nl"], text, row["stl"])}})
     return out
+
+
+# ---------------------------------------------------------------- checks made without a model (reported, not filters)
+
+NAME_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
+TOKEN_RE = re.compile(r"\d+(?:\.\d+)?|[A-Za-z_][A-Za-z0-9_']*")
+STL_OPERATORS = {"G", "F", "U", "R", "X", "inf"}
+
+
+def missing_symbols(original: str, paraphrase: str, stl: str) -> list[str]:
+    """
+    The numbers and symbols of the original that the paraphrase doesn't have: words with a digit or an underscore,
+    and the formula's names (compared in lowercase). Presence only: a symbol written once where the original repeats it
+    is not missing.
+    """
+    names = {n.lower() for n in NAME_RE.findall(stl) if n not in STL_OPERATORS}
+    kept = {t.lower() for t in TOKEN_RE.findall(paraphrase)}
+    out = []
+    for t in TOKEN_RE.findall(original):
+        w = t.lower()
+        if (any(c.isdigit() for c in w) or "_" in w or w in names) and w not in kept and w not in out:
+            out.append(w)
+    return out
+
+
+def word_difference(original: str, paraphrase: str) -> float:
+    """How different the words are, 0 (the same words in the same order) to 1 (no word in common): 1 - difflib's ratio."""
+    a = [t.lower() for t in TOKEN_RE.findall(original)]
+    b = [t.lower() for t in TOKEN_RE.findall(paraphrase)]
+    return 1 - difflib.SequenceMatcher(a=a, b=b, autojunk=False).ratio()

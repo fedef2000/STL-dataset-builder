@@ -1,7 +1,7 @@
 """
-The reports of the trials of step 8, written to be shared with readers who don't know the project:
-textattack_trial.md and llm_trial.md in data/processed/augmentation/. Each one: what was tried, the conclusion, how
-the trial was done, the results, the problems with examples, then every paraphrase.
+The report of the TextAttack trial of step 8 (textattack_trial.md), written to be shared with readers who don't know
+the project: what was tried, the conclusion, how the trial was done, the results, the problems with examples, then
+every paraphrase. (Archived: the LLM trial's report was removed from this file.)
 
 The conclusions, the problems and the counts "read by hand" are written by hand after reading every paraphrase of the
 trial of 30 descriptions (seed "augment-trial"); the examples are given as (description id, method) and their text and
@@ -186,122 +186,5 @@ def write_textattack_report(path: Path, rows: list[dict], sample: list[dict], it
             method = r["method"] + (f" ({r['operation'][4:]})" if r["operation"] and r["operation"].startswith("eda_") else "")
             text = highlight(row["nl"], r["text"]) if r["label"] != "unchanged" else "*(nothing changed)*"
             out.append(f"| {method} | {judge_line(r) if r['label'] != 'unchanged' else '—'} | {text} |")
-        out += reasons_block(mine) + [""]
-    path.write_text("\n".join(out), encoding="utf-8")
-
-
-# ---------------------------------------------------------------- LLM
-
-# Written after reading the paraphrases of the trial (None until then: the report says so)
-LLM_CONCLUSION = (
-    "An LLM paraphrases our descriptions far better than TextAttack. Of 60 paraphrases (2 per description), the judge "
-    "labels 56 correct (93%, against 54% to 85% for TextAttack's methods), and read by hand all 56 are fluent, "
-    "natural English (against about 25 of TextAttack's 74). No paraphrase lost a number or a symbol, and they "
-    "really rephrase the sentence: on average about half of the words differ from the original, against under a "
-    "tenth for TextAttack's word methods. Of the four the judge didn't accept, only one is a real loss of meaning; "
-    "the others are borderline cases of the judge. The problems we found are minor: the model sometimes adds a detail "
-    "taken from the formula or from the paper's variable meanings, though the prompt asks it not to, and once "
-    "rewrote a symbol (xt as x_t). Cost: about a cent for every three paraphrases, judge included."
-)
-LLM_NATURAL = 56     # of the paraphrases labelled correct, those that read as natural English (read by hand)
-LLM_PROBLEMS = [     # (title, text, [(description id, method)]), as TEXTATTACK_PROBLEMS
-    ("Details taken from the formula or the paper",
-     "The prompt gives the model the formula and the variable meanings only to understand the description, and asks "
-     "it to add nothing. Sometimes it adds a detail anyway: \"the environment input w\" (from the variable meanings), "
-     "\"region B\" and \"during that time\" (the 10 seconds of avoiding A, from the formula). The meaning is still the "
-     "formula's, so the judge accepts them, but the paraphrase is more precise than the paper's description.",
-     [("W2256658272:F4:D1", "llm-2"), ("arxiv_2603.28426:F2:D3", "llm-2")]),
-    ("One paraphrase vaguer than the original",
-     "\"Avoid A throughout\" no longer ties avoiding A to the 10 seconds. The judge catches it (ambiguous).",
-     [("arxiv_2603.28426:F2:D3", "llm-1")]),
-    ("The judge rejects some faithful paraphrases",
-     "\"Never reaches the threshold\" is as strict as the original's \"less than\" (the formula has <=), but the "
-     "judge called it wrong, where it had accepted the original. A description that is itself borderline gives "
-     "borderline paraphrases, on which the three judges all differ. Harmless (a good paraphrase is lost), but the "
-     "filter is not perfectly consistent.",
-     [("W2221585980:F1:D1", "llm-1"), ("W2995364870:P9:D1", "llm-1")]),
-    ("A symbol rewritten",
-     "\"xt\" became \"x_t\". The check on numbers and symbols doesn't catch it: \"xt\" has no digit or underscore "
-     "and is not a name of the formula (which writes x).",
-     [("W4394907173:F2:D1", "llm-1")]),
-]
-
-
-def difference(rows: list[dict]) -> str:
-    values = [word_difference(r["original"], r["text"]) for r in rows if r["text"] and r["label"] != "unchanged"]
-    return f"{statistics.mean(values):.2f}" if values else "—"
-
-
-def write_llm_report(path: Path, rows: list[dict], sample: list[dict], items: list[dict], stored: dict, models: list[str],
-                     methods: tuple, generator: str, reasoning: str, k: int, generation_cost: float,
-                     textattack_rows: list[dict] | None):
-    by_key = {(r["id"], r["method"]): r for r in rows}
-    third, cost = judge_facts(items, stored, models)
-    missing = [r for r in rows if r["missing"]]
-    texts = collections.defaultdict(list)
-    for r in rows:
-        texts[r["id"]].append(r["text"])
-    same = [r for r in rows if r["label"] == "unchanged"] + [i for i, t in texts.items() if len(set(t)) < len(t)]
-    out = ["# Paraphrasing STL descriptions with an LLM: a trial", "",
-           "We want more training pairs (natural-language description, STL formula) by paraphrasing the descriptions "
-           "we have. TextAttack's augmenters mostly gave broken English (see `textattack_trial.md`), so we asked an LLM "
-           "to write the paraphrases, on the same descriptions.", "",
-           "## In short", "", LLM_CONCLUSION or "*(to be written after reading the paraphrases)*", "",
-           "## How the trial was done", "",
-           f"- **Sample:** the same {len(sample)} descriptions as the TextAttack trial: descriptions of set 1 "
-           "(formula and description from papers) that the dataset's judge had labelled correct.",
-           f"- **Paraphrases:** `{short(generator)}`, reasoning {reasoning}, wrote {k} paraphrases of "
-           f"each description in one call ({len(rows)} in all), so that they differ from each other. It read the "
-           "description, the formula and the meanings of the formula's variables from the paper. The prompt "
-           "(`src/augmentation/llm.py`) asks it to:",
-           "  - keep every number and symbol as written, and what the description talks about (signals, quantities, "
-           "objects), reworded at most;",
-           "  - keep the temporal and logical meaning with its strength (\"less than\" must not become \"at most\");",
-           "  - add, remove or make precise nothing: the formula is there only to understand the description;",
-           "  - change the sentence structure, not just single words (order of the clauses, voice, how the timing or "
-           "a condition is said), in natural English.",
-           f"- **Judge:** each paraphrase was checked against its formula by the same LLM judge used to build the "
-           "dataset (and the TextAttack trial): two models label it, and a third decides when they disagree (here "
-           f"the third was needed for some paraphrase of {third} of the {len(items)} descriptions). The third judge is the "
-           "model that wrote the paraphrases: it may favour its own text, but it only decides where the other two "
-           f"disagree. Labels: {LABELS_TEXT}.",
-           f"- **Cost:** ${generation_cost:.2f} to write the paraphrases, ${cost:.2f} of judge calls.", "",
-           "## Results", "",
-           "Paraphrases per label (llm-1 is the first paraphrase of each description, llm-2 the second):", ""]
-    out += summary_table(rows, methods, lost=False)
-    out += ["", "Checks made without a model:", "",
-            f"- **Numbers or symbols missing** (a number, a word with an underscore, or a name of the formula that is "
-            f"in the original and not in the paraphrase): {len(missing)} of {len(rows)} paraphrases"
-            + (": " + "; ".join(f"{r['id']} {r['method']} ({', '.join(r['missing'])})" for r in missing) if missing else "") + ".",
-            f"- **Identical to the original or to the other paraphrase:** {len(same)}.",
-            f"- **Difference from the original:** {difference(rows)} on average (0 = the same words in the same order, "
-            "1 = no word in common; a word-level diff)."]
-    if textattack_rows:
-        out += ["", "## Compared with TextAttack", "",
-                "On the same descriptions. *Natural English*: of the paraphrases labelled correct, those that read as "
-                "natural English when read by hand.", "",
-                "| Method | judged | correct | natural English | difference from the original |", "|---|---:|---:|---:|---:|"]
-        groups = [(m, [r for r in textattack_rows if r["method"] == m], TEXTATTACK_NATURAL.get(m)) for m in TEXTATTACK_METHODS]
-        groups.append((f"LLM ({short(generator)})", rows, LLM_NATURAL))
-        for name, mine, natural in groups:
-            judged = [r for r in mine if r["label"] != "unchanged"]
-            correct = sum(1 for r in judged if r["label"] == "correct")
-            out.append(f"| {name} | {len(judged)} | {correct} ({correct / max(1, len(judged)):.0%}) | "
-                       f"{'about ' + str(natural) if natural is not None else '—'} | {difference(mine)} |")
-    if LLM_PROBLEMS:
-        out += ["", "## Problems found", ""]
-        for n, (title, text, examples) in enumerate(LLM_PROBLEMS, 1):
-            out += [f"### {n}. {title}", "", text, ""] + examples_table(by_key, examples, diff=False) + [""]
-    out += ["", "## Every paraphrase", "",
-            "For each description: its formula, the original, and its paraphrases. Under the table, the judges' "
-            "reasons for the paraphrases not labelled correct.", ""]
-    for row in sample:
-        mine = [by_key[(row["id"], m)] for m in methods if (row["id"], m) in by_key]
-        out += [f"### {row['id']}", "", f"Formula: `{md(row['stl'])}`", "", f"Original: {md(row['nl'])}", "",
-                "| Paraphrase | Judge | Text |", "|---|---|---|"]
-        for r in mine:
-            label = judge_line(r) if r["label"] != "unchanged" else "— (identical)"
-            note = f" *(missing: {', '.join(r['missing'])})*" if r["missing"] else ""
-            out.append(f"| {r['method']} | {label} | {md(r['text'] or '')}{note} |")
         out += reasons_block(mine) + [""]
     path.write_text("\n".join(out), encoding="utf-8")

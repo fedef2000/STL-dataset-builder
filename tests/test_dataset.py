@@ -1,58 +1,14 @@
-"""Step 7: the checks on the judge's answers, the vote and the signals computed without a model."""
+"""Step 7 (the sets), the split of step 8, the analysis."""
 import json
 
-from src.dataset.judge import build_messages, check_answer, item_key, vote
-
-
-def answer(*items):
-    return json.dumps({"descriptions": [dict(zip(("id", "describes", "faithful"), item), problems=[], reason="r") for item in items]})
-
-
-def test_check_answer_labels():
-    judgments, problems = check_answer(answer(("D1", "yes", "correct"), ("D2", "no", None), ("D3", "yes", "wrong")), 3)
-    assert problems == [] and [j["label"] for j in judgments] == ["correct", "no", "wrong"]
-
-
-def test_check_answer_fenced_json():
-    judgments, _ = check_answer("```json\n" + answer(("D1", "yes", "ambiguous")) + "\n```", 1)
-    assert judgments[0]["label"] == "ambiguous"
-
-
-def test_check_answer_rejects_missing_or_extra_ids():
-    assert check_answer(answer(("D1", "yes", "correct")), 2)[0] is None
-    assert check_answer(answer(("D2", "yes", "correct")), 1)[0] is None
-
-
-def test_check_answer_rejects_inconsistent_labels():
-    assert check_answer(answer(("D1", "no", "correct")), 1)[0] is None
-    assert check_answer(answer(("D1", "yes", None)), 1)[0] is None
-
-
-def test_check_answer_rejects_other_keys_and_prose():
-    assert check_answer(json.dumps({"items": []}), 1)[0] is None
-    assert check_answer("The formula says ...", 1)[0] is None
-
-
-def test_vote():
-    assert vote(["correct", "correct"], None) == ("correct", "agreed")
-    assert vote(["correct", "ambiguous"], None)[0] == "disputed"
-    assert vote(["correct", "ambiguous"], "ambiguous") == ("ambiguous", "decided by the third model")
-    assert vote(["correct", "ambiguous"], "no")[0] == "undecided"
-    assert vote(["correct", "wrong"], "ambiguous")[0] == "ambiguous"   # decided by the third model
-    assert vote(["correct", "ambiguous"], "wrong") == ("ambiguous", "correct, ambiguous and wrong: the middle one")
-    assert vote(["wrong", "correct"], "no")[0] == "undecided"
-    assert vote(["correct", None], None)[0] == "unjudged"
+from src.dataset import sets
+from src.extraction.records import item_key
 
 
 def test_item_key_follows_the_content():
-    a = build_messages("G[0,2] p", ["p holds for 2 s"])
-    assert item_key(a) == item_key(build_messages("G[0,2] p", ["p holds for 2 s"]))
-    assert item_key(a) != item_key(build_messages("G[0,3] p", ["p holds for 2 s"]))
-
-
-def test_variables_only_when_given():
-    assert "Variable meanings" not in build_messages("p", ["d"])[1]["content"]
-    assert "- \\mu_C: note C" in build_messages("mu_C", ["d"], {"\\mu_C": "note C"})[1]["content"]
+    a = [{"role": "user", "content": "G[0,2] p: p holds for 2 s"}]
+    assert item_key(a) == item_key([{"role": "user", "content": "G[0,2] p: p holds for 2 s"}])
+    assert item_key(a) != item_key([{"role": "user", "content": "G[0,3] p: p holds for 2 s"}])
 
 
 def test_stlnl_rows(tmp_path):
@@ -80,13 +36,6 @@ def test_stlnl_rows(tmp_path):
     assert rows[0]["id"] == "stlnl_0:R0" and rows[0]["paper_id"] is None
 
 
-def test_stlnl_semantics_only_for_stlnl_sets():
-    assert "up to and including" not in build_messages("p", ["d"])[0]["content"]
-    with_semantics = build_messages("p", ["d"], stlnl=True)[0]["content"]
-    assert "up to and including" in with_semantics
-    assert with_semantics.index("The semantics of these formulas") < with_semantics.index("For each description, answer:")
-
-
 def test_pattern_tree():
     from src.dataset.analysis import operators, parse
     assert operators(parse("G[#,#] (φ -> F[#,#] ψ)")) == {"G", "->", "F"}
@@ -95,3 +44,39 @@ def test_pattern_tree():
     tree = parse("(F[#,#] G[#,#] φ) || (F[#,#] G[#,#] ψ)")
     assert tree[0] == "||" and operators(tree) == {"||", "F", "G"}
     assert parse("!(φ U[#,#] ψ)")[0] == "!"
+
+
+def test_without_next_leaves_out_only_the_operator():
+    from src.dataset.sets import without_next
+    rows = [{"stl": s} for s in ("G[0,inf] (red -> (X G[0,5] !red))", "G[0,1] ((l == p) && (X (l == n)))", "X !a",
+                                 "G[0,l - 2] (XXS -> (F[0,1] XXS))", "G[1,4] (XMEAS_21 > 94.6)", "F[0,2] (X != 3)",
+                                 "G[0,5] (X > 1)", "F[1,1] p")]
+    kept, left_out = without_next(rows)
+    assert left_out == 3 and [r["stl"] for r in kept] == [r["stl"] for r in rows[3:]]
+
+
+def verdict(v):
+    return {"verdict": v, "best": {"match": "renamed", "miss": "different", "not_checkable": "not_checkable"}[v]}
+
+
+def test_split_follows_the_round_trip_and_the_hand():
+    rows = [{"id": i, "stl": "p", "manual": {"action": "stale"}} for i in ("A", "B", "C", "D", "E", "F", "G")]
+    verdicts = {"A": verdict("match"), "B": verdict("miss"), "C": verdict("not_checkable"), "D": verdict("match"),
+                "E": verdict("miss"), "F": verdict("miss")}
+    decisions = {"D": {"id": "D", "action": "drop", "note": "covers another formula"},
+                 "E": {"id": "E", "action": "keep", "note": "enough"}, "F": {"id": "F", "action": "fix", "note": "phi"}}
+    pairs, dropped = sets.split(rows, verdicts, decisions)
+    assert [r["id"] for r in pairs] == ["A", "E", "F"]
+    why = {r["id"]: r["dropped"] for r in dropped}
+    assert why == {"B": sets.BOTH_MISS, "C": sets.NOT_CHECKABLE, "D": "by hand: covers another formula", "G": sets.NO_ANSWER}
+    assert pairs[0]["roundtrip"] == verdict("match") and "manual" not in pairs[0]   # a stale `manual` goes
+    assert pairs[1]["manual"] == {"action": "keep", "note": "enough"}
+    assert {sets.short_reason(r["dropped"]) for r in dropped} == {"both miss", "not checkable", "dropped by hand", "no answer yet"}
+
+
+def test_split_of_paraphrases_needs_the_original():
+    rows = [{"id": "A:A1", "augmented_from": "A"}, {"id": "B:A1", "augmented_from": "B"}, {"id": "B:A2", "augmented_from": "B"}]
+    verdicts = {i: verdict("match") for i in ("A:A1", "B:A1", "B:A2")}
+    keep = {"B:A2": {"id": "B:A2", "action": "keep", "note": ""}}
+    pairs, dropped = sets.split(rows, verdicts, keep, originals={"A"})
+    assert [r["id"] for r in pairs] == ["A:A1"] and all(r["dropped"] == sets.ORIGINAL_OUT for r in dropped)

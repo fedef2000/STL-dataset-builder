@@ -3,6 +3,7 @@ Puts the stored answers of the models side by side: one record per formula, with
 agree on its requirement and, where a third model was asked to break the tie, which of them it sides with. Used by
 the extraction (step 5).
 """
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -40,6 +41,14 @@ ANSWERS_FILE, FORMULAS_FILE = store_files()
 AGREEMENTS = ("same passages", "both none", "partly the same", "different passages", "one gives none", "not answered")
 AGREED = ("same passages", "both none")
 DISPUTED = ("partly the same", "different passages", "one gives none")
+
+
+def item_key(messages: list[dict]) -> str:
+    """
+    A hash of what a model reads, stored with each answer (steps 8 and 9): a stored answer counts only while the
+    messages (prompt, description, formula) are the same.
+    """
+    return hashlib.sha256(json.dumps(messages, ensure_ascii=False).encode("utf-8")).hexdigest()[:16]
 
 
 def parse_model(spec: str) -> tuple[str, str]:
