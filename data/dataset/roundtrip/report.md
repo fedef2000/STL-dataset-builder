@@ -119,4 +119,5 @@ Sheets of `roundtrip.xlsx`:
 | set 1, both miss | 1035 | neither model wrote the formula back, so the pair is out: keep it when the description is enough after all, fix the formula when the description is right and the formula opaque (phi for a condition the description spells out) |
 | set 1, not checkable | 106 | stlgen can't read the formula, so the pair is out: the column why not checkable says what it has that stlgen doesn't take, the models' formulas are there to compare by eye; keep it when the description is right, fix the formula into one stlgen reads (then it is checked) |
 | paraphrase loses it | 62 | the original's formula was matched, the paraphrase's not: it may lose something |
+| stlsat checked | 303 | the descriptions with at least one answer stlsat checked (not equivalent or renamed already, not skipped), both groups: its outcome in the columns sat |
 | all | 2843 | every description |
