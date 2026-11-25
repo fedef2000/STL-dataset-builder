@@ -13,7 +13,7 @@ and the outcome:
     weaker        only ref implies cand
     incomparable  neither
     unknown       stlsat ran past its time (TIMEOUT seconds) under every renaming tried
-    not_checkable a formula stlsat can't take (below), or no renaming to try
+    sat_skipped   a formula stlsat can't take (below), or no renaming to try: not checked
 The dataset's formula alone gets a flag: unsatisfiable (nothing satisfies it) or valid (everything does); then
 "equivalent" says little.
 
@@ -22,11 +22,13 @@ inclusive (p U[a,b] q: q at some i in [t+a,t+b], p on all of [t,i]), signals unc
 Booleans. A named threshold (x > c) is a signal for stlsat, which may change over time: an "equivalent" holds
 for every c, so also for a constant one; a "different" may (rarely) come from that.
 
-Not checkable (decided on 2026-11-25): an interval with an infinite end (G[0,inf]) or a named end (G[0,T]), stlsat has
-neither; arithmetic beyond affine (x * y, x / y). Open ends are moved by one step: (0,5] = [1,5].
+Skipped (sat_skipped, decided on 2026-11-25): an interval with an infinite end (G[0,inf]) or a named end (G[0,T]),
+stlsat has neither; arithmetic beyond affine (x * y, x / y). Open ends are moved by one step: (0,5] = [1,5]. Until
+2026-11-25 this outcome was called not_checkable: renamed so that "not checkable" says only that stlgen can't read the
+dataset's formula (roundtrip.py).
 
 Renaming: the names of cand are given one to one to those of ref of the same kind (atom to atom, signal to signal); a
-different number of names of one kind, or more than MAX_RENAMINGS ways, is not checkable. The ways are tried from the
+different number of names of one kind, or more than MAX_RENAMINGS ways, is skipped. The ways are tried from the
 likeliest (the mapping compare.py found, then equal names, then names in the same conditions: speed > 80 and v > 80),
 and the first equivalent one stops the search; otherwise the best certain outcome wins (stronger, weaker, then
 incomparable). After MAX_TIMEOUTS renamings that ran past their time, the search stops.
@@ -44,11 +46,11 @@ from src.evaluation.compare import identifiers, nnf, polynomial
 TIMEOUT = 10          # seconds per stlsat call
 MAX_RENAMINGS = 24
 MAX_TIMEOUTS = 3      # renamings that ran past their time, after which an answer is given up (unknown)
-OUTCOMES = ("equivalent", "stronger", "weaker", "incomparable", "unknown", "not_checkable")
+OUTCOMES = ("equivalent", "stronger", "weaker", "incomparable", "unknown", "sat_skipped")
 PREFIX = {"atom": "a", "var": "v"}   # the names written for stlsat: a0, a1, ... and v0, v1, ...
 
 
-class NotCheckable(Exception):
+class Skipped(Exception):
     """A formula stlsat can't take; the message says why."""
 
 
@@ -69,7 +71,7 @@ def _affine(p: dict, name) -> str:
         if not monomial:
             text, size = _number(abs(c)), None
         elif len(monomial) > 1 or monomial[0][0] == "div":
-            raise NotCheckable("arithmetic beyond affine (a product or a division by a signal)")
+            raise Skipped("arithmetic beyond affine (a product or a division by a signal)")
         elif monomial[0][0] == "var":
             text = name(("var", monomial[0][1]))
             if abs(c) != 1:
@@ -89,11 +91,11 @@ def _interval(bounds: dict) -> str:
     lower, upper = bounds["lower"], bounds["upper"]
     for b in (lower, upper):
         if isinstance(b, dict):
-            raise NotCheckable("an infinite interval end" if b["type"] == "infinity" else "a named interval end")
+            raise Skipped("an infinite interval end" if b["type"] == "infinity" else "a named interval end")
     lower += 1 if bounds.get("lower_open") else 0
     upper -= 1 if bounds.get("upper_open") else 0
     if lower > upper:
-        raise NotCheckable("an empty interval")
+        raise Skipped("an empty interval")
     return f"[{lower},{upper}]"
 
 
@@ -127,19 +129,19 @@ def to_stlsat(tree: dict, name) -> str:
 
 
 def names_of(tree: dict) -> set[tuple[str, str]]:
-    """(kind, name) of the atoms and signals; NotCheckable when a bound is a name (stlsat has no parameters)."""
+    """(kind, name) of the atoms and signals; Skipped when a bound is a name (stlsat has no parameters)."""
     found = identifiers(nnf(tree))
     if any(kind == "param" for kind, _ in found):
-        raise NotCheckable("a named interval end")
+        raise Skipped("a named interval end")
     return found
 
 
-def checkable(tree: dict) -> str | None:
+def why_skipped(tree: dict) -> str | None:
     """None if stlsat can take the formula, else why not."""
     try:
         names_of(tree)
         to_stlsat(tree, lambda i: i[1])
-    except NotCheckable as exc:
+    except Skipped as exc:
         return str(exc)
     return None
 
@@ -196,7 +198,7 @@ def _conditions(tree: dict, own) -> dict:
 def renamings(reference: dict, candidate: dict, hint: dict | None = None) -> list[dict]:
     """
     The one-to-one ways of giving the candidate's names those of the reference, kind by kind, likeliest first:
-    {(kind, candidate name): (kind, reference name)}. NotCheckable when a kind has a different number of names, or
+    {(kind, candidate name): (kind, reference name)}. Skipped when a kind has a different number of names, or
     there are more than MAX_RENAMINGS ways.
     """
     ref_names, cand_names = names_of(reference), names_of(candidate)
@@ -205,14 +207,14 @@ def renamings(reference: dict, candidate: dict, hint: dict | None = None) -> lis
         r = sorted(n for n in ref_names if n[0] == kind)
         c = sorted(n for n in cand_names if n[0] == kind)
         if len(r) != len(c):
-            raise NotCheckable(f"a different number of {'atoms' if kind == 'atom' else 'signals'} ({len(r)} vs {len(c)})")
+            raise Skipped(f"a different number of {'atoms' if kind == 'atom' else 'signals'} ({len(r)} vs {len(c)})")
         by_kind[kind] = (r, c)
     count = 1
     for r, _ in by_kind.values():
         for n in range(2, len(r) + 1):
             count *= n
     if count > MAX_RENAMINGS:
-        raise NotCheckable(f"too many renamings to try ({count})")
+        raise Skipped(f"too many renamings to try ({count})")
     ref_cond, cand_cond = _conditions(reference, ref_names), _conditions(candidate, cand_names)
     hint = hint or {}
 
@@ -246,7 +248,7 @@ def _writer(reference_names):
 
 
 def reference_flag(reference: dict) -> str | None:
-    """'unsatisfiable', 'valid', 'unknown' or None (neither) for the dataset's formula; NotCheckable if stlsat can't take it."""
+    """'unsatisfiable', 'valid', 'unknown' or None (neither) for the dataset's formula; Skipped if stlsat can't take it."""
     text = to_stlsat(reference, _writer(names_of(reference)))
     if satisfiable(text) == "unsat":
         return "unsatisfiable"
@@ -265,14 +267,14 @@ def _outcome(a: str, b: str) -> str:
 def check(reference: dict, candidate: dict, hint: dict | None = None) -> dict:
     """
     -> {"sat": outcome, "sat_mapping": {candidate's name: reference's name} for the names that differ,
-    "sat_reason": why not_checkable, else None}. `hint`: compare.py's mapping, tried first.
+    "sat_reason": why sat_skipped, else None}. `hint`: compare.py's mapping, tried first.
     """
     try:
         for tree in (reference, candidate):
             to_stlsat(tree, lambda i: i[1])
         ways = renamings(reference, candidate, hint)
-    except NotCheckable as exc:
-        return {"sat": "not_checkable", "sat_mapping": {}, "sat_reason": str(exc)}
+    except Skipped as exc:
+        return {"sat": "sat_skipped", "sat_mapping": {}, "sat_reason": str(exc)}
     write = _writer(names_of(reference))
     ref_text = to_stlsat(reference, write)
     rank = {"equivalent": 0, "stronger": 1, "weaker": 2, "incomparable": 3}

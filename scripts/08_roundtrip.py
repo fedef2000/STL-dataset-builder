@@ -21,7 +21,8 @@ Every run without --trial ends, when every checkable description has both answer
 - data/dataset/roundtrip/: results.jsonl (one row per description: the formulas of both models and the comparator's
   verdicts), report.md (the split, matches per group and model, levels, near details, stlsat, paraphrases against
   their originals) and roundtrip.xlsx (the descriptions to read, with three columns to fill by hand: decision (keep,
-  fix, drop), fixed formula, note; and every row);
+  fix, drop), fixed formula, note; among them the sheet "set 1, not checkable", the pairs whose formula stlgen can't
+  read, with why and the models' formulas; and every row);
 - data/dataset/analysis.md and patterns.csv (src/dataset/analysis.py).
 --import-decisions checks the decisions and writes them to data/dataset/set_1/manual.jsonl; then run step 7 (only
 needed for a fix), this step, step 9 (paraphrases for the pairs now in the dataset) and this step again.
@@ -72,12 +73,13 @@ def main():
     else:
         items = roundtrip.items_of(args.group or GROUPS)
     references = roundtrip.reference_trees(items)
-    checkable = [i for i in items if references[i["stl"]] is not None]
-    print(f"{len(items)} descriptions, {len(checkable)} checkable ({len(items) - len(checkable)} formulas stlgen can't read)")
+    unread = sum(1 for i in items if references[i["stl"]] is None)
+    print(f"{len(items)} descriptions, {len(items) - unread} checkable ({unread} with a formula stlgen can't read: "
+          "asked too, their answers shown in roundtrip.xlsx for deciding by hand)")
     if args.dry_run:
         roundtrip.plan(items, references)
         return
-    spent = roundtrip.run_calls(checkable, args.workers, args.budget)
+    spent = roundtrip.run_calls(items, args.workers, args.budget)
     print(f"${spent:.2f} spent in this run")
 
     if args.trial:

@@ -49,8 +49,38 @@ def test_review_sheets_and_verdict():
     sheets = roundtrip.review_sheets(rows)
     assert [r["id"] for r in sheets["set 1, both miss"]] == ["C:D1"]
     assert [r["id"] for r in sheets["paraphrase loses it"]] == ["A:D1:A1"]   # its original matched
+    assert [r["id"] for r in sheets["set 1, not checkable"]] == ["D:D1"]
     assert [roundtrip.verdict(r)["verdict"] for r in rows[:4]] == ["match", "match", "miss", "not_checkable"]
     assert roundtrip.verdict(rows[0]) == {"verdict": "match", "best": "renamed"}
+
+
+@pytest.mark.parametrize("stl, error, why", [
+    ("F[0,0.3] (z <= -0.1)", "STL parse error at byte 1: unsupported", "decimal bound"),
+    ("G[0,T - 5] (x < 1)", "STL parse error at byte 1: unsupported", "bound with an expression"),
+    ("G(2 * i - 1,2 * i) a", "STL parse error at byte 1: unsupported", "bound with an expression; F or G with both ends open"),
+    ("G[0,inf] (H -> (!F(0,1) H))", "STL parse error at byte 1: unsupported", "F or G with both ends open"),
+    ("G[0,2] (x^2 > 1.5^2)", "STL parse error at byte 1: unsupported", "power (^)"),
+    ("G[N,N] (cnt <= N)", 'STL parse error: name "N" is used both as a signal and as an interval parameter',
+     "N both a signal and a bound"),
+    ("G[0,5] p", "STL parse error: something else", "something else"),
+])
+def test_why_not_checkable(stl, error, why):
+    assert roundtrip.why_not_checkable(stl, error) == why
+
+
+def test_not_checkable_rows_keep_the_answers(monkeypatch):
+    try:
+        parse_many({"0": "p"})
+    except StlgenError:
+        pytest.skip("stlgen of stl-nl with the parse command not built")
+    item = {"id": "X:F1:D1", "group": "set_1", "formula_id": "X:F1", "augmented_from": None, "nl": "within 0.3 s z drops",
+            "stl": "F[0,0.3] (z <= -0.1)", "key": "k"}
+    stored = {(*roundtrip.parse_model(label), item["id"]): {"key": "k", "formula": "F[0,0.3] (z <= -0.1)"}
+              for label in roundtrip.MODELS}
+    monkeypatch.setattr(roundtrip, "read_answers", lambda: stored)
+    [row] = roundtrip.results([item], roundtrip.reference_trees([item]), use_sat=False)
+    assert row["best"] == "not_checkable" and row["stl_error"] == "decimal bound"
+    assert all(v["level"] == "not_checkable" and v["formula"] == "F[0,0.3] (z <= -0.1)" for v in row["models"].values())
 
 
 def test_matched_with_stlsat():
@@ -60,5 +90,5 @@ def test_matched_with_stlsat():
     assert not roundtrip.matched({"level": "different", "sat": None})
     assert roundtrip.sat_details({"level": "different", "sat": "equivalent", "sat_mapping": {"open": "door_open"}}) \
         == "equivalent (open -> door_open)"
-    assert roundtrip.sat_details({"level": "near", "sat": "not_checkable", "sat_reason": "an infinite interval end"}) \
-        == "not_checkable: an infinite interval end"
+    assert roundtrip.sat_details({"level": "near", "sat": "sat_skipped", "sat_reason": "an infinite interval end"}) \
+        == "sat_skipped: an infinite interval end"

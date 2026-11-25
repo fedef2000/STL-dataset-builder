@@ -10,8 +10,10 @@ The descriptions checked (sets 2 and 3 wait for their new stl-nl run):
     set_1        set_1/candidates.jsonl: every description of the papers (step 7)
     paraphrase   set_1/augmented/candidates.jsonl: the paraphrases of step 9
 
-A description dropped by hand is not asked about. A description whose formula stlgen can't read (real or expression
-bounds, powers, ...) is not_checkable and no model is asked about it either.
+A description dropped by hand is not asked about. A description whose formula stlgen can't read (decimal or expression
+bounds, powers, ...: why_not_checkable) is not_checkable: its answers can't be compared, so it is out unless kept or
+fixed by hand. Both models are asked about it all the same, so that the sheet "set 1, not checkable" of roundtrip.xlsx
+shows their formulas next to ours, for deciding by hand.
 
 Two stages compare an answer with the dataset's formula: compare.py (written the same way, up to renaming: the `level`)
 and, for the answers it doesn't match exactly (near, same_pattern, different), stlsat (sat.py: the same meaning, the
@@ -136,6 +138,32 @@ def reference_trees(items: list[dict]) -> dict[str, dict | None]:
     """The dataset's formulas as trees, one stlgen call for all; None for those stlgen can't read (not checkable)."""
     parsed = parse_many({stl: stl for stl in sorted({i["stl"] for i in items})})
     return {stl: p["ast"] if p["ok"] else None for stl, p in parsed.items()}
+
+
+BOUNDS_RE = re.compile(r"\b[FGUR]\s*[\[(]([^\])]*)[\])]")
+BOTH_OPEN_RE = re.compile(r"\b[FG]\s*\([^\])]*\)")
+SIGNAL_AND_BOUND_RE = re.compile(r'name "([^"]+)" is used both as a signal and as an interval parameter')
+
+
+def why_not_checkable(stl: str, error: str) -> str:
+    """
+    Why stlgen can't read a formula, in a few words: what the formula has that stlgen doesn't take (found by pattern,
+    since stlgen's message rarely says it), else stlgen's own message.
+    """
+    bounds = [b.strip() for found in BOUNDS_RE.findall(stl) for b in found.split(",")]
+    found = []
+    if any(re.search(r"\d\.\d", b) for b in bounds):
+        found.append("decimal bound")
+    if any(re.search(r"[-+*/|^]", b) for b in bounds):
+        found.append("bound with an expression")
+    if BOTH_OPEN_RE.search(stl):
+        found.append("F or G with both ends open")
+    if "^" in stl:
+        found.append("power (^)")
+    name = SIGNAL_AND_BOUND_RE.search(error)
+    if name:
+        found.append(f"{name.group(1)} both a signal and a bound")
+    return "; ".join(found) or error.removeprefix("STL parse error").strip(" :")
 
 
 # ---------------------------------------------------------------- the calls
@@ -298,7 +326,7 @@ def run_calls(items: list[dict], workers: int = 8, budget: float = 5.0) -> float
 def plan(items: list[dict], references: dict) -> None:
     """--dry-run: the calls still to make per model, priced at the average of that model's stored calls."""
     stored = read_answers()
-    todo = tasks_to_make([i for i in items if references[i["stl"]] is not None], stored)
+    todo = tasks_to_make(items, stored)
     total = 0.0
     for label in MODELS:
         model, reasoning = parse_model(label)
@@ -321,27 +349,32 @@ def short(label: str) -> str:
 
 def results(items: list[dict], references: dict, use_sat: bool = True, workers: int = 8) -> list[dict]:
     """
-    One row per description: the dataset's formula (with stl_flag: unsatisfiable or valid for stlsat, see sat.py),
-    and per model its formula and the comparator's verdict, with stlsat's outcome (sat, sat_mapping, sat_reason; None
-    without use_sat, or for no answer or one stlgen can't read).
+    One row per description: the dataset's formula (with stl_flag: unsatisfiable or valid for stlsat, see sat.py;
+    stl_error: why stlgen can't read it, for a not checkable one), and per model its formula and the comparator's
+    verdict, with stlsat's outcome (sat, sat_mapping, sat_reason; None without use_sat, or for no answer or one
+    stlgen can't read). A not checkable description has level not_checkable for both models, answered or not.
     """
     stored = read_answers()
     answers = {}
     for item in items:
         for label in MODELS:
             row = stored.get((*parse_model(label), item["id"]))
-            if references[item["stl"]] is not None and usable(row, item):
+            if usable(row, item):
                 answers[(item["id"], label)] = row["formula"] or ""
-    parsed = parse_many({f"{i}\t{label}": formula for (i, label), formula in answers.items() if formula})
+    stl_of = {item["id"]: item["stl"] for item in items}
+    parsed = parse_many({f"{i}\t{label}": formula for (i, label), formula in answers.items()
+                         if formula and references[stl_of[i]] is not None})
+    unread = sorted({item["stl"] for item in items if references[item["stl"]] is None})
+    errors = {stl: why_not_checkable(stl, p["error"]) for stl, p in parse_many({s: s for s in unread}).items()}
     out = []
     for item in items:
         reference = references[item["stl"]]
         per_model = {}
         for label in MODELS:
-            if reference is None:
-                per_model[short(label)] = {"formula": None, **compare(None, None)}
-                continue
             formula = answers.get((item["id"], label))
+            if reference is None:
+                per_model[short(label)] = {"formula": formula, **compare(None, None)}
+                continue
             if formula is None:
                 per_model[short(label)] = {"formula": None, "level": None}   # no answer yet
                 continue
@@ -354,7 +387,8 @@ def results(items: list[dict], references: dict, use_sat: bool = True, workers: 
                                        "tree": p["ast"] if p["ok"] else None}
         out.append({"id": item["id"], "group": item["group"], "formula_id": item["formula_id"],
                     "augmented_from": item["augmented_from"], "nl": item["nl"],
-                    "stl": item["stl"], "stl_flag": None, "models": per_model, "best": best_level(per_model)})
+                    "stl": item["stl"], "stl_flag": None, "stl_error": errors.get(item["stl"]), "models": per_model,
+                    "best": best_level(per_model)})
     if use_sat:
         add_sat(out, references, workers)
     for row in out:
@@ -380,7 +414,7 @@ def add_sat(rows: list[dict], references: dict, workers: int = 8) -> None:
             elif v.get("level") in SAT_LEVELS:
                 tasks.append((references[row["stl"]], v))
     formulas = sorted({row["stl"] for row in rows if references.get(row["stl"]) is not None
-                       and sat.checkable(references[row["stl"]]) is None})
+                       and sat.why_skipped(references[row["stl"]]) is None})
     print(f"stlsat: {len(tasks)} answers to check, {len(formulas)} dataset formulas to flag "
           f"(at most {sat.TIMEOUT} s per call, {workers} in parallel)")
     started, done = time.time(), [0]
@@ -462,8 +496,8 @@ def sat_details(verdict: dict) -> str:
     outcome = verdict.get("sat")
     if outcome is None or verdict.get("level") in ("equivalent", "renamed"):
         return outcome or ""
-    if outcome == "not_checkable":
-        return f"not_checkable: {verdict['sat_reason']}"
+    if outcome == "sat_skipped":
+        return f"sat_skipped: {verdict['sat_reason']}"
     mapping = verdict.get("sat_mapping") or {}
     return outcome + (" (" + ", ".join(f"{a} -> {b}" for a, b in mapping.items()) + ")" if mapping else "")
 
@@ -476,6 +510,9 @@ def table(header: list[str], rows: list[list]) -> list[str]:
     return ["| " + " | ".join(header) + " |", "|" + "---|" * len(header)] + ["| " + " | ".join(map(str, r)) + " |" for r in rows]
 
 
+NOT_CHECKABLE_SHEET = "set 1, not checkable"
+
+
 def review_sheets(rows: list[dict]) -> dict[str, list[dict]]:
     """The descriptions worth reading, and every row."""
     originals = {r["id"]: r for r in rows if r["group"] != "paraphrase"}
@@ -485,6 +522,7 @@ def review_sheets(rows: list[dict]) -> dict[str, list[dict]]:
         return original is not None and any_match(original) and r["best"] != "not_checkable" and not any_match(r)
     return {
         "set 1, both miss": [r for r in rows if r["group"] == "set_1" and r["best"] != "not_checkable" and both_miss(r)],
+        NOT_CHECKABLE_SHEET: [r for r in rows if r["group"] == "set_1" and r["best"] == "not_checkable"],
         "paraphrase loses it": [r for r in rows if r["group"] == "paraphrase" and lost(r)],
         "all": rows,
     }
@@ -500,9 +538,10 @@ def write_report(rows: list[dict], path: Path, split_counts: dict[str, dict[str,
              "interval end, or an outer G[0,inf]), same_pattern (the same structure, other bounds or conditions), "
              "different, or unparseable. For the answers at near, same_pattern or different, stlsat (`src/evaluation/sat.py`) "
              "then checks whether they mean the same: equivalent, stronger (the answer asks more), weaker, incomparable, "
-             "unknown (past its time) or not_checkable. A match is one of the first three levels, or equivalent for "
+             "unknown (past its time) or sat_skipped (a formula stlsat can't take). A match is one of the first three levels, or equivalent for "
              "stlsat. Groups: set 1 (every description of the papers, step 7) and the paraphrases of step 9. Not "
-             "checkable: formulas stlgen can't read (real or expression bounds, powers); no model was asked about them. "
+             "checkable: formulas stlgen can't read (decimal or expression bounds, powers): the answers can't be compared, "
+             "they are shown for deciding by hand. "
              "A description is in the dataset when at least one model matches it, or when it was kept or fixed by hand.",
              "", "## Size", ""]
     groups = [g for g in GROUPS if any(r["group"] == g for r in rows)]
@@ -550,6 +589,7 @@ def write_report(rows: list[dict], path: Path, split_counts: dict[str, dict[str,
     lines += ["", "## To read", "", "Sheets of `roundtrip.xlsx`:", ""]
     lines += table(["Sheet", "Descriptions", "Why"],
                    [["set 1, both miss", len(review_sheets(rows)["set 1, both miss"]), "neither model wrote the formula back, so the pair is out: keep it when the description is enough after all, fix the formula when the description is right and the formula opaque (phi for a condition the description spells out)"],
+                    [NOT_CHECKABLE_SHEET, len(review_sheets(rows)[NOT_CHECKABLE_SHEET]), "stlgen can't read the formula, so the pair is out: the column why not checkable says what it has that stlgen doesn't take, the models' formulas are there to compare by eye; keep it when the description is right, fix the formula into one stlgen reads (then it is checked)"],
                     ["paraphrase loses it", len(review_sheets(rows)["paraphrase loses it"]), "the original's formula was matched, the paraphrase's not: it may lose something"],
                     ["all", len(rows), "every description"]])
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
@@ -562,7 +602,7 @@ def sat_section(rows: list[dict], checkable: dict, groups: list[str], labels: li
         return []
     lines = ["", "## Meaning (stlsat)", "",
              "The answers at near, same_pattern or different, checked by stlsat (discrete time, inclusive until; "
-             "formulas with inf, named bounds or products not checkable). stronger: the answer implies the dataset's "
+             "formulas with inf, named bounds or products skipped: sat_skipped). stronger: the answer implies the dataset's "
              "formula, not the converse; weaker: the converse.", ""]
     for m in labels:
         lines += ["", f"### {m}", ""]
@@ -577,10 +617,10 @@ def sat_section(rows: list[dict], checkable: dict, groups: list[str], labels: li
     reasons = {}
     for r in rows:
         for m in labels:
-            if checked(r, m) and r["models"][m]["sat"] == "not_checkable":
+            if checked(r, m) and r["models"][m]["sat"] == "sat_skipped":
                 reason = r["models"][m]["sat_reason"].split(" (")[0]
                 reasons[reason] = reasons.get(reason, 0) + 1
-    lines += ["", "Why stlsat couldn't check an answer (both models together):", ""]
+    lines += ["", "Why stlsat skipped an answer (sat_skipped, both models together):", ""]
     lines += table(["Reason", "Answers"], [[k, n] for k, n in sorted(reasons.items(), key=lambda x: -x[1])])
     flagged = {}
     for r in rows:
@@ -612,6 +652,7 @@ def write_xlsx(rows: list[dict], path: Path) -> None:
     decision_columns = [(name, 14 if name == "decision" else 40,
                          lambda r, name=name: decision_values[name](decided[r["id"]]) if r["id"] in decided else "")
                         for name in DECISION_COLUMNS]
+    why_column = ("why not checkable", 30, lambda r: r.get("stl_error") or "")
     rest = [("best", 13, lambda r: r["best"] or ""), ("stl flag", 13, lambda r: r.get("stl_flag") or "")]
     for m in labels:
         rest += [(f"{m} formula", 45, lambda r, m=m: r["models"][m]["formula"] or ""),
@@ -622,7 +663,8 @@ def write_xlsx(rows: list[dict], path: Path) -> None:
     book.remove(book.active)
     to_fill = PatternFill("solid", fgColor="FFF2CC")
     for name, sheet_rows in review_sheets(rows).items():
-        columns = base + (decision_columns if name != "all" else []) + rest
+        why = [why_column] if name in (NOT_CHECKABLE_SHEET, "all") else []
+        columns = base + (decision_columns if name != "all" else []) + why + rest
         sheet = book.create_sheet(name[:31])
         sheet.append([c[0] for c in columns])
         for cell in sheet[1]:

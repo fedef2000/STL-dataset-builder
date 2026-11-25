@@ -65,9 +65,9 @@ def test_renamings_likeliest_first():
     ("(x1 > 1) && (x2 > 2) && (x3 > 3) && (x4 > 4) && (x5 > 5)",
      "(y1 > 1) && (y2 > 2) && (y3 > 3) && (y4 > 4) && (y5 > 5)", "too many renamings"),
 ])
-def test_not_checkable(reference, candidate, reason):
+def test_sat_skipped(reference, candidate, reason):
     result = check(reference, candidate)
-    assert result["sat"] == "not_checkable" and result["sat_reason"].startswith(reason)
+    assert result["sat"] == "sat_skipped" and result["sat_reason"].startswith(reason)
 
 
 def test_reference_flag():
