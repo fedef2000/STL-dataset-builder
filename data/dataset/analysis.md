@@ -1,35 +1,33 @@
 # Analysis of the dataset
 
-The dataset is: set 1's correct and ambiguous pairs; sets 2 and 3's pairs except the few the judge's sample found wrong, not a description, or undecided (the pairs outside the sample are not judged and are kept). Patterns, domains and operators count formulas, not descriptions (in sets 2 and 3 each formula has two descriptions); a formula is counted once per set, and the total adds the three sets. The paraphrases of step 8 are counted apart.
+The dataset is: set 1's pairs whose formula a model wrote back from the description alone (the round trip of step 8), with those kept or fixed by hand; every pair of sets 2 and 3 (not checked by the round trip yet). Patterns, domains and operators count formulas, not descriptions (in sets 2 and 3 each formula has two descriptions); a formula is counted once per set, and the total adds the three sets. The paraphrases of step 9 are counted apart.
 
 ## Size
 
-Paraphrases: those step 8 adds to the descriptions (see Paraphrases below); they have the formulas of their originals, so they add no formula.
+Paraphrases: those step 9 adds to the descriptions (see Paraphrases below); they have the formulas of their originals, so they add no formula.
 
 | Set | Descriptions | Paraphrases | Formulas |
 |---|---|---|---|
-| set_1 | 1018 | 1143 | 982 |
-| set_2 | 2376 | 0 | 1188 |
-| set_3 | 1997 | 0 | 1000 |
-| total | 5391 | 1143 | 3170 |
+| set_1 | 568 | 1073 | 554 |
+| set_2 | 2378 | 0 | 1189 |
+| set_3 | 2000 | 0 | 1000 |
+| total | 4946 | 1073 | 2743 |
 
-## Judge
+## Set 1: round trip
 
-Labels of the descriptions judged: every description of set 1, a sample of 500 formulas (1,000 descriptions) of sets 2 and 3. `No`: the description is not a description of the formula (it only says what the formula is for, describes a part of it, or something else). The rest of the judged descriptions are undecided (the three models gave three different labels, one of them `no`; correct, ambiguous and wrong together give ambiguous).
+Every description of set 1 is a candidate; the round trip of step 8 (a model writes the formula from the description alone) decides which are in the dataset: those at least one of its two models wrote back, and those kept or fixed by hand after reading them. Out: neither model wrote the formula back, stlgen can't read the formula (not checkable), or dropped by hand.
 
-| Set | Judged | Correct | Ambiguous | Wrong | No (not a description) |
-|---|---|---|---|---|---|
-| set_1 | 1719 | 573 (33.3%) | 445 (25.9%) | 126 (7.3%) | 537 (31.2%) |
-| set_2 | 1000 | 987 (98.7%) | 11 (1.1%) | 2 (0.2%) | 0 (0.0%) |
-| set_3 | 1000 | 988 (98.8%) | 9 (0.9%) | 2 (0.2%) | 0 (0.0%) |
+| Candidates | In the dataset | Match | Kept or fixed by hand | Out | both miss | not checkable | dropped by hand |
+|---|---|---|---|---|---|---|---|
+| 1712 | 33.2% | 531 | 37 | 1144 | 1035 | 106 | 3 |
 
 ## Paraphrases
 
-Step 8: a model writes two paraphrases of each correct description of set 1 (the ambiguous ones are not paraphrased), keeping its numbers, symbols and meaning; they are not judged. Missing a symbol: the paraphrases that lack a number or symbol of their original, read by hand and kept (the others read were dropped by hand). Word difference: how different the words of a paraphrase are from its original's, 0 (the same words in the same order) to 1 (no word in common); in the trial, TextAttack's word-level augmenters gave 0.08 and back-translation 0.22.
+Step 9: a model writes two paraphrases of each pair of set 1 in the dataset, keeping its numbers, symbols and meaning; the round trip of step 8 keeps those a model writes back into the formula, as for set 1. Missing a symbol: the paraphrases in the dataset that lack a number or symbol of their original. Word difference: how different the words of a paraphrase are from its original's, 0 (the same words in the same order) to 1 (no word in common); in the trial of TextAttack (archive/textattack_trial/), its word-level augmenters gave 0.08 and back-translation 0.22.
 
-| Set | Descriptions paraphrased | Formulas | Paraphrases | Dropped by hand | Missing a symbol | Word difference |
+| Set | Descriptions paraphrased | Formulas | Paraphrases | Out (round trip or by hand) | Missing a symbol | Word difference |
 |---|---|---|---|---|---|---|
-| set_1 | 572 | 560 | 1143 | 3 | 13 | 0.55 |
+| set_1 | 555 | 542 | 1073 | 63 | 10 | 0.55 |
 
 ## Patterns
 
@@ -37,10 +35,10 @@ The pattern of a formula: its temporal and Boolean structure, each condition a G
 
 | Set | Formulas | Patterns | Top 10 cover |
 |---|---|---|---|
-| set_1 | 982 | 219 | 61.9% |
-| set_2 | 1188 | 418 | 35.6% |
+| set_1 | 554 | 103 | 73.8% |
+| set_2 | 1189 | 418 | 35.6% |
 | set_3 | 1000 | 401 | 25.5% |
-| total | 3170 | 891 | 37.3% |
+| total | 2743 | 810 | 35.7% |
 
 ### The 10 most common patterns of the dataset
 
@@ -48,40 +46,40 @@ Formulas of each set with the pattern, and their share of that set's formulas.
 
 | Pattern | set_1 | set_2 | set_3 | total |
 |---|---|---|---|---|
-| `G[#,#] φ` | 201 (20.5%) | 107 (9.0%) | 32 (3.2%) | 340 (10.7%) |
-| `F[#,#] φ` | 161 (16.4%) | 85 (7.2%) | 29 (2.9%) | 275 (8.7%) |
-| `φ U[#,#] ψ` | 72 (7.3%) | 25 (2.1%) | 17 (1.7%) | 114 (3.6%) |
-| `G[#,#] F[#,#] φ` | 22 (2.2%) | 45 (3.8%) | 20 (2.0%) | 87 (2.7%) |
-| `F[#,#] G[#,#] φ` | 25 (2.5%) | 19 (1.6%) | 27 (2.7%) | 71 (2.2%) |
-| `G[#,#] (φ && ψ)` | 32 (3.3%) | 37 (3.1%) | 1 (0.1%) | 70 (2.2%) |
-| `G[#,inf] (φ -> F[#,#] ψ)` | 39 (4.0%) | 14 (1.2%) | 10 (1.0%) | 63 (2.0%) |
-| `G[#,#] (φ -> F[#,#] ψ)` | 18 (1.8%) | 18 (1.5%) | 25 (2.5%) | 61 (1.9%) |
-| `(F[#,#] φ) && (G[#,#] ψ)` | 14 (1.4%) | 41 (3.5%) | 0 (0.0%) | 55 (1.7%) |
-| `G[#,inf] φ` | 17 (1.7%) | 22 (1.9%) | 6 (0.6%) | 45 (1.4%) |
+| `G[#,#] φ` | 120 (21.7%) | 107 (9.0%) | 32 (3.2%) | 259 (9.4%) |
+| `F[#,#] φ` | 120 (21.7%) | 85 (7.1%) | 29 (2.9%) | 234 (8.5%) |
+| `φ U[#,#] ψ` | 59 (10.6%) | 25 (2.1%) | 17 (1.7%) | 101 (3.7%) |
+| `G[#,#] F[#,#] φ` | 18 (3.2%) | 45 (3.8%) | 20 (2.0%) | 83 (3.0%) |
+| `F[#,#] G[#,#] φ` | 16 (2.9%) | 19 (1.6%) | 27 (2.7%) | 62 (2.3%) |
+| `G[#,inf] (φ -> F[#,#] ψ)` | 30 (5.4%) | 14 (1.2%) | 10 (1.0%) | 54 (2.0%) |
+| `(F[#,#] φ) && (G[#,#] ψ)` | 7 (1.3%) | 41 (3.4%) | 0 (0.0%) | 48 (1.7%) |
+| `G[#,#] (φ && ψ)` | 9 (1.6%) | 37 (3.1%) | 1 (0.1%) | 47 (1.7%) |
+| `G[#,#] (φ -> F[#,#] ψ)` | 4 (0.7%) | 18 (1.5%) | 25 (2.5%) | 47 (1.7%) |
+| `G[#,inf] φ` | 17 (3.1%) | 22 (1.9%) | 6 (0.6%) | 45 (1.6%) |
 
 ### The 10 most common patterns of set_1
 
 | Pattern | Formulas | Share |
 |---|---|---|
-| `G[#,#] φ` | 201 | 20.5% |
-| `F[#,#] φ` | 161 | 16.4% |
-| `φ U[#,#] ψ` | 72 | 7.3% |
-| `G[#,inf] (φ -> F[#,#] ψ)` | 39 | 4.0% |
-| `G[#,#] (φ && ψ)` | 32 | 3.3% |
-| `F[#,#] G[#,#] φ` | 25 | 2.5% |
-| `G[#,#] F[#,#] φ` | 22 | 2.2% |
-| `G[#,#] !φ` | 21 | 2.1% |
-| `G[#,#] (φ -> F[#,#] ψ)` | 18 | 1.8% |
-| `G[#,inf] φ` | 17 | 1.7% |
+| `F[#,#] φ` | 120 | 21.7% |
+| `G[#,#] φ` | 120 | 21.7% |
+| `φ U[#,#] ψ` | 59 | 10.6% |
+| `G[#,inf] (φ -> F[#,#] ψ)` | 30 | 5.4% |
+| `G[#,#] F[#,#] φ` | 18 | 3.2% |
+| `G[#,inf] φ` | 17 | 3.1% |
+| `F[#,#] G[#,#] φ` | 16 | 2.9% |
+| `G[#,#] !φ` | 13 | 2.3% |
+| `G[#,#] (φ && ψ)` | 9 | 1.6% |
+| `(F[#,#] φ) && (G[#,#] ψ)` | 7 | 1.3% |
 
 ### The 10 most common patterns of set_2
 
 | Pattern | Formulas | Share |
 |---|---|---|
 | `G[#,#] φ` | 107 | 9.0% |
-| `F[#,#] φ` | 85 | 7.2% |
+| `F[#,#] φ` | 85 | 7.1% |
 | `G[#,#] F[#,#] φ` | 45 | 3.8% |
-| `(F[#,#] φ) && (G[#,#] ψ)` | 41 | 3.5% |
+| `(F[#,#] φ) && (G[#,#] ψ)` | 41 | 3.4% |
 | `G[#,#] (φ && ψ)` | 37 | 3.1% |
 | `φ U[#,#] ψ` | 25 | 2.1% |
 | `G[#,inf] φ` | 22 | 1.9% |
@@ -110,23 +108,23 @@ In sets 1 and 2 the domain is the one step 5's models read in the paper (`generi
 
 | Domain | set_1 | set_2 | set_3 | total |
 |---|---|---|---|---|
-| generic | 458 (46.6%) | 663 (55.8%) | 58 (5.8%) | 1179 (37.2%) |
-| automotive | 192 (19.6%) | 224 (18.9%) | 63 (6.3%) | 479 (15.1%) |
-| mobile robotics | 162 (16.5%) | 120 (10.1%) | 49 (4.9%) | 331 (10.4%) |
-| marine robotics | 8 (0.8%) | 25 (2.1%) | 81 (8.1%) | 114 (3.6%) |
-| aerial robotics | 33 (3.4%) | 20 (1.7%) | 51 (5.1%) | 104 (3.3%) |
-| industrial machinery | 19 (1.9%) | 24 (2.0%) | 55 (5.5%) | 98 (3.1%) |
-| robotic manipulation | 22 (2.2%) | 19 (1.6%) | 54 (5.4%) | 95 (3.0%) |
-| smart city | 21 (2.1%) | 5 (0.4%) | 60 (6.0%) | 86 (2.7%) |
-| power systems | 7 (0.7%) | 7 (0.6%) | 67 (6.7%) | 81 (2.6%) |
-| medical devices | 0 (0.0%) | 0 (0.0%) | 81 (8.1%) | 81 (2.6%) |
-| mechatronics | 11 (1.1%) | 10 (0.8%) | 58 (5.8%) | 79 (2.5%) |
-| railway | 3 (0.3%) | 21 (1.8%) | 55 (5.5%) | 79 (2.5%) |
-| aviation | 20 (2.0%) | 6 (0.5%) | 52 (5.2%) | 78 (2.5%) |
-| smart home | 19 (1.9%) | 6 (0.5%) | 51 (5.1%) | 76 (2.4%) |
-| social dynamics | 5 (0.5%) | 22 (1.9%) | 48 (4.8%) | 75 (2.4%) |
-| epidemiology | 2 (0.2%) | 16 (1.3%) | 52 (5.2%) | 70 (2.2%) |
-| cloud computing | 0 (0.0%) | 0 (0.0%) | 65 (6.5%) | 65 (2.1%) |
+| generic | 346 (62.5%) | 663 (55.8%) | 58 (5.8%) | 1067 (38.9%) |
+| automotive | 78 (14.1%) | 225 (18.9%) | 63 (6.3%) | 366 (13.3%) |
+| mobile robotics | 59 (10.6%) | 120 (10.1%) | 49 (4.9%) | 228 (8.3%) |
+| marine robotics | 3 (0.5%) | 25 (2.1%) | 81 (8.1%) | 109 (4.0%) |
+| aerial robotics | 12 (2.2%) | 20 (1.7%) | 51 (5.1%) | 83 (3.0%) |
+| industrial machinery | 3 (0.5%) | 24 (2.0%) | 55 (5.5%) | 82 (3.0%) |
+| robotic manipulation | 8 (1.4%) | 19 (1.6%) | 54 (5.4%) | 81 (3.0%) |
+| medical devices | 0 (0.0%) | 0 (0.0%) | 81 (8.1%) | 81 (3.0%) |
+| smart city | 14 (2.5%) | 5 (0.4%) | 60 (6.0%) | 79 (2.9%) |
+| railway | 3 (0.5%) | 21 (1.8%) | 55 (5.5%) | 79 (2.9%) |
+| power systems | 3 (0.5%) | 7 (0.6%) | 67 (6.7%) | 77 (2.8%) |
+| social dynamics | 4 (0.7%) | 22 (1.9%) | 48 (4.8%) | 74 (2.7%) |
+| mechatronics | 5 (0.9%) | 10 (0.8%) | 58 (5.8%) | 73 (2.7%) |
+| epidemiology | 2 (0.4%) | 16 (1.3%) | 52 (5.2%) | 70 (2.6%) |
+| smart home | 8 (1.4%) | 6 (0.5%) | 51 (5.1%) | 65 (2.4%) |
+| cloud computing | 0 (0.0%) | 0 (0.0%) | 65 (6.5%) | 65 (2.4%) |
+| aviation | 6 (1.1%) | 6 (0.5%) | 52 (5.2%) | 64 (2.3%) |
 
 ## Operators
 
@@ -134,11 +132,11 @@ Share of the formulas of each set that hold each operator.
 
 | Operator | set_1 | set_2 | set_3 | total |
 |---|---|---|---|---|
-| `G` | 69.2% | 69.5% | 59.4% | 66.2% |
-| `F` | 54.0% | 60.4% | 66.7% | 60.4% |
-| `U` | 11.2% | 13.6% | 5.5% | 10.3% |
-| `R` | 0.1% | 0.8% | 12.0% | 4.1% |
-| `!` | 17.7% | 16.4% | 31.1% | 21.5% |
-| `&&` | 28.0% | 41.8% | 38.7% | 36.6% |
-| `\|\|` | 5.2% | 15.2% | 24.1% | 14.9% |
-| `->` | 16.5% | 14.9% | 40.7% | 23.5% |
+| `G` | 61.6% | 69.6% | 59.4% | 64.2% |
+| `F` | 52.0% | 60.4% | 66.7% | 61.0% |
+| `U` | 13.2% | 13.5% | 5.5% | 10.5% |
+| `R` | 0.0% | 0.8% | 12.0% | 4.7% |
+| `!` | 8.8% | 16.5% | 31.1% | 20.3% |
+| `&&` | 16.2% | 41.9% | 38.7% | 35.5% |
+| `\|\|` | 2.2% | 15.1% | 24.1% | 15.8% |
+| `->` | 13.2% | 15.0% | 40.7% | 24.0% |

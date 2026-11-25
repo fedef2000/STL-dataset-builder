@@ -1,0 +1,44 @@
+{"id": "W1511164163:F4:D1", "action": "fix", "stl": "(G[0,65) spreading_active) && (F[65,90] !spreading_active)", "note": "", "formula_before": "(F[65,90] (V_s == 0)) && (G[0,65] (V_S > 0))"}
+{"id": "W1523101422:F2:D1", "action": "keep", "stl": null, "note": "", "formula_before": "F[0,5000] G[0,1000] carrying_uav_box"}
+{"id": "W1523101422:F3:D1", "action": "fix", "stl": "G[0,inf] (flying_too_quickly -> (F[0,1000] (G[0,1000] within_limits)))", "note": "", "formula_before": "G[0,inf] ((speed_uav > T) -> (F[0,1000] G[0,1000] (speed_uav <= T)))"}
+{"id": "W1796872423:P5:D1", "action": "fix", "stl": "G[0,inf] ((signal > p) -> F[0,s1] G[0,s2] (signal < p))", "note": "", "formula_before": "G[0,inf] ((x >= p) -> (F[0,s_2] G[0,s_1] (x < p)))"}
+{"id": "W1991698050:P3:D1", "action": "keep", "stl": null, "note": "", "formula_before": "!F[tau_i,inf] chi"}
+{"id": "W2136512560:P3:D1", "action": "fix", "stl": "(G[0,t_1] Phi_1) && (Phi_1 U[t_1,t_2] Phi_2)", "note": "", "formula_before": "Phi_1 U[t_1,t_2] Phi_2"}
+{"id": "W2167799541:F2:D1", "action": "fix", "stl": "F[0,10) (v >= 80)", "note": "", "formula_before": "F[0,10] (v >= 80)"}
+{"id": "W2233433391:F8:D1", "action": "fix", "stl": "F[0,30] (meet_in_yellow_region_A || meet_in_yellow_region_B)", "note": "", "formula_before": "F[0,30] ((meet_1_A && meet_2_A) || (meet_1_B && meet_2_B))"}
+{"id": "W2256658272:F23:D1", "action": "fix", "stl": "G[0,inf] (((speed_adv > 0.5) -> (velocity_ego > 0.5)) && ((acceleration >= -1) && (acceleration <= 1)))", "note": "", "formula_before": "(G[0,inf] ((v_adv > 0.5) -> (v_ego > 0.5))) && (|a_ego| <= 1)"}
+{"id": "W2470448410:F6:D1", "action": "fix", "stl": "G[0,inf] (battery_low -> fly_low)", "note": "", "formula_before": "G[0,inf] (phi -> psi)"}
+{"id": "W2531762107:P10:D1:A2", "action": "keep", "stl": null, "note": "", "formula_before": "G[0,tau_1) (phi_t1 -> phi_t2)"}
+{"id": "W2797213222:F1:D1", "action": "fix", "stl": "F[1,5] (x < -10)", "note": "", "formula_before": "F[1,5) (x <= -10)"}
+{"id": "W2920800988:P15:D1", "action": "keep", "stl": null, "note": "", "formula_before": "G[a,b] varphi"}
+{"id": "W2932622350:F1:D1", "action": "fix", "stl": "G[0,inf] (x <= p)", "note": "", "formula_before": "G[0,inf] (x < p)"}
+{"id": "W2962924557:F2:D1", "action": "keep", "stl": null, "note": "", "formula_before": "G[0,inf] F[0,2] A"}
+{"id": "W2964890016:F13:D1", "action": "keep", "stl": null, "note": "", "formula_before": "(F[1,18] G[0,4] G_bar_T) && (F[24,40] Y_bar_prime_T)"}
+{"id": "W2964890016:F14:D1", "action": "keep", "stl": null, "note": "", "formula_before": "G[0,25] F[0,8] B_bar_S"}
+{"id": "W2995364870:F11:D1", "action": "drop", "stl": null, "note": "", "formula_before": "G[1,1000] !deadlock"}
+{"id": "W2995364870:F7:D1", "action": "drop", "stl": null, "note": "", "formula_before": "G[1,1000] !alarm"}
+{"id": "W3159513475:P125:D1", "action": "keep", "stl": null, "note": "", "formula_before": "G[a,b] phi"}
+{"id": "W3159513475:P126:D1", "action": "keep", "stl": null, "note": "", "formula_before": "F[a,b] phi"}
+{"id": "W3162166567:P2:D1", "action": "keep", "stl": null, "note": "", "formula_before": "Phi U[t_1,t_2] Psi"}
+{"id": "W3203641084:F1:D1", "action": "keep", "stl": null, "note": "", "formula_before": "G[3,6] (s_3 <= 1)"}
+{"id": "W4225679458:F5:D1:A1", "action": "drop", "stl": null, "note": "the name phi, the formula's only symbol, is left out", "formula_before": "G[0,25] phi"}
+{"id": "W4225679458:F5:D1:A2", "action": "drop", "stl": null, "note": "the name phi, the formula's only symbol, is left out", "formula_before": "G[0,25] phi"}
+{"id": "W4289856811:F1:D1", "action": "keep", "stl": null, "note": "", "formula_before": "G[0,2] psi_1"}
+{"id": "W4292070345:P17:D1", "action": "keep", "stl": null, "note": "", "formula_before": "F[a,b] varphi"}
+{"id": "W4390396230:F6:D1", "action": "fix", "stl": "G[0,inf] (F[0,20] ram_verification)", "note": "", "formula_before": "F[0,20] operational_check"}
+{"id": "W4399032625:F11:D1", "action": "drop", "stl": null, "note": "", "formula_before": "F[2,21] r_2"}
+{"id": "W4403799341:F1:D2", "action": "keep", "stl": null, "note": "", "formula_before": "G[0,inf] (detect_motion -> (F[0,10] activate_alert))"}
+{"id": "W4403799341:P1:D2", "action": "fix", "stl": "G[0,inf] (P -> (F[0,k) response))", "note": "", "formula_before": "G[0,inf] (P -> (F(0,k] Q))"}
+{"id": "W4403799341:P3:D1", "action": "keep", "stl": null, "note": "", "formula_before": "G[0,inf] (P -> (G[0,k] Q))"}
+{"id": "W4413521524:F14:D1", "action": "fix", "stl": "(G[4,6] (x1 > 9)) && (F[10,12] (x1 <= -10)) && (G[16,18] (x1 <= -12)) && (F[22,24] (x1 > 13)) && (G[28,30] (x1 <= -15))", "note": "", "formula_before": "(G[4,6] (x_1 >= 9)) && (F[10,12] (x_1 <= -10)) && (G[16,18] (x_1 <= -12)) && (F[22,24] (x_1 >= 13)) && (G[28,30] (x_1 <= -15))"}
+{"id": "arxiv_1510.06460:P9:D1", "action": "fix", "stl": "F[a,b] phi", "note": "", "formula_before": "F[a,b) phi"}
+{"id": "arxiv_1606.06355:F6:D1", "action": "fix", "stl": "G[0,inf] ((F[0,40] enter_A) && (F[0,40] enter_B) && (F[0,40] enter_C))", "note": "", "formula_before": "G[0,inf] ((F[0,40) psi_A) && (F[0,40) psi_B) && (F[0,40) psi_C))"}
+{"id": "arxiv_2402.10310:P3:D1", "action": "keep", "stl": null, "note": "", "formula_before": "G[t_1,t_2] phi"}
+{"id": "arxiv_2405.06670:P2:D1", "action": "keep", "stl": null, "note": "", "formula_before": "F[t_1,t_2] phi"}
+{"id": "arxiv_2405.06670:P3:D1", "action": "keep", "stl": null, "note": "", "formula_before": "G[t_1,t_2] phi"}
+{"id": "arxiv_2505.19703:F6:D1", "action": "keep", "stl": null, "note": "", "formula_before": "(F[0,6] A_1) && (F[0,6] G[0,2] A_2)"}
+{"id": "arxiv_2508.04438:P7:D1", "action": "keep", "stl": null, "note": "", "formula_before": "rho_1 U[x,y] rho_2"}
+{"id": "arxiv_2512.06973:F10:D1", "action": "keep", "stl": null, "note": "", "formula_before": "F[2,5] Reg_2"}
+{"id": "arxiv_2603.25531:F4:D1:A1", "action": "drop", "stl": null, "note": "V_EGM written out from the variable meanings, and 'below' made 'to or below' from the formula", "formula_before": "G[0,inf] ((V_EGM > V_v_th) -> (F[0.6,1] (V_EGM <= V_v_th)))"}
+{"id": "arxiv_2604.24540:F2:D2", "action": "keep", "stl": null, "note": "", "formula_before": "G[0,inf] (ControlLoopStart -> (F[0,12] ControlLoopFinish))"}
+{"id": "arxiv_2609.33287:F6:D1", "action": "keep", "stl": null, "note": "", "formula_before": "G[0,900] stationary_in_room"}
