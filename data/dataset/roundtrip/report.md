@@ -1,6 +1,6 @@
 # Round-trip check
 
-Each description is given, alone, to a model, which writes the formula from it (prompt: `src/evaluation/roundtrip.py`, models: gemini-3.8-flash:off, gpt-6-luna:medium, one answer each). The comparator (`src/evaluation/compare.py`) then says how close that formula is to the dataset's: equivalent (the same formula), renamed (the same with other names), near (the same apart from < vs <=, an open vs a closed interval end, or an outer G[0,inf]), same_pattern (the same structure, other bounds or conditions), different, or unparseable. For the answers at near, same_pattern or different, stlsat (`src/evaluation/sat.py`) then checks whether they mean the same: equivalent, stronger (the answer asks more), weaker, incomparable, unknown (past its time) or not_checkable. A match is one of the first three levels, or equivalent for stlsat. Groups: set 1 (every description of the papers, step 7) and the paraphrases of step 9. Not checkable: formulas stlgen can't read (real or expression bounds, powers); no model was asked about them. A description is in the dataset when at least one model matches it, or when it was kept or fixed by hand.
+Each description is given, alone, to a model, which writes the formula from it (prompt: `src/evaluation/roundtrip.py`, models: gemini-3.8-flash:off, gpt-6-luna:medium, one answer each). The comparator (`src/evaluation/compare.py`) then says how close that formula is to the dataset's: equivalent (the same formula), renamed (the same with other names), near (the same apart from < vs <=, an open vs a closed interval end, or an outer G[0,inf]), same_pattern (the same structure, other bounds or conditions), different, or unparseable. For the answers at near, same_pattern or different, stlsat (`src/evaluation/sat.py`) then checks whether they mean the same: equivalent, stronger (the answer asks more), weaker, incomparable, unknown (past its time) or sat_skipped (a formula stlsat can't take). A match is one of the first three levels, or equivalent for stlsat. Groups: set 1 (every description of the papers, step 7) and the paraphrases of step 9. Not checkable: formulas stlgen can't read (decimal or expression bounds, powers): the answers can't be compared, they are shown for deciding by hand. A description is in the dataset when at least one model matches it, or when it was kept or fixed by hand.
 
 ## Size
 
@@ -53,21 +53,21 @@ Answers at level near, by the details they differ in (one answer may differ in t
 
 ## Meaning (stlsat)
 
-The answers at near, same_pattern or different, checked by stlsat (discrete time, inclusive until; formulas with inf, named bounds or products not checkable). stronger: the answer implies the dataset's formula, not the converse; weaker: the converse.
+The answers at near, same_pattern or different, checked by stlsat (discrete time, inclusive until; formulas with inf, named bounds or products skipped: sat_skipped). stronger: the answer implies the dataset's formula, not the converse; weaker: the converse.
 
 
 ### gemini-3.8-flash:off
 
-| Group | Checked | equivalent | stronger | weaker | incomparable | unknown | not_checkable |
+| Group | Checked | equivalent | stronger | weaker | incomparable | unknown | sat_skipped |
 |---|---|---|---|---|---|---|---|
-| set_1 | 1098 | 3 | 50 | 40 | 59 | 8 | 938 |
-| paraphrase | 216 | 11 | 53 | 21 | 10 | 2 | 119 |
+| set_1 | 1098 | 3 | 51 | 40 | 59 | 7 | 938 |
+| paraphrase | 216 | 11 | 55 | 21 | 10 | 0 | 119 |
 
 ### gpt-6-luna:medium
 
-| Group | Checked | equivalent | stronger | weaker | incomparable | unknown | not_checkable |
+| Group | Checked | equivalent | stronger | weaker | incomparable | unknown | sat_skipped |
 |---|---|---|---|---|---|---|---|
-| set_1 | 1105 | 5 | 48 | 36 | 45 | 4 | 967 |
+| set_1 | 1105 | 5 | 49 | 36 | 45 | 3 | 967 |
 | paraphrase | 259 | 15 | 51 | 21 | 14 | 0 | 158 |
 
 Matches found only by stlsat (the answer's level is same_pattern or different), per group and model:
@@ -77,7 +77,7 @@ Matches found only by stlsat (the answer's level is same_pattern or different), 
 | set_1 | 3 | 5 |
 | paraphrase | 11 | 15 |
 
-Why stlsat couldn't check an answer (both models together):
+Why stlsat skipped an answer (sat_skipped, both models together):
 
 | Reason | Answers |
 |---|---|
@@ -117,5 +117,6 @@ Sheets of `roundtrip.xlsx`:
 | Sheet | Descriptions | Why |
 |---|---|---|
 | set 1, both miss | 1035 | neither model wrote the formula back, so the pair is out: keep it when the description is enough after all, fix the formula when the description is right and the formula opaque (phi for a condition the description spells out) |
+| set 1, not checkable | 106 | stlgen can't read the formula, so the pair is out: the column why not checkable says what it has that stlgen doesn't take, the models' formulas are there to compare by eye; keep it when the description is right, fix the formula into one stlgen reads (then it is checked) |
 | paraphrase loses it | 62 | the original's formula was matched, the paraphrase's not: it may lose something |
 | all | 2843 | every description |
