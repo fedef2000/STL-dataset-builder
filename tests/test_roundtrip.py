@@ -50,8 +50,19 @@ def test_review_sheets_and_verdict():
     assert [r["id"] for r in sheets["set 1, both miss"]] == ["C:D1"]
     assert [r["id"] for r in sheets["paraphrase loses it"]] == ["A:D1:A1"]   # its original matched
     assert [r["id"] for r in sheets["set 1, not checkable"]] == ["D:D1"]
+    assert sheets["stlsat checked"] == []
     assert [roundtrip.verdict(r)["verdict"] for r in rows[:4]] == ["match", "match", "miss", "not_checkable"]
     assert roundtrip.verdict(rows[0]) == {"verdict": "match", "best": "renamed"}
+
+
+def test_sat_sheet():
+    labels = [roundtrip.short(m) for m in roundtrip.MODELS]
+    checked = dict(zip(labels, ({"level": "different", "sat": "stronger"}, {"level": "renamed", "sat": "equivalent"})))
+    skipped = dict(zip(labels, ({"level": "near", "sat": "sat_skipped"}, {"level": "unparseable", "sat": None})))
+    already = {m: {"level": "equivalent", "sat": "equivalent"} for m in labels}
+    rows = [{"id": i, "group": "set_1", "augmented_from": None, "best": "different", "models": models}
+            for i, models in (("A:D1", checked), ("B:D1", skipped), ("C:D1", already))]
+    assert [r["id"] for r in roundtrip.review_sheets(rows)["stlsat checked"]] == ["A:D1"]
 
 
 @pytest.mark.parametrize("stl, error, why", [

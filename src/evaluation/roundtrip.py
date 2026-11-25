@@ -511,6 +511,12 @@ def table(header: list[str], rows: list[list]) -> list[str]:
 
 
 NOT_CHECKABLE_SHEET = "set 1, not checkable"
+SAT_SHEET = "stlsat checked"
+
+
+def sat_checked(verdict: dict) -> bool:
+    """An answer stlsat really checked: at a level it checks (near, same_pattern, different), and not skipped."""
+    return verdict.get("level") in SAT_LEVELS and verdict.get("sat") not in (None, "sat_skipped")
 
 
 def review_sheets(rows: list[dict]) -> dict[str, list[dict]]:
@@ -524,6 +530,7 @@ def review_sheets(rows: list[dict]) -> dict[str, list[dict]]:
         "set 1, both miss": [r for r in rows if r["group"] == "set_1" and r["best"] != "not_checkable" and both_miss(r)],
         NOT_CHECKABLE_SHEET: [r for r in rows if r["group"] == "set_1" and r["best"] == "not_checkable"],
         "paraphrase loses it": [r for r in rows if r["group"] == "paraphrase" and lost(r)],
+        SAT_SHEET: [r for r in rows if any(sat_checked(v) for v in r["models"].values())],
         "all": rows,
     }
 
@@ -591,6 +598,7 @@ def write_report(rows: list[dict], path: Path, split_counts: dict[str, dict[str,
                    [["set 1, both miss", len(review_sheets(rows)["set 1, both miss"]), "neither model wrote the formula back, so the pair is out: keep it when the description is enough after all, fix the formula when the description is right and the formula opaque (phi for a condition the description spells out)"],
                     [NOT_CHECKABLE_SHEET, len(review_sheets(rows)[NOT_CHECKABLE_SHEET]), "stlgen can't read the formula, so the pair is out: the column why not checkable says what it has that stlgen doesn't take, the models' formulas are there to compare by eye; keep it when the description is right, fix the formula into one stlgen reads (then it is checked)"],
                     ["paraphrase loses it", len(review_sheets(rows)["paraphrase loses it"]), "the original's formula was matched, the paraphrase's not: it may lose something"],
+                    [SAT_SHEET, len(review_sheets(rows)[SAT_SHEET]), "the descriptions with at least one answer stlsat checked (not equivalent or renamed already, not skipped), both groups: its outcome in the columns sat"],
                     ["all", len(rows), "every description"]])
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
