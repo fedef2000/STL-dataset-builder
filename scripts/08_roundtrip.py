@@ -62,7 +62,7 @@ def main():
 
     if args.import_decisions:
         if roundtrip.import_decisions():
-            print("Next: python scripts/07_build_dataset.py (only needed for a fix), python scripts/08_roundtrip.py, "
+            print("Next: python scripts/07_build_sets.py (only needed for a fix), python scripts/08_roundtrip.py, "
                   "python scripts/09_augment_dataset.py, python scripts/08_roundtrip.py")
         return
 
